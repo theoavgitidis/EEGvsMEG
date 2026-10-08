@@ -12,6 +12,7 @@ endif()
 target_compile_features(unicorn_terminal PRIVATE cxx_std_17)
 target_include_directories(unicorn_terminal PRIVATE ../lib)
 target_link_libraries(unicorn_terminal PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../lib/Unicorn.lib")
+target_link_libraries(unicorn_terminal PRIVATE user32 gdi32)
 add_custom_command(TARGET unicorn_terminal POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_if_different
   "${CMAKE_CURRENT_SOURCE_DIR}/../lib/Unicorn.dll" "$<TARGET_FILE_DIR:unicorn_terminal>")

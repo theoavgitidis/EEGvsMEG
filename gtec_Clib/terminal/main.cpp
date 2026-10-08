@@ -20,6 +20,7 @@ static void check(int code) {
 }
 #include "recorder.h"
 #include "experiments.h"
+#include "cues.h"
 static void help() {
     std::cout <<
         "NewExp NAME | GoToExp NAME | ListExp | Where\n"
@@ -29,6 +30,8 @@ static void help() {
         "start real|test | read SCANS [CSV_NAME] | stop\n"
         "record SECONDS CSV_NAME [real|test] (0 = until stop)\n"
         "mark LABEL | status (background recorder)\n"
+        "cue open|close|rest | cue text TEXT (preview without marker)\n"
+        "cue LABEL | TEXT (display and marker during background recording)\n"
         "outputs | outputs VALUE (0..255) | help | quit\n"
         "read accepts 1..2500 scans; CSV filenames stay in the active experiment; existing files are refused.\n"
         "Pair the headset in Windows or Unicorn Suite before opening it.\n";
@@ -41,6 +44,7 @@ int main() {
     UNICORN_HANDLE handle = 0;
     bool opened = false, acquiring = false;
     Recorder recorder;
+    Cues cues;
     auto stop = [&]() { recorder.stop(); if (acquiring) { check(UNICORN_StopAcquisition(handle)); acquiring = false; } };
     auto close = [&]() { if (opened) { stop(); check(UNICORN_CloseDevice(&handle)); opened = false; } };
     std::cout << "Unicorn API terminal (250 Hz). Type help for commands.\n";
@@ -61,13 +65,34 @@ int main() {
             if (cmd == "quit" || cmd == "exit") break;
             if (cmd == "help") { help(); continue; }
             if (cmd == "status") { recorder.status(); continue; }
+            if (cmd == "cue") {
+                std::string argument; std::getline(in >> std::ws, argument);
+                if (argument == "open") { cues.open(); continue; }
+                if (argument == "close") { cues.close(); continue; }
+                if (argument == "rest") { cues.show("+"); continue; }
+                if (argument.rfind("text ", 0) == 0) { cues.show(argument.substr(5)); continue; }
+                auto separator = argument.find('|');
+                if (separator == std::string::npos) throw std::runtime_error("Use cue LABEL | TEXT, or cue open|close|rest|text TEXT");
+                auto trim = [](std::string s) {
+                    auto a = s.find_first_not_of(" \t");
+                    if (a == std::string::npos) return std::string();
+                    return s.substr(a, s.find_last_not_of(" \t")-a+1);
+                };
+                auto label = trim(argument.substr(0, separator));
+                auto text = trim(argument.substr(separator+1));
+                if (label.empty() || text.empty()) throw std::runtime_error("Marker and cue text must be nonempty.");
+                if (!recorder.active()) throw std::runtime_error("Start background recording before logging a cue.");
+                cues.show(text); recorder.mark(label); continue;
+            }
             if (cmd == "mark") {
                 std::string label; std::getline(in >> std::ws, label);
                 if (label.empty()) throw std::runtime_error("Use mark LABEL");
+                if (!recorder.active()) throw std::runtime_error("No background recording is active.");
+                if (cues.active()) cues.show(cueForMarker(label));
                 recorder.mark(label); continue;
             }
             if (recorder.active() && cmd != "stop" && cmd != "close")
-                throw std::runtime_error("Background recording active. Use mark, status, stop, close, help or quit.");
+                throw std::runtime_error("Background recording active. Use mark, cue, status, stop, close, help or quit.");
             if (!recorder.active()) recorder.stop(); // join completed timed recordings
             if (cmd == "version") { std::cout << UNICORN_GetApiVersion() << '\n'; continue; }
             if (cmd == "error") {

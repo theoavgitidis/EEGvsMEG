@@ -1,5 +1,76 @@
 # Unicorn-Terminal: Bedienungsanleitung
 
+## Teilnehmerfenster: Anweisung und Marker gemeinsam
+
+Das native Windows-Fenster zeigt weiße Anweisungen auf schwarzem Hintergrund.
+`cue open` öffnet es zunächst mit einem mittigen Fixationskreuz (`+`). Verschiebe
+es auf den Teilnehmerbildschirm und drücke dort F11 für Vollbild. F11 oder Escape
+verlässt Vollbild. Kehre anschließend für die Bedienung zum Terminal zurück.
+Das Fenster kann ohne angeschlossenes Headset zur Vorschau geöffnet werden.
+
+Beispiel mit aktiver Experimentauswahl und Hintergrundaufnahme:
+
+```text
+NewExp "Pilot_Cues_01"
+open YOUR_SERIAL
+cue open
+record 0 "session01.csv" real
+mark rest
+mark hands_up
+mark hands_down
+mark imagine_hands
+mark rest
+stop
+cue rest
+cue close
+close
+quit
+```
+
+Bei geöffnetem Fenster aktualisiert jeder `mark`-Befehl die Teilnehmeranzeige
+und speichert danach den Marker im Ereignislog. Die vordefinierten Labels sind
+exakt in Kleinbuchstaben zu schreiben:
+
+| Marker | Teilnehmeranzeige |
+|---|---|
+| `mark rest`, `mark baseline`, `mark fixation` | Fixationskreuz `+` |
+| `mark hands`, `mark hands_up` | Hände hochheben |
+| `mark hands_down` | Hände senken |
+| `mark imagine_hands` | Stelle dir vor, deine Hände hochzuheben |
+| Andere Labels | Das Label selbst |
+
+Für unabhängig gewählte Markerlabels und Anweisungen verwende:
+
+```text
+cue left_trial_01_start | Hebe deine linke Hand hoch
+cue left_trial_01_end | +
+```
+
+Die linke Seite wird als Marker gespeichert, die rechte Seite angezeigt.
+Das Fenster muss geöffnet sein und eine Hintergrundaufnahme laufen. Nur das
+erste `|` trennt Label und Anweisung. Diese Befehle sind während der Aufnahme
+zulässig und greifen nicht auf die Gerätebibliothek zu.
+
+Vorschau ohne Marker: `cue text Hebe deine Hände hoch` zeigt Text und `cue rest`
+zeigt das Kreuz. Diese beiden Befehle funktionieren auch während einer Aufnahme,
+erzeugen aber ausdrücklich keinen Marker. Für dokumentierte Ruhephasen deshalb
+`mark rest` oder `cue LABEL | +` verwenden. `cue close` schließt nur das Fenster,
+nicht die Aufnahme. Ohne geöffnetes Fenster bleibt `mark` ein reiner Logbefehl.
+`stop` ändert die zuletzt angezeigte Anweisung nicht; anschließend bei Bedarf
+`cue rest` ausführen. Fenster-Schließen stoppt ebenfalls keine Aufnahme.
+
+Der Marker wird nach der synchronen Anforderung und Bearbeitung des Neuzeichnens
+geschrieben. Sein Zeitstempel bestätigt keinen physisch gemessenen Bildbeginn:
+Bildschirm-Refresh, Windows-Compositor, verdeckte/minimierte Fenster und
+Bluetooth-Puffer erzeugen Unsicherheit. Eine Markierung kann fehlschlagen, wenn
+die Aufnahme während der Anzeige endet; dann erscheint ein Fehler im Terminal.
+Es gibt weder eine Garantie atomarer Anzeige/Log-Ausgabe noch eine automatische
+Protokollierung des vollständigen Anweisungstextes zusätzlich zum Label.
+Für präzise Onset-Messungen sind Photodiode/gemeinsame Trigger oder eine validierte
+Stimulussoftware nötig. Die aktuelle Steuerung ist manuell, kein automatischer
+Trial-Scheduler. Vor dem Versuch das Fenster auf dem echten Teilnehmermonitor
+prüfen. Native Windows-Anzeige und Vollbild sind hier noch nicht hardwaregetestet.
+
 ## Voraussetzungen
 
 - Windows, 64 Bit: Die mitgelieferte `Unicorn.dll` ist eine Windows-x64-Bibliothek.

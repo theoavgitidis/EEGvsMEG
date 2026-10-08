@@ -2,6 +2,11 @@
 
 **Vollständige deutsche Bedienungsanleitung:** [VERWENDUNG.md](VERWENDUNG.md)
 
+Participant display: `cue open` opens a Windows window. During background
+recording, `mark hands_up`, `mark hands_down`, `mark imagine_hands` and
+`mark rest` both update it and log the marker. For arbitrary instructions use
+`cue trial_01 | Hebe deine Hände hoch`. See the German guide for timing limits.
+
 Interactive hardware test utility covering every function in the supplied
 `unicorn.h`. Requires 64-bit Windows, the supplied Unicorn DLL, a working
 Bluetooth adapter and a compatible headset. This is a manual diagnostic tool,

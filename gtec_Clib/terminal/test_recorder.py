@@ -16,10 +16,12 @@ with tempfile.TemporaryDirectory() as directory:
     define = f'-DRECORDINGS_ROOT="{recordings.as_posix()}"'
     if shutil.which("cl"):
         subprocess.run(["cl", "/nologo", "/std:c++17", "/EHsc", "/utf-8", "/DUNICORN_API=",
-                        define, "/I" + str(root.parent / "lib"), *source, "/Fe:" + str(exe)], cwd=work, check=True)
+                        define, "/I" + str(root.parent / "lib"), *source, "/Fe:" + str(exe),
+                        "/link", "user32.lib", "gdi32.lib"], cwd=work, check=True)
     else:
         subprocess.run(["clang++", "-std=c++17", "-pthread", "-DUNICORN_API=", define,
-                        "-I", str(root.parent / "lib"), *source, "-o", str(exe)], check=True)
+                        "-I", str(root.parent / "lib"), *source, "-o", str(exe),
+                        *(["-luser32", "-lgdi32"] if os.name == "nt" else [])], check=True)
 
     def session(commands, fail=False):
         env = os.environ.copy()
