@@ -54,9 +54,10 @@ public:
         events.flush();
         if (!events) throw std::runtime_error("Event log write failed.");
     }
-    void start(UNICORN_HANDLE handle, const std::string& path, uint64_t target, bool test) {
+    void start(UNICORN_HANDLE handle, const std::filesystem::path& path, uint64_t target, bool test) {
         stop();
-        if (std::filesystem::exists(path) || std::filesystem::exists(path + ".events.csv"))
+        auto eventPath = path; eventPath += ".events.csv";
+        if (std::filesystem::exists(path) || std::filesystem::exists(eventPath))
             throw std::runtime_error("Recording files already exist; choose a new path.");
         uint32_t n = 0; check(UNICORN_GetNumberOfAcquiredChannels(handle, &n));
         if (!n || n > UNICORN_TOTAL_CHANNELS_COUNT) throw std::runtime_error("Unexpected channel count.");
@@ -73,7 +74,7 @@ public:
         }
         std::ofstream data(path);
         if (!data) throw std::runtime_error("Cannot create recording file.");
-        events.open(path + ".events.csv");
+        events.open(eventPath);
         if (!events) throw std::runtime_error("Cannot create event log.");
         data << "sample_index,nominal_time_s,host_read_utc_s";
         for (const auto& name : names) data << ',' << csv(name);

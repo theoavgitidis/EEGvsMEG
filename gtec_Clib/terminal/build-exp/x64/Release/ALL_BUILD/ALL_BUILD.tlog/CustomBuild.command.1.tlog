@@ -1,0 +1,10 @@
+^C:\USERS\DHBWQ\DESKTOP\EEG\EEGVSMEG\GTEC_CLIB\TERMINAL\CMAKELISTS.TXT
+setlocal
+C:\Users\DHBWQ\AppData\Local\Microsoft\WinGet\Packages\Kitware.CMake_Microsoft.Winget.Source_8wekyb3d8bbwe\cmake-4.4.4-windows-x86_64\bin\cmake.exe -SC:/Users/DHBWQ/Desktop/EEG/EEGvsMEG/gtec_Clib/terminal -BC:/Users/DHBWQ/Desktop/EEG/EEGvsMEG/gtec_Clib/terminal/build-exp --check-stamp-file C:/Users/DHBWQ/Desktop/EEG/EEGvsMEG/gtec_Clib/terminal/build-exp/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

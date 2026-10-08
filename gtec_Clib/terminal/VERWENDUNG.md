@@ -5,7 +5,7 @@
 - Windows, 64 Bit: Die mitgelieferte `Unicorn.dll` ist eine Windows-x64-Bibliothek.
 - Kompatibles Unicorn-Headset, eingeschaltet und geladen.
 - Funktionierender Bluetooth-Adapter und zuvor gekoppeltes Headset.
-- Zum Bauen: Visual Studio mit „Desktopentwicklung mit C++“, Windows SDK und CMake. Der Quellcode benötigt C++17.
+- Zum Bauen: Visual Studio 2022 oder dessen Build Tools mit „Desktopentwicklung mit C++“, Windows SDK und CMake. Der Quellcode benötigt C++17.
 
 Die Bibliothek ersetzt keinen Bluetooth-Treiber. Windows muss den Adapter erkennen.
 Falls mehrere Adapter vorhanden sind, kann der interne Adapter im Geräte-Manager
@@ -18,10 +18,18 @@ beende andere Anwendungen, die eine Aufnahme mit dem Headset durchführen.
 Öffne PowerShell im Stammordner des Projekts `EEGvsMEG`:
 
 ```powershell
-cmake -S gtec_Clib/terminal -B gtec_Clib/terminal/build -A x64
-cmake --build gtec_Clib/terminal/build --config Release
-& .\gtec_Clib\terminal\build\Release\unicorn_terminal.exe
+cmake -S gtec_Clib/terminal -B gtec_Clib/terminal/build-vs -G "Visual Studio 17 2022" -A x64
+cmake --build gtec_Clib/terminal/build-vs --config Release
+& .\gtec_Clib\terminal\build-vs\Release\unicorn_terminal.exe
 ```
+
+`-G "Visual Studio 17 2022"` wählt ausdrücklich das Buildsystem von Visual Studio
+2022 aus; `-A x64` legt einen 64-Bit-Build fest. Ohne `-G` kann CMake automatisch
+NMake auswählen. NMake unterstützt `-A` nicht und meldet dann „does not support
+platform specification“. Der Ordner `build-vs` vermeidet die Wiederverwendung
+einer früheren NMake-Konfiguration im Ordner `build`.
+Mit `cmake --help` kannst du die Generatoren anzeigen. Für eine andere
+Visual-Studio-Version wähle den entsprechenden Generatornamen.
 
 CMake kopiert `Unicorn.dll` neben die EXE. Beim Weitergeben müssen beide Dateien
 zusammenbleiben. Die passende Visual-C++-Laufzeit muss auf dem Zielrechner verfügbar sein.
@@ -31,17 +39,54 @@ Bei Änderungen am Buildsystem führe auch den ersten Befehl erneut aus.
 Falls `cmake` nicht gefunden wird, installiere CMake bzw. füge seinen `bin`-Ordner
 zu PATH hinzu und öffne ein neues Terminal. Falls kein C++-Compiler gefunden wird,
 ergänze die C++-Buildtools im Visual Studio Installer. Bei einem Generator-Konflikt
-verwende einen neuen Buildordner, etwa `build-new`, in beiden Buildbefehlen.
+verwende einen neuen Buildordner, etwa `build-new`, in allen drei Befehlen.
 
 Nach dem Start erscheinen `>` und eine Befehlsübersicht. Gib Befehle einzeln ein
 und bestätige mit Enter. Diese Befehle gehören in das laufende Programm, nicht in
-PowerShell. Groß-/Kleinschreibung ist relevant. `quit` oder `exit` beendet es.
+PowerShell. Befehle ignorieren Groß-/Kleinschreibung; Namen und Labels bleiben unverändert. `quit` oder `exit` beendet es.
+
+## Versuche und Speicherort
+
+Alle neuen Aufnahmen liegen unter `EEG/recordings/<Versuchsname>/`, also hier:
+`C:\Users\DHBWQ\Desktop\EEG\recordings`. Der Basisordner wird beim
+CMake-Konfigurieren festgelegt und bleibt unabhängig vom Startordner gleich.
+Nach einem Umzug des Projekts oder auf einen anderen Rechner erneut konfigurieren
+und bauen. Alte Aufnahmen werden nicht automatisch verschoben.
+
+```text
+NewExp "Pilotversuch 01"
+Where
+ListExp
+GoToExp "Pilotversuch 01"
+```
+
+- `NewExp "NAME"`: Erstellt und aktiviert einen neuen Versuchsordner. Existiert er bereits, verwende `GoToExp`.
+- `GoToExp "NAME"`: Aktiviert einen vorhandenen Versuchsordner.
+- `ListExp`: Listet Versuche auf; `*` markiert den aktiven.
+- `Where`: Zeigt den vollständigen Speicherort.
+
+Der Prompt zeigt ständig `[Pilotversuch 01] >`. Beim Programmstart steht dort
+`[Kein Versuch ausgewählt] >`; wähle vor `record` oder `start` einen Versuch.
+Alle Befehle akzeptieren Groß- und Kleinschreibung. Namen dürfen Leerzeichen und
+Umlaute enthalten; Namen mit Leerzeichen in Anführungszeichen setzen. Ungültige
+Windows-Namen, Sonderzeichen und Pfade wie `..\` werden abgelehnt.
+Während einer Aufnahme ist ein Versuchswechsel gesperrt; `Where` und `ListExp`
+funktionieren weiterhin.
+
+`record` und `read` akzeptieren ausschließlich Dateinamen, keine abweichenden
+Pfade. Bei `record 60 "session01.csv" real` entstehen im aktiven Versuchsordner
+`session01.csv` und `session01.csv.events.csv`. Die Spalte `label` in der Event-Datei
+enthält die Markierungen. Vorhandene Dateien werden auch bei `read` nicht überschrieben.
+
+Eine laufende EXE lässt sich unter Windows nicht neu bauen. Beende sie zuerst mit
+`quit` oder verwende zum Bauen einen separaten Buildordner.
 
 ## Erster Funktionstest
 
 ```text
 version
 bluetooth
+NewExp "Pilotversuch 01"
 scan paired
 open YOUR_SERIAL
 info
@@ -76,7 +121,7 @@ Für eine echte Messung verwende `real` statt `test` und einen neuen Dateinamen.
 | `start real` | Startet manuelle Messwerterfassung; anschließend zeitnah `read` aufrufen. |
 | `start test` | Startet manuelle Erfassung eines Testsignals. |
 | `read SCANS` | Liest 1–2500 Scans nach `start`; zeigt die ersten fünf im Terminal. |
-| `read SCANS "datei.csv"` | Liest und speichert zusätzlich CSV. Eine vorhandene Datei wird überschrieben. |
+| `read SCANS "datei.csv"` | Liest und speichert zusätzlich CSV im aktiven Versuch. Vorhandene Dateien werden abgelehnt. |
 | `stop` | Stoppt manuelle oder Hintergrundaufnahme, hält die Verbindung offen. |
 | `record SEKUNDEN "datei.csv" [real\|test]` | Hintergrundaufnahme; Modus standardmäßig `real`. Dauer 0–86400 Sekunden. 0 bedeutet bis zum Stoppen. |
 | `mark LABEL` | Speichert den gesamten Text hinter `mark` als Ereignislabel. Nur während Hintergrundaufnahme. |
@@ -85,7 +130,7 @@ Für eine echte Messung verwende `real` statt `test` und einen neuen Dateinamen.
 | `outputs WERT` | Setzt die Bits mit einer Dezimalzahl 0–255 und liest sie zurück. Hardwareunterstützung erforderlich. |
 | `quit` / `exit` | Versucht Aufnahme zu stoppen und Gerät zu schließen, dann Programmende. |
 
-Während einer Hintergrundaufnahme sind nur `help`, `status`, `mark`, `stop`,
+Während einer Hintergrundaufnahme sind nur `Where`, `ListExp`, `help`, `status`, `mark`, `stop`,
 `close`, `quit` und `exit` erlaubt. Die Bibliothek wird ausschließlich vom
 Aufnahmethread verwendet. Nach automatischem Aufnahmeende sind die anderen
 Befehle wieder verfügbar. Eine manuelle Aufnahme muss vor `record` gestoppt werden.
@@ -137,13 +182,10 @@ erscheinen in `status`. Es gibt keinen automatischen Wiederverbindungsversuch.
 
 ## Dateien, Pfade und Datenformat
 
-Relative Pfade beziehen sich auf den Ordner, aus dem die EXE gestartet wurde,
-nicht zwingend auf den EXE-Ordner. Bei den obigen PowerShell-Befehlen ist das der
-Projektstamm. Absolute Pfade sind möglich. Setze Pfade mit Leerzeichen in doppelte
-Anführungszeichen, z. B. `record 60 "C:/EEG Daten/versuch01.csv" real`.
-Übergeordnete Ordner müssen bereits existieren. Bei zitierten Pfaden verwendet
-der Parser Backslash als Escape-Zeichen: Für verlässliche Windows-Pfade verwende
-Schrägstriche, z. B. `"C:/EEG Daten/versuch01.csv"`, oder doppelte Backslashes.
+Dateinamen beziehen sich immer auf den aktiven Versuchsordner unter
+`EEG/recordings`. Absolute Pfade und Unterordner sind nicht erlaubt.
+Setze Dateinamen mit Leerzeichen in doppelte Anführungszeichen, zum Beispiel
+`record 60 "session 01.csv" real`.
 
 Eine Hintergrundaufnahme erzeugt:
 
@@ -152,8 +194,7 @@ Eine Hintergrundaufnahme erzeugt:
 
 Existiert eine dieser Dateien bereits, wird die Aufnahme abgelehnt. Verwende
 einen neuen Namen. Ein Fehler beim Start kann bereits angelegte Dateien hinterlassen;
-prüfe diese vor einem neuen Versuch. Der manuelle Befehl `read` hat diesen
-Überschreibschutz nicht. `read` exportiert ausschließlich Kanalwerte.
+prüfe diese vor einem neuen Versuch. Auch der manuelle Befehl `read` schützt vorhandene Dateien. `read` exportiert ausschließlich Kanalwerte.
 
 ### Spalten der Hintergrundaufnahme
 

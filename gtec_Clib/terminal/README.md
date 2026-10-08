@@ -10,22 +10,67 @@ with a separate event log.
 
 ## Build on Windows
 
-Install Visual Studio C++ build tools (Desktop development with C++) and CMake.
+Install Visual Studio 2022 or its Build Tools with Desktop development with C++
+(including the Windows SDK), and CMake.
 From PowerShell in the repository folder:
 
 ```powershell
-cmake -S gtec_Clib/terminal -B gtec_Clib/terminal/build -A x64
-cmake --build gtec_Clib/terminal/build --config Release
-& .\gtec_Clib\terminal\build\Release\unicorn_terminal.exe
+cmake -S gtec_Clib/terminal -B gtec_Clib/terminal/build-vs -G "Visual Studio 17 2022" -A x64
+cmake --build gtec_Clib/terminal/build-vs --config Release
+& .\gtec_Clib\terminal\build-vs\Release\unicorn_terminal.exe
 ```
+
+`-G "Visual Studio 17 2022"` explicitly selects the Visual Studio 2022 build
+system; `-A x64` selects a 64-bit build. Without `-G`, CMake may choose NMake,
+which does not support `-A` and reports that it does not support platform
+specification. The `build-vs` folder avoids reusing an earlier NMake configuration
+in `build`. If `build-vs` already uses another generator, choose a new folder
+and update all three commands. Run `cmake --help` to list generators; if you use
+another Visual Studio version, select its corresponding generator. If Visual
+Studio or a C++ compiler cannot be found, install the C++ workload through the
+Visual Studio Installer.
 
 CMake copies Unicorn.dll beside the executable. If Windows reports a missing
 runtime dependency, install the Microsoft Visual C++ x64 runtime required by
 the vendor DLL. Pair the headset through Windows or Unicorn Suite first.
 
+## Experiment folders
+
+Recordings now go to `EEG/recordings/<experiment>/`, beside the `EEGvsMEG`
+repository. CMake fixes this absolute base path when configuring, so launching
+from another working directory does not change it. Reconfigure and rebuild if
+moving the repository or distributing the executable to another machine.
+
+```text
+NewExp "Pilot 01"
+ListExp
+Where
+GoToExp "Pilot 01"
+```
+
+`NewExp` creates and activates a folder; if it already exists, use `GoToExp`.
+`GoToExp` activates an existing folder. `ListExp` marks the active folder with
+`*`; `Where` prints its full path. The prompt always shows the active experiment,
+for example `[Pilot 01] >`. Each new terminal session starts without a selected
+experiment. Select one before `record` or manual `start`.
+
+Commands are case-insensitive. Names support spaces and Unicode; quote names
+containing spaces. Windows reserved names, invalid characters and path traversal
+are rejected. `record` and `read` accept filenames only, never other directories.
+EEG data and `.events.csv` labels stay together. Existing files are refused,
+including manual `read` exports. Experiment changes are blocked during both
+manual acquisition and background recording; `Where` and `ListExp` remain usable.
+Earlier recordings are not moved automatically.
+
+If the executable is still running, exit it with `quit` before rebuilding. An
+active EXE cannot be replaced on Windows. A separate build folder can be used
+while the existing terminal remains open.
+
 ## Example session
 
 ```text
+NewExp "Pilot 01"
+Where
 version
 error
 bluetooth
@@ -54,8 +99,8 @@ does not pair them. `enable` uses configuration indices (0..16), whereas
 for channel names, units, ranges and enabled flags.
 
 `start test` still requires a connected headset. `read` takes 1..2500 scans
-(up to ten seconds at 250 Hz), prints the first five and optionally overwrites
-a CSV in the current working directory. CSV headers follow the acquired channel
+(up to ten seconds at 250 Hz), prints the first five and optionally saves
+a new CSV in the active experiment folder. Existing files are refused. CSV headers follow the acquired channel
 indices. There are no added timestamps or experiment markers.
 
 After starting, run `read` promptly. Acquisition continues while the terminal
@@ -87,16 +132,18 @@ cover timed recording, markers and CSV quoting, exclusive background API
 access, manual stopping, overwrite protection and simulated connection failure:
 
 ```sh
-python3 gtec_Clib/terminal/test_recorder.py
+python gtec_Clib/terminal/test_recorder.py
 ```
 
+Run with MSVC `cl` available in an x64 Developer Command Prompt, or with `clang++` on PATH. Test recordings use a temporary folder.
+
 The test links `mock_api.cpp` instead of the vendor DLL; the normal CMake build
-never includes this simulated implementation. Windows linking, DLL loading,
-Bluetooth communication and hardware behavior have not been tested here.
+never includes this simulated implementation. Bluetooth communication and hardware behavior require a connected headset. The experiment changes were built on Windows with MSVC; DLL loading and hardware-free integration tests passed.
 
 ## Background recording and task markers
 
 ```text
+GoToExp "Pilot 01"
 open YOUR_SERIAL
 record 60 "participant01.csv" real
 mark baseline_start
@@ -109,11 +156,11 @@ close
 `record SECONDS CSV_PATH [real|test]` starts a background worker. Positive
 durations record ceil(seconds * 250) scans; `0` records until `stop`, `close`,
 `quit` or input EOF. An API or file error ends recording and is shown by
-`status`. Existing data or event files are refused. Parent folders must exist.
+`status`. Existing data or event files are refused. Select an experiment first.
 The default mode is `real`. After a timed recording ends, use `status` to
 inspect its result; completion does not print asynchronously over your prompt.
 
-During background recording, only `mark`, `status`, `help`, `stop`, `close`
+During background recording, only `mark`, `status`, `Where`, `ListExp`, `help`, `stop`, `close`
 and `quit` are accepted. This prevents simultaneous access to the vendor DLL.
 The worker reads blocks of 25 scans (nominally 100 ms) and flushes data once
 per second and at completion. Stop waits for the current GetData call to return;

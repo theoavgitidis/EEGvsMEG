@@ -1,0 +1,3 @@
+host_utc_s,elapsed_s,samples_received,label
+1791467467.2694204,13.5801695,3375,"baseline_start"
+1791467495.3656707,41.676442600000001,10400,"baseline_end"

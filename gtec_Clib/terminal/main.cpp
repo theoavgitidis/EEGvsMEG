@@ -1,4 +1,8 @@
 #include "unicorn.h"
+#ifdef _WIN32
+#define NOMINMAX
+#include <windows.h>
+#endif
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -15,19 +19,25 @@ static void check(int code) {
     }
 }
 #include "recorder.h"
+#include "experiments.h"
 static void help() {
     std::cout <<
+        "NewExp NAME | GoToExp NAME | ListExp | Where\n"
         "version | error | bluetooth | scan paired|unpaired\n"
         "open SERIAL | close | info | config | channels | index CHANNEL NAME\n"
         "enable CONFIG_INDEX 0|1   (indices 0..16; acquisition stopped)\n"
-        "start real|test | read SCANS [CSV_PATH] | stop\n"
-        "record SECONDS CSV_PATH [real|test] (0 = until stop)\n"
+        "start real|test | read SCANS [CSV_NAME] | stop\n"
+        "record SECONDS CSV_NAME [real|test] (0 = until stop)\n"
         "mark LABEL | status (background recorder)\n"
         "outputs | outputs VALUE (0..255) | help | quit\n"
-        "read accepts 1..2500 scans; CSV files are overwritten.\n"
+        "read accepts 1..2500 scans; CSV filenames stay in the active experiment; existing files are refused.\n"
         "Pair the headset in Windows or Unicorn Suite before opening it.\n";
 }
 int main() {
+#ifdef _WIN32
+    SetConsoleCP(CP_UTF8); SetConsoleOutputCP(CP_UTF8);
+#endif
+    Experiments experiments;
     UNICORN_HANDLE handle = 0;
     bool opened = false, acquiring = false;
     Recorder recorder;
@@ -36,11 +46,18 @@ int main() {
     std::cout << "Unicorn API terminal (250 Hz). Type help for commands.\n";
     help();
     std::string line;
-    while (std::cout << "> " && std::getline(std::cin, line)) {
+    while (std::cout << experiments.prompt() && std::getline(std::cin, line)) {
         try {
             std::istringstream in(line);
             std::string cmd; in >> cmd;
             if (cmd.empty()) continue;
+            std::transform(cmd.begin(), cmd.end(), cmd.begin(), [](unsigned char c) { return char(std::tolower(c)); });
+            if (cmd == "where") { experiments.where(); continue; }
+            if (cmd == "listexp") { experiments.list(); continue; }
+            if (cmd == "newexp" || cmd == "gotoexp") {
+                if (acquiring || recorder.active()) throw std::runtime_error("Stop acquisition before changing experiments.");
+                experiments.select(in, cmd == "newexp"); continue;
+            }
             if (cmd == "quit" || cmd == "exit") break;
             if (cmd == "help") { help(); continue; }
             if (cmd == "status") { recorder.status(); continue; }
@@ -116,26 +133,31 @@ int main() {
                 uint32_t index = 0; check(UNICORN_GetChannelIndex(handle, name.c_str(), &index)); std::cout << index << '\n';
             } else if (cmd == "record") {
                 double seconds; std::string path, mode = "real";
-                if (!(in >> seconds >> std::quoted(path)) || !std::isfinite(seconds) || seconds < 0 || seconds > 86400 || path.empty())
-                    throw std::runtime_error("Use record SECONDS CSV_PATH [real|test], 0..86400 seconds");
+                if (!(in >> seconds >> std::quoted(path, '"', '\0')) || !std::isfinite(seconds) || seconds < 0 || seconds > 86400 || path.empty())
+                    throw std::runtime_error("Use record SECONDS CSV_NAME [real|test], 0..86400 seconds");
                 in >> mode;
                 if (mode != "real" && mode != "test") throw std::runtime_error("Mode must be real or test.");
                 if (acquiring) throw std::runtime_error("Stop manual acquisition first.");
                 uint64_t target = seconds == 0 ? 0 : uint64_t(std::ceil(seconds * UNICORN_SAMPLING_RATE));
-                recorder.start(handle, path, target, mode == "test");
+                auto destination = experiments.output(path);
+                recorder.start(handle, destination, target, mode == "test");
+                path = destination.u8string();
                 std::cout << "Background recording started: " << path << " (events: " << path << ".events.csv).\n";
             } else if (cmd == "start") {
                 std::string mode; in >> mode;
                 if (mode != "real" && mode != "test") throw std::runtime_error("Use start real|test");
                 if (acquiring) throw std::runtime_error("Already acquiring.");
+                experiments.require();
                 check(UNICORN_StartAcquisition(handle, mode == "test" ? TRUE : FALSE)); acquiring = true;
                 std::cout << "Started. Read promptly: the API buffer can overflow while waiting for commands.\n";
             } else if (cmd == "stop") { stop(); std::cout << "Stopped.\n"; }
             else if (cmd == "read") {
                 int scans; std::string path;
-                if (!(in >> scans) || scans < 1 || scans > 2500) throw std::runtime_error("Use read SCANS [CSV_PATH], 1..2500");
+                if (!(in >> scans) || scans < 1 || scans > 2500) throw std::runtime_error("Use read SCANS [CSV_NAME], 1..2500");
                 if (!acquiring) throw std::runtime_error("Start acquisition first.");
-                in >> std::quoted(path);
+                in >> std::ws;
+                if (!in.eof() && !(in >> std::quoted(path, '"', '\0')))
+                    throw std::runtime_error("Use read SCANS [CSV_NAME]; close quoted filenames.");
                 uint32_t n = 0; check(UNICORN_GetNumberOfAcquiredChannels(handle, &n));
                 if (!n || n > UNICORN_TOTAL_CHANNELS_COUNT) throw std::runtime_error("Unexpected channel count.");
                 uint32_t floats = uint32_t(scans) * n;
@@ -144,7 +166,7 @@ int main() {
                 uint32_t length = floats * sizeof(float);
                 std::vector<float> data(length);
                 std::ofstream file;
-                if (!path.empty()) { file.open(path); if (!file) throw std::runtime_error("Cannot open CSV file."); }
+                if (!path.empty()) { file.open(experiments.output(path)); if (!file) throw std::runtime_error("Cannot open CSV file."); }
                 check(UNICORN_GetData(handle, uint32_t(scans), data.data(), length));
                 if (file) {
                     UNICORN_AMPLIFIER_CONFIGURATION c{}; check(UNICORN_GetConfiguration(handle, &c));

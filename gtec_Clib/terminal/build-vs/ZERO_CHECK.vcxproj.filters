@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\DHBWQ\Desktop\EEG\EEGvsMEG\gtec_Clib\terminal\build-vs\CMakeFiles\194a849cf022bf1d8e3d6f31c1aab28a\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{15C2F894-8C7B-3A4A-BDD4-0B217ECBCCF5}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
