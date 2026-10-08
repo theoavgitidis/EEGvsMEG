@@ -2,6 +2,11 @@
 
 **Vollständige deutsche Bedienungsanleitung:** [VERWENDUNG.md](VERWENDUNG.md)
 
+**CSV-Aufnahmen mit MNE ansehen:** [MNE_ANLEITUNG.md](MNE_ANLEITUNG.md).
+Use `view_eeg.py` in the repository root to import EEG and event labels,
+view recordings, and optionally export FIF or PNG files. The CSV unit must
+be supplied explicitly (for example `--unit uV`, after checking `config`).
+
 Participant display: `cue open` opens a Windows window. During background
 recording, `mark hands_up`, `mark hands_down`, `mark imagine_hands` and
 `mark rest` both update it and log the marker. For arbitrary instructions use
@@ -72,6 +77,31 @@ active EXE cannot be replaced on Windows. A separate build folder can be used
 while the existing terminal remains open.
 
 ## Example session
+
+### New experiment and cue commands
+
+| Command | Behavior |
+|---|---|
+| `NewExp "NAME"` | Creates and activates an experiment folder; acquisition must be stopped. |
+| `GoToExp "NAME"` | Selects an existing experiment folder; acquisition must be stopped. |
+| `ListExp` | Lists experiments and marks the active one with `*`. |
+| `Where` | Prints the active folder, or the base folder if none is selected. |
+| `cue open` | Opens the participant window with `+`; no headset connection, recording or marker. |
+| `cue close` | Closes only the participant window; recording continues. |
+| `cue rest` | Shows `+` in the open window without writing a marker. |
+| `cue text TEXT` | Shows custom text in the open window without writing a marker. |
+| `cue LABEL \| TEXT` | Shows text and logs the label; requires an open window and active background recording. |
+| `mark LABEL` | Logs a label during background recording; also updates the participant window when open. |
+
+`open SERIAL` connects the headset, whereas `cue open` opens the display.
+`close` stops acquisition and disconnects the headset; it leaves the display open.
+`cue close` only closes the display. `stop` leaves both the connection and the
+display intact. Finish a session with `stop`, `cue close`, `close`, then `quit`.
+Cue subcommands `open`, `close`, `rest`, and `text` must be lowercase.
+Enter `cue trial_01 | Raise your hands` inside the Unicorn terminal; the `|`
+separates the logged label from the display text. Extra quotation marks become
+part of that label/text. Preview commands never log markers; use `mark rest`
+or `cue rest_start | +` to log a rest phase.
 
 ```text
 NewExp "Pilot 01"
@@ -165,7 +195,7 @@ durations record ceil(seconds * 250) scans; `0` records until `stop`, `close`,
 The default mode is `real`. After a timed recording ends, use `status` to
 inspect its result; completion does not print asynchronously over your prompt.
 
-During background recording, only `mark`, `status`, `Where`, `ListExp`, `help`, `stop`, `close`
+During background recording, only `mark`, all `cue` commands, `status`, `Where`, `ListExp`, `help`, `stop`, `close`
 and `quit` are accepted. This prevents simultaneous access to the vendor DLL.
 The worker reads blocks of 25 scans (nominally 100 ms) and flushes data once
 per second and at completion. Stop waits for the current GetData call to return;

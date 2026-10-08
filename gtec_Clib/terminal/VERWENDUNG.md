@@ -1,6 +1,49 @@
 # Unicorn-Terminal: Bedienungsanleitung
 
+Für die Anzeige und Auswertung gespeicherter CSV-Dateien siehe die
+[ausführliche MNE-Anleitung](MNE_ANLEITUNG.md). Das fertige Skript
+`view_eeg.py` liegt im Projektstamm und zeigt EEG-Kurven einschließlich Labels.
+Bei schrägen Linien durch starke Drift beschreibt Abschnitt 6 der MNE-Anleitung
+die erfolgreich geprüfte Ansicht mit `--highpass 1 --lowpass 40` und automatischer Skalierung.
+
 ## Teilnehmerfenster: Anweisung und Marker gemeinsam
+
+### `open` und `close`: Headset oder Cue-Fenster?
+
+Das Headset und das Teilnehmerfenster werden getrennt gesteuert:
+
+| Befehl | Was wird geöffnet oder geschlossen? | Wirkung auf die Aufnahme |
+|---|---|---|
+| `open SERIAL` | Verbindet das Headset mit der angegebenen Seriennummer aus `scan paired`. | Startet noch keine Aufnahme. |
+| `close` | Trennt das Headset. | Stoppt zuvor eine laufende Aufnahme; das Cue-Fenster bleibt geöffnet. |
+| `cue open` | Öffnet das Teilnehmerfenster mit Fixationskreuz. | Verbindet kein Headset und startet keine Aufnahme; schreibt keinen Marker. |
+| `cue close` | Schließt nur das Teilnehmerfenster. | Eine laufende Aufnahme läuft weiter; schreibt keinen Marker. |
+| `stop` | Beendet die Aufnahme. | Headset bleibt verbunden; Cue-Fenster und zuletzt gezeigter Text bleiben bestehen. |
+
+Zum Aufnehmen brauchst du `open SERIAL` und anschließend `record ...`.
+Für sichtbare Anweisungen öffnest du zusätzlich mit `cue open` das Fenster.
+Nach dem Versuch: `stop`, dann `cue close`, dann `close`. Mit `quit` beendest
+du das gesamte Programm einschließlich Fenster und Geräteverbindung.
+
+### Alle Cue-Befehle
+
+| Befehl | Anzeige | Marker in der Event-Datei? | Voraussetzung |
+|---|---|---|---|
+| `cue open` | Öffnet das Fenster mit `+`; ein bereits offenes Fenster bleibt bestehen. | Nein | Kein Headset und keine Aufnahme nötig. |
+| `cue close` | Schließt das Fenster. | Nein | Auch bei bereits geschlossenem Fenster möglich. |
+| `cue rest` | Zeigt das Fixationskreuz `+`. | Nein | Cue-Fenster geöffnet. |
+| `cue text TEXT` | Zeigt den gesamten Text hinter `cue text`. | Nein | Cue-Fenster geöffnet; auch zur Vorschau ohne Aufnahme. |
+| `cue LABEL \| TEXT` | Zeigt `TEXT` und speichert anschließend `LABEL`. | Ja | Cue-Fenster geöffnet und Hintergrundaufnahme mit `record` aktiv. |
+| `mark LABEL` | Bei offenem Fenster vordefinierte Anweisung oder das Label selbst; sonst keine Anzeige. | Ja | Hintergrundaufnahme mit `record` aktiv. |
+
+Gib das Trennzeichen `|` bei eigenen Cues direkt im Unicorn-Terminal ein,
+zum Beispiel `cue trial_01_start | Hebe deine Hände hoch`. Es ist hier kein
+PowerShell-Pipe-Befehl. Text und Labels müssen nicht in Anführungszeichen
+gesetzt werden; zusätzliche Anführungszeichen werden als Text übernommen.
+Der Befehlsname `cue` ignoriert Groß-/Kleinschreibung, seine Unterbefehle
+`open`, `close`, `rest` und `text` sind exakt klein zu schreiben.
+
+### Ablauf am Teilnehmerbildschirm
 
 Das native Windows-Fenster zeigt weiße Anweisungen auf schwarzem Hintergrund.
 `cue open` öffnet es zunächst mit einem mittigen Fixationskreuz (`+`). Verschiebe
@@ -175,6 +218,15 @@ Für eine echte Messung verwende `real` statt `test` und einen neuen Dateinamen.
 
 | Befehl | Wirkung und Voraussetzungen |
 |---|---|
+| `NewExp "NAME"` | Erstellt und aktiviert einen Versuchsordner unter `EEG/recordings`. Keine Aufnahme aktiv; keine Headset-Verbindung nötig. Existiert der Ordner schon, `GoToExp` verwenden. |
+| `GoToExp "NAME"` | Aktiviert einen vorhandenen Versuchsordner. Keine Aufnahme aktiv; keine Headset-Verbindung nötig. |
+| `ListExp` | Listet Versuchsordner auf; `*` markiert den aktiven. Auch während einer Aufnahme möglich. |
+| `Where` | Zeigt den vollständigen aktiven Speicherpfad; ohne Versuch den Basisordner. Auch während einer Aufnahme möglich. |
+| `cue open` | Öffnet das Teilnehmerfenster mit Fixationskreuz; startet keine Aufnahme. |
+| `cue close` | Schließt nur das Teilnehmerfenster; stoppt keine Aufnahme. |
+| `cue rest` | Zeigt `+` im geöffneten Fenster, ohne Marker. |
+| `cue text TEXT` | Zeigt eigenen Text im geöffneten Fenster, ohne Marker. |
+| `cue LABEL \| TEXT` | Zeigt eigenen Text und speichert das Label; geöffnetes Fenster und aktive Hintergrundaufnahme erforderlich. |
 | `help` | Zeigt die Kurzreferenz; jederzeit möglich. |
 | `version` | Gibt die API-Version aus; keine Verbindung nötig. |
 | `error` | Gibt den letzten Fehlertext der Bibliothek aus; keine Verbindung nötig. Ein früherer Fehlertext kann weiter vorhanden sein. |
@@ -195,13 +247,13 @@ Für eine echte Messung verwende `real` statt `test` und einen neuen Dateinamen.
 | `read SCANS "datei.csv"` | Liest und speichert zusätzlich CSV im aktiven Versuch. Vorhandene Dateien werden abgelehnt. |
 | `stop` | Stoppt manuelle oder Hintergrundaufnahme, hält die Verbindung offen. |
 | `record SEKUNDEN "datei.csv" [real\|test]` | Hintergrundaufnahme; Modus standardmäßig `real`. Dauer 0–86400 Sekunden. 0 bedeutet bis zum Stoppen. |
-| `mark LABEL` | Speichert den gesamten Text hinter `mark` als Ereignislabel. Nur während Hintergrundaufnahme. |
+| `mark LABEL` | Speichert den gesamten Text hinter `mark` als Ereignislabel. Bei offenem Cue-Fenster zusätzlich Anzeige gemäß obiger Zuordnung. Nur während Hintergrundaufnahme. |
 | `status` | Zeigt den Zustand und die zuletzt erfassten Werte der Hintergrundaufnahme; keine Verbindung nötig. |
 | `outputs` | Liest die acht digitalen Ausgangsbits als Dezimalzahl. Verbindung erforderlich. |
 | `outputs WERT` | Setzt die Bits mit einer Dezimalzahl 0–255 und liest sie zurück. Hardwareunterstützung erforderlich. |
 | `quit` / `exit` | Versucht Aufnahme zu stoppen und Gerät zu schließen, dann Programmende. |
 
-Während einer Hintergrundaufnahme sind nur `Where`, `ListExp`, `help`, `status`, `mark`, `stop`,
+Während einer Hintergrundaufnahme sind nur `Where`, `ListExp`, `help`, `status`, `mark`, alle `cue`-Befehle, `stop`,
 `close`, `quit` und `exit` erlaubt. Die Bibliothek wird ausschließlich vom
 Aufnahmethread verwendet. Nach automatischem Aufnahmeende sind die anderen
 Befehle wieder verfügbar. Eine manuelle Aufnahme muss vor `record` gestoppt werden.
@@ -225,7 +277,11 @@ in den gespeicherten EEG-Daten.
 
 ## Experiment aufnehmen
 
+Wähle zuerst den Versuch. Für einen neuen Ordner verwende `NewExp`, für einen
+vorhandenen `GoToExp`. Das folgende Beispiel setzt einen vorhandenen Ordner voraus:
+
 ```text
+GoToExp "Pilotversuch 01"
 open YOUR_SERIAL
 record 0 "participant01_session01.csv" real
 mark baseline_start
@@ -283,7 +339,7 @@ prüfe diese vor einem neuen Versuch. Auch der manuelle Befehl `read` schützt v
 | `host_utc_s` | Unix-Zeit bei Verarbeitung des Markerbefehls. |
 | `elapsed_s` | Monoton verstrichene Zeit seit Anforderung des Aufnahmestarts. |
 | `samples_received` | Anzahl bereits verarbeiteter Scans bei Eingabe des Markers; kein exakter Marker-Sampleindex. |
-| `label` | Gesamter Text hinter `mark`; Kommas und Anführungszeichen werden für CSV maskiert. |
+| `label` | Gesamter Text hinter `mark` oder das Label links von `\|` bei `cue LABEL \| TEXT`; Kommas und Anführungszeichen werden für CSV maskiert. |
 
 Beispiel: `mark trial 1, left hand` speichert das Label `trial 1, left hand`.
 Zusätzliche Anführungszeichen um Markertexte werden Teil des Labels.
