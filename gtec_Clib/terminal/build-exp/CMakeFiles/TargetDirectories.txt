@@ -1,3 +1,0 @@
-C:/Users/DHBWQ/Desktop/EEG/EEGvsMEG/gtec_Clib/terminal/build-exp/CMakeFiles/unicorn_terminal.dir
-C:/Users/DHBWQ/Desktop/EEG/EEGvsMEG/gtec_Clib/terminal/build-exp/CMakeFiles/ALL_BUILD.dir
-C:/Users/DHBWQ/Desktop/EEG/EEGvsMEG/gtec_Clib/terminal/build-exp/CMakeFiles/ZERO_CHECK.dir
