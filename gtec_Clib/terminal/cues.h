@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 #include <stdexcept>
+#include <sstream>
+#include <cmath>
 #ifdef _WIN32
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -123,7 +125,23 @@ public:
 inline std::string cueForMarker(const std::string& label) {
     if (label == "rest" || label == "baseline" || label == "fixation") return "+";
     if (label == "hands" || label == "hands_up") return "Hände hochheben";
-    if (label == "hands_down") return "Hände senken";
-    if (label == "imagine_hands") return "Stelle dir vor, deine Hände hochzuheben";
+    if (label == "legs" || label == "legs_up") return "Beine hochheben";
+    std::istringstream input(label);
+    std::string command; input >> command;
+    if (command == "subtract" || command == "substract") {
+        std::string x, from, z, extra;
+        if (!(input >> x >> from >> z) || from != "from" || (input >> extra))
+            throw std::runtime_error("Use mark substract X from Z (for example: mark substract 7 from 100)");
+        auto number = [](const std::string& value) {
+            try {
+                size_t used = 0; double n = std::stod(value, &used);
+                if (used == value.size() && std::isfinite(n)) return n;
+            } catch (const std::exception&) {}
+            throw std::runtime_error("Subtraction parameters must be finite numbers (decimal point: .).");
+        };
+        if (number(x) <= 0) throw std::runtime_error("The subtraction step X must be positive.");
+        number(z);
+        return "Ziehe fortlaufend " + x + " ab.\nBeginne bei " + z + ".";
+    }
     return label;
 }

@@ -17,8 +17,8 @@ cue open
 record 0 "session01.csv" real
 mark rest
 mark hands_up
-mark hands_down
-mark imagine_hands
+mark legs_up
+mark substract 7 from 100
 mark rest
 stop
 cue rest
@@ -35,9 +35,18 @@ exakt in Kleinbuchstaben zu schreiben:
 |---|---|
 | `mark rest`, `mark baseline`, `mark fixation` | Fixationskreuz `+` |
 | `mark hands`, `mark hands_up` | Hände hochheben |
-| `mark hands_down` | Hände senken |
-| `mark imagine_hands` | Stelle dir vor, deine Hände hochzuheben |
+| `mark legs`, `mark legs_up` | Beine hochheben |
+| `mark substract X from Z` | Ziehe fortlaufend X ab. Beginne bei Z. |
 | Andere Labels | Das Label selbst |
+
+Beispiel: `mark substract 7 from 100` fordert zum fortlaufenden Subtrahieren
+auf (100 → 93 → 86 → …). Die Anzeige bleibt eine Anweisung; Ergebnisse werden
+nicht eingeblendet und die Rechnung wird nicht automatisch weitergeschaltet.
+`subtract` wird ebenfalls akzeptiert. X muss positiv sein; X und Z müssen
+endliche Zahlen sein (Dezimalpunkt `.`). Ungültige Subtraktionsbefehle erzeugen
+keine Anzeigeänderung und keinen Marker. Das vollständige Label einschließlich
+X und Z wird gespeichert. `hands_down` und `imagine_hands` besitzen keine
+vordefinierte Anzeige mehr; wie andere freie Labels würden sie als Text erscheinen.
 
 Für unabhängig gewählte Markerlabels und Anweisungen verwende:
 

@@ -88,7 +88,8 @@ int main() {
                 std::string label; std::getline(in >> std::ws, label);
                 if (label.empty()) throw std::runtime_error("Use mark LABEL");
                 if (!recorder.active()) throw std::runtime_error("No background recording is active.");
-                if (cues.active()) cues.show(cueForMarker(label));
+                auto text = cueForMarker(label);
+                if (cues.active()) cues.show(text);
                 recorder.mark(label); continue;
             }
             if (recorder.active() && cmd != "stop" && cmd != "close")

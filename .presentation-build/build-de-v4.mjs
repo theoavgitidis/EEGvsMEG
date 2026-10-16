@@ -1,0 +1,63 @@
+import fs from 'node:fs/promises';
+import {Presentation, PresentationFile} from '@oai/artifact-tool';
+import {finalizePresentation} from '/Users/theoa/.codex/plugins/cache/openai-primary-runtime/presentations/26.1013.11914/skills/presentations/container_tools/artifact_tool_utils.mjs';
+const root='/Users/theoa/Desktop/Projects/EEGvsMEG';
+const skill='/Users/theoa/.codex/plugins/cache/openai-primary-runtime/presentations/26.1013.11914/skills/presentations';
+const p=Presentation.create({slideSize:{width:1280,height:720}});
+const navy='#142B3B', teal='#087F83', gray='#435563', paper='#F6F5F0';
+function txt(s,text,x,y,w,h,size=28,color=navy,bold=false){const t=s.shapes.add({geometry:'textbox',position:{left:x,top:y,width:w,height:h},fill:'none',line:{fill:'none',width:0}});t.text=text;t.text.style={fontFamily:'Aptos',fontSize:size,color,bold};return t;}
+function slide(title,number){const s=p.slides.add();s.background.fill=paper;txt(s,title,72,55,1136,100,46,navy,true);txt(s,String(number).padStart(2,'0'),1150,653,60,30,18,gray);return s;}
+function row(s,label,body,y){txt(s,label,74,y,315,65,29,teal,true);txt(s,body,418,y,775,85,28,navy);}
+function notes(s,text,sources){s.speakerNotes.text=text+'\n\nProject sources:\n'+sources.map(a=>root+'/'+a).join('\n');}
+let s=slide('EEG vs MEG',1);
+txt(s,'Implementierung und Versuchsablauf',74,224,1136,150,54,navy,true);
+txt(s,'C-API-CLI, Teilnehmeranzeige und geplante Auswertung',76,398,1090,90,31,gray);
+txt(s,'Theodoros Avgitidis\n15. Oktober 2026',76,548,1000,80,25,teal);
+notes(s,'Schwerpunkt dieses Zwischenstands sind die implementierte Erfassungssoftware und die Vorbereitung der ersten Datenerhebung am Montag, 19. Oktober 2026. Termin laut Projektplanung des Präsentierenden.',['gtec_Clib/terminal/README.md']);
+s=slide('g.tec Unicorn Suite: Workflow und Daten',2);
+row(s,'Workflow','Headset in „My Unicorn“ koppeln, Recorder starten, Signale prüfen und Aufnahme speichern.',179);
+row(s,'Einzelne Kanäle','Der Recorder zeigt die EEG-Zeitverläufe der acht Elektrodenpositionen und zeichnet die Signale auf.',289);
+row(s,'Frequenzbänder','Unicorn Bandpower berechnet laufend die Leistung je Kanal und Frequenzband, z. B. Theta oder Beta.',399);
+row(s,'Einfacher PoC','Bandpower kann ein einfaches Feedback steuern, z. B. bei konzentriertem Kopfrechnen. Pro Person prüfen.',509);
+notes(s,'Unicorn Suite umfasst Recorder, Bandpower und Entwicklungswerkzeuge wie die C-API. Im Recorder lassen sich EEG-Daten erfassen, darstellen, filtern und speichern. Notch- und Bandpassfilter sowie OSCAR sind Herstellerfunktionen, keine Eigenimplementierung. Unicorn Bandpower schätzt Bandenergie fortlaufend über acht Kanäle und bietet eine UDP-Schnittstelle zur Weitergabe. Kanal und Frequenzband sind unterschiedliche Dimensionen: Ein Kanal beschreibt eine Elektrodenposition, ein Frequenzband einen Bereich im Signal dieses Kanals. Bandpower ist ein berechnetes Merkmal, keine alternative Elektrodenaufnahme. Für die Projektpipeline werden die Kanal-Zeitreihen mit Ereignisdatei gespeichert und Frequenzmerkmale anschließend berechnet. Ein direkter Dateiexport der Bandpower-Werte wird hier nicht behauptet. Mit diesen Frequenzmerkmalen lässt sich ein technischer Proof of Concept einfach aufbauen: Nach einer Ruhe- und Aufgabenaufnahme wird eine individuelle Änderung der Bandpower als Schwellwert für eine Anzeige oder ein Steuersignal verwendet. Konzentriertes oder anstrengendes Kopfrechnen ist ein mögliches Testszenario. Ob die Änderung die Aufgabe zuverlässig abbildet, muss pro Person geprüft werden. Bandpower ist kein eindeutiger Konzentrationsmesser und kann auch durch Augen- oder Muskelaktivität beeinflusst werden. Der PoC ist eine vorgeschlagene Erweiterung und noch nicht implementiert. Herstellerquelle: https://www.gtec.at/product/unicorn-suite/ (abgerufen am 16. Oktober 2026).',['docs/manual/unicorn-hybrid-black-and-suite-summary.md','gtec_Clib/terminal/recorder.h','analysis/view_eeg.py']);
+s=slide('Implementiert: C-API-CLI',3);
+row(s,'Gerätezugriff','Unicorn-Headset über die Hersteller-C-API verbinden und konfigurieren.',180);
+row(s,'Aufzeichnung','250 Hz, kurze Testaufnahmen oder kontinuierliche Aufnahme mit optionalem Zeitlimit.',287);
+row(s,'Datenverwaltung','Versuchsordner, EEG-CSV und separate Ereignisdatei. Schutz vor Überschreiben.',394);
+txt(s,'NewExp "Pilot_01"\nscan paired   /   open <Seriennummer>\nconfig   /   record 0 "VP01.csv" real   /   status   /   stop',76,521,1120,115,25,teal);
+notes(s,'Die CLI ist in C++ implementiert und kapselt die Hersteller-C-API. Sie unterstützt Bluetooth-Diagnose, Gerätesuche, Geräteinformationen, Kanalwahl und manuelle Datenerfassung. Digitale Ausgänge können abhängig vom Headset gelesen und gesetzt werden. Der Hintergrundrekorder vermeidet konkurrierende API-Zugriffe und meldet Fehler, Zählerunterbrechungen sowie Batterie- und Validierungswerte, sofern aktiviert. Reale Erfassung benötigt Windows x64, Hersteller-DLL, Bluetooth und Headset. Die Beispiele setzen ein gekoppeltes Gerät und eine ausgewählte Versuchsablage voraus.',['gtec_Clib/terminal/main.cpp','gtec_Clib/terminal/recorder.h','gtec_Clib/terminal/experiments.h']);
+s=slide('Teilnehmeranzeige beim Szenariowechsel',4);
+row(s,'Automatische Anzeige','Ein Szenariobefehl aktualisiert die Anweisung im separaten Teilnehmerfenster.',177);
+row(s,'Passender Marker','Derselbe Befehl protokolliert die Aufgabenbezeichnung während der Aufnahme.',282);
+row(s,'Flexible Aufgaben','Bewegung, Kopfrechnen, Fixationskreuz und eigene Anweisungen. Vollbild mit F11.',387);
+txt(s,'cue open\nmark hands_up   /   mark legs_up   /   mark rest\nmark subtract 7 from 347\ncue imagery_arms | Stelle dir vor, beide Unterarme anzuheben.',76,500,1130,145,24,teal);
+notes(s,'Voraussetzung für die mark-Beispiele ist eine aktive Hintergrundaufnahme. Bei geöffnetem Teilnehmerfenster wird die Anzeige automatisch aus dem Marker abgeleitet: Hände hochheben, Beine hochheben, Fixationskreuz oder parametrisierte Rechenanweisung. Eigene cue-Befehle verknüpfen Marker und frei formulierten Anzeigetext, etwa für Imagery oder Blinzeln. Der Versuchsleiter löst den Szenariowechsel aus. Die automatische Anzeige ist implementiert, eine selbstständig zeitgesteuerte und randomisierte Trial-Abfolge noch nicht. Marker basieren auf Hostzeit und empfangenen Samples und erlauben nur eine ungefähre zeitliche Zuordnung.',['gtec_Clib/terminal/main.cpp','gtec_Clib/terminal/cues.h','gtec_Clib/terminal/recorder.h']);
+s=slide('Geplante Szenarien im ersten Pilotversuch',5);
+row(s,'Motorik','Beide Unterarme anheben, beide Füße anheben oder zweimal bewusst blinzeln. Je 20 Trials.',179);
+row(s,'Motor Imagery','Dieselben Arm- und Beinbewegungen aus der eigenen Körperperspektive vorstellen. Je 20 Trials.',289);
+row(s,'Kopfrechnen','Von einer dreistelligen Zahl wiederholt 7 abziehen, still und ohne Fingerbewegung. 12 Trials.',399);
+row(s,'Ruhephasen','Je 60 Sekunden Baseline vor und nach den Aufgaben. Erholung zwischen den Trials.',509);
+notes(s,'Die tatsächliche Bewegung soll klein, bequem und vorab geübt sein. Bei Imagery bleibt der Körper ruhig und die Versuchsperson konzentriert sich auf das Bewegungsgefühl. Das Blinzeln dient auch der Erfassung des Augensignals und wird gesondert ausgewertet. Rechenschwierigkeit und einheitliche Bewegungsdefinition vor der Messung prüfen. Wortgenerierung gehört zur früheren erweiterten Planung, ist im aktuellen Pilotprotokoll vom 13. Oktober nicht vorgesehen. Eine mögliche spätere Erweiterung ist stille Wortgenerierung zu einem Buchstaben oder einer Kategorie.',['docs/experiment-protocol.md','docs/plannedExperiments/wordGeneration.md']);
+s=slide('Trial-Struktur und Sitzungsdauer',6);
+row(s,'Motorik und Imagery','2 s Fixation, 4 s Aufgabe, anschließend 6–8 s Erholung.',180);
+row(s,'Kopfrechnen','2 s Zahleninstruktion, 10 s stilles Rechnen, anschließend 15–17 s Erholung.',287);
+row(s,'Blöcke und Pausen','Kurze Aufgabenblöcke mit 45 s Pause dazwischen. Zwischen Hauptläufen 90 s.',394);
+txt(s,'112 Aufgaben-Trials',76,526,1080,55,38,teal,true);
+txt(s,'29:16 min Messzeit, mit geplanten Zusatzpausen 38:16 min\nAufbau, Einweisung und Übung kommen hinzu.',76,590,1080,65,25,gray);
+notes(s,'Motorik: vier Blöcke mit je 15 Trials, insgesamt 60. Imagery: vier Blöcke mit je zehn Trials, insgesamt 40. Rechnen: drei Blöcke mit je vier Trials. Erholungszeiten sind je Bedingung ausgeglichen verteilt. Aufgaben innerhalb eines Blocks sollen zufällig angeordnet werden, höchstens zweimal dieselbe Aufgabe unmittelbar hintereinander. Die konkrete Trial-Liste und der Zufallsseed sollen gespeichert werden. Die Reihenfolge der Hauptläufe soll über Personen möglichst ausgeglichen sein. Dies sind geplante Protokollvorgaben. Eine automatische Ablaufsteuerung ist noch zu ergänzen. Rest bezeichnet die Erholung zwischen Aufgaben, keine zusätzliche Aufgabenklasse mit separaten Trials.',['docs/experiment-protocol.md']);
+s=slide('Auswertung in Python',7);
+row(s,'1  Daten laden','Die CLI speichert EEG und Aufgabenmarker. Python liest beide Dateien ein.',179);
+row(s,'2  Signale prüfen','EEG-Kurven ansehen und gestörte Abschnitte erkennen, etwa durch Bewegung oder Blinzeln.',289);
+row(s,'3  Aufgaben vergleichen','Signale nach Aufgabe aufteilen und typische Unterschiede untersuchen, z. B. in Frequenzbändern.',399);
+row(s,'4  Erkennung testen','Prüfen, ob ein Modell die Aufgaben anhand neuer, zuvor ungenutzter Daten unterscheiden kann.',509);
+notes(s,'Die Aufnahme erfolgt über die bestehende, in C++ geschriebene CLI mit der g.tec-C-API. Die Auswertung ist in Python vorgesehen. Das vorhandene Python-Skript analysis/view_eeg.py nutzt bereits MNE und NumPy zum Einlesen und Prüfen der Daten sowie zur Anzeige von EEG-Kurven und Frequenzspektren. Die weiteren Schritte zur Aufgabenaufteilung, Merkmalsberechnung und Modellbewertung werden darauf aufgebaut. Aufgabenmarker erlauben derzeit eine ungefähre zeitliche Zuordnung. Bewegungs- und Blinzelartefakte müssen passend zum Szenario beurteilt werden. Daten für den abschließenden Test bleiben vom Training getrennt, wobei Abschnitte desselben Trials zusammenbleiben.',['analysis/view_eeg.py','gtec_Clib/terminal/main.cpp','docs/experiment-protocol.md']);
+s=slide('Nächster Schritt: Datenerhebung',8);
+txt(s,'Erster Lauf am Montag, 19. Oktober 2026',76,179,1120,100,39,teal,true);
+row(s,'Vorbereitung','Headset und Kanäle prüfen, Einwilligung einholen, Aufgaben kurz üben und Versuchsordner anlegen.',319);
+row(s,'Erste Aufnahme','Szenarien mit Teilnehmeranzeige durchführen. EEG und Marker speichern, Auffälligkeiten dokumentieren.',429);
+row(s,'Direkte Nachkontrolle','Dateien in MNE öffnen, Signalqualität und Marker prüfen. Ablauf für weitere Datenerhebungen anpassen.',539);
+notes(s,'Termin gemäß Angabe des Präsentierenden: erster Lauf am kommenden Montag, 19. Oktober 2026. Vorhanden sind Betriebsanleitung, Hardwareübersicht, Aufgabenbeschreibungen, Pilotprotokoll sowie Teilnehmerinformation und Einwilligung. Die hardwarefreien Integrationstests bestanden am 15. Oktober: unter anderem Aufzeichnung, Marker, Versuchsordner, Pfad- und Überschreibschutz sowie simulierte Verbindungsfehler. Diese Tests ersetzen die praktische Prüfung am Headset nicht. Ziel des ersten Laufs sind verwertbare Daten und Rückmeldungen zur Durchführbarkeit, noch keine abschließende Aussage zur Klassifikationsleistung.',['docs/Einwilligungserklaerung_EEG-Studie.html','docs/experiment-protocol.md','gtec_Clib/terminal/test_recorder.py']);
+for(let i=0;i<p.slides.items.length;i++){const png=await p.export({slide:p.slides.items[i],format:'png',scale:1});await fs.writeFile(root+'/.presentation-build/v4-slide-'+(i+1)+'.png',new Uint8Array(await png.arrayBuffer()));}
+await (await PresentationFile.exportPptx(p)).save(root+'/.presentation-build/draft-de-v4.pptx');
+await finalizePresentation({workspaceDir:root,candidatePath:root+'/.presentation-build/draft-de-v4.pptx',finalPath:root+'/presentations/EEGvsMEG_Projektstand_DE_v4.pptx',pythonExecutable:'/Users/theoa/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3',integrityValidatorPath:skill+'/container_tools/inspect_presentation_package_integrity.py',layoutValidatorPath:skill+'/container_tools/inspect_presentation_layout_geometry.py',layoutArgs:['--expected-slide-size-emu','12192000,6858000','--validate-heading-fit'],fontPolicy:{basis:'design',families:['Aptos']},verifyArtifactToolImport:true,receiptPath:root+'/.presentation-build/validation-de-v4.json'});
+console.log('DONE');

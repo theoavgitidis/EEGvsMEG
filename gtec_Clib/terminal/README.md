@@ -3,7 +3,7 @@
 **Vollständige deutsche Bedienungsanleitung:** [VERWENDUNG.md](VERWENDUNG.md)
 
 Participant display: `cue open` opens a Windows window. During background
-recording, `mark hands_up`, `mark hands_down`, `mark imagine_hands` and
+recording, `mark hands_up`, `mark legs_up`, `mark substract 7 from 100` and
 `mark rest` both update it and log the marker. For arbitrary instructions use
 `cue trial_01 | Hebe deine Hände hoch`. See the German guide for timing limits.
 

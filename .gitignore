@@ -1,0 +1,10 @@
+# CMake output directories (including build-vs and build-exp).
+/gtec_Clib/terminal/build/
+/gtec_Clib/terminal/build-*/
+/gtec_Clib/terminal/out/
+
+# Local Visual Studio state and Python caches.
+.vs/
+*.vcxproj.user
+__pycache__/
+*.py[cod]
