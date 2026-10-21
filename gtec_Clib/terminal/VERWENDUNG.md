@@ -1,12 +1,29 @@
 # Unicorn-Terminal: Bedienungsanleitung
 
+Stand: 19. Oktober 2026.
+
+## Automatische Sitzung
+
+`start session` führt den aktuellen Pilotablauf mit 38:16 Minuten geplanter Dauer aus. Die vollständige Bedienung, Anzeigen, Dateien und Unterbrechungsregeln stehen in [SESSION_ANLEITUNG.md](SESSION_ANLEITUNG.md). Die [Projektübersicht](../../README.md) verlinkt Versuchsprotokoll und Tests.
+
+| Befehl | Wirkung |
+|---|---|
+| `start session` | Automatische Sitzung mit verbundenem Headset und ausgewähltem Experimentordner starten; alle acht EEG-Kanäle müssen aktiviert sein. |
+| `session order imagery motorik kognitiv` | Vor Start die Reihenfolge wählen; jeden Lauf genau einmal angeben. |
+| `session pause` | Ablauf anhalten, EEG weiter aufzeichnen und `PAUSE` zeigen. |
+| `session resume` | Fortsetzen; unterbrochenen Trial oder Baseline vollständig wiederholen. |
+| `mark LABEL` | Zusätzliche Beobachtung speichern, ohne den automatischen Ablauf oder die Anzeige zu verändern. |
+| `stop` | Zuerst `PAUSE` zeigen, anschließend die Sitzung als abgebrochen finalisieren und die Aufnahme stoppen. |
+
+Während der automatischen Sitzung sind manuelle `cue`-Befehle gesperrt. Die folgenden Cue-Beispiele beschreiben die weiterhin verfügbare manuelle Bedienung mit `record`.
+
 Für die Anzeige und Auswertung gespeicherter CSV-Dateien siehe die
 [ausführliche MNE-Anleitung](MNE_ANLEITUNG.md). Das fertige Skript
 `view_eeg.py` liegt im Projektstamm und zeigt EEG-Kurven einschließlich Labels.
 Bei schrägen Linien durch starke Drift beschreibt Abschnitt 6 der MNE-Anleitung
 die erfolgreich geprüfte Ansicht mit `--highpass 1 --lowpass 40` und automatischer Skalierung.
 
-## Teilnehmerfenster: Anweisung und Marker gemeinsam
+## Manuelle Teilnehmeranzeige: Anweisung und Marker gemeinsam
 
 ### `open` und `close`: Headset oder Cue-Fenster?
 
@@ -20,7 +37,7 @@ Das Headset und das Teilnehmerfenster werden getrennt gesteuert:
 | `cue close` | Schließt nur das Teilnehmerfenster. | Eine laufende Aufnahme läuft weiter; schreibt keinen Marker. |
 | `stop` | Beendet die Aufnahme. | Headset bleibt verbunden; Cue-Fenster und zuletzt gezeigter Text bleiben bestehen. |
 
-Zum Aufnehmen brauchst du `open SERIAL` und anschließend `record ...`.
+Für die manuelle Aufnahme brauchst du `open SERIAL` und anschließend `record ...`. Für den vollständigen Pilotablauf verwende `start session`.
 Für sichtbare Anweisungen öffnest du zusätzlich mit `cue open` das Fenster.
 Nach dem Versuch: `stop`, dann `cue close`, dann `close`. Mit `quit` beendest
 du das gesamte Programm einschließlich Fenster und Geräteverbindung.
@@ -119,8 +136,8 @@ die Aufnahme während der Anzeige endet; dann erscheint ein Fehler im Terminal.
 Es gibt weder eine Garantie atomarer Anzeige/Log-Ausgabe noch eine automatische
 Protokollierung des vollständigen Anweisungstextes zusätzlich zum Label.
 Für präzise Onset-Messungen sind Photodiode/gemeinsame Trigger oder eine validierte
-Stimulussoftware nötig. Die aktuelle Steuerung ist manuell, kein automatischer
-Trial-Scheduler. Vor dem Versuch das Fenster auf dem echten Teilnehmermonitor
+Stimulussoftware nötig. Die hier gezeigten `mark`-/`cue`-Beispiele werden manuell gesteuert.
+Die automatische Trialfolge mit Countdowns wird durch `start session` bereitgestellt. Vor dem Versuch das Fenster auf dem echten Teilnehmermonitor
 prüfen. Native Windows-Anzeige und Vollbild sind hier noch nicht hardwaregetestet.
 
 ## Voraussetzungen
@@ -166,7 +183,7 @@ verwende einen neuen Buildordner, etwa `build-new`, in allen drei Befehlen.
 
 Nach dem Start erscheinen `>` und eine Befehlsübersicht. Gib Befehle einzeln ein
 und bestätige mit Enter. Diese Befehle gehören in das laufende Programm, nicht in
-PowerShell. Befehle ignorieren Groß-/Kleinschreibung; Namen und Labels bleiben unverändert. `quit` oder `exit` beendet es.
+PowerShell. Hauptbefehle ignorieren Groß-/Kleinschreibung; Unterbefehle und Modi wie `session`, `pause`, `resume`, `order`, `real`, `test` und Cue-Unterbefehle exakt wie gezeigt klein schreiben. Namen und Labels bleiben unverändert. `quit` oder `exit` beendet es.
 
 ## Versuche und Speicherort
 
@@ -190,7 +207,7 @@ GoToExp "Pilotversuch 01"
 
 Der Prompt zeigt ständig `[Pilotversuch 01] >`. Beim Programmstart steht dort
 `[Kein Versuch ausgewählt] >`; wähle vor `record` oder `start` einen Versuch.
-Alle Befehle akzeptieren Groß- und Kleinschreibung. Namen dürfen Leerzeichen und
+Die Hauptbefehle akzeptieren Groß- und Kleinschreibung; Unterbefehle und Modi wie oben gezeigt schreiben. Namen dürfen Leerzeichen und
 Umlaute enthalten; Namen mit Leerzeichen in Anführungszeichen setzen. Ungültige
 Windows-Namen, Sonderzeichen und Pfade wie `..\` werden abgelehnt.
 Während einer Aufnahme ist ein Versuchswechsel gesperrt; `Where` und `ListExp`
@@ -250,19 +267,25 @@ Für eine echte Messung verwende `real` statt `test` und einen neuen Dateinamen.
 | `index EEG 1` | Position des benannten Kanals im aktuellen Datenstrom. Namen exakt wie in `config` angeben. |
 | `enable INDEX 0` | Deaktiviert einen Kanal über seinen Konfigurationsindex 0–16. Aufnahme muss gestoppt sein. |
 | `enable INDEX 1` | Aktiviert den Kanal. Aufnahme muss gestoppt sein. |
+| `start session` | Startet den automatischen Pilotablauf einschließlich Aufnahme und Marker; siehe Sitzungsanleitung. |
+| `session pause` | Pausiert die automatische Sitzung; EEG-Aufnahme läuft weiter. |
+| `session resume` | Setzt eine pausierte Sitzung nach den Wiederholungsregeln fort. |
+| `session order motorik imagery kognitiv` | Wählt vor Sitzungsstart eine Permutation der drei Läufe. |
 | `start real` | Startet manuelle Messwerterfassung; anschließend zeitnah `read` aufrufen. |
 | `start test` | Startet manuelle Erfassung eines Testsignals. |
 | `read SCANS` | Liest 1–2500 Scans nach `start`; zeigt die ersten fünf im Terminal. |
 | `read SCANS "datei.csv"` | Liest und speichert zusätzlich CSV im aktiven Versuch. Vorhandene Dateien werden abgelehnt. |
-| `stop` | Stoppt manuelle oder Hintergrundaufnahme, hält die Verbindung offen. |
+| `stop` | Stoppt die Aufnahme und bricht gegebenenfalls die automatische Sitzung ab; diese zeigt vorher PAUSE. Verbindung bleibt offen. |
 | `record SEKUNDEN "datei.csv" [real\|test]` | Hintergrundaufnahme; Modus standardmäßig `real`. Dauer 0–86400 Sekunden. 0 bedeutet bis zum Stoppen. |
-| `mark LABEL` | Speichert den gesamten Text hinter `mark` als Ereignislabel. Bei offenem Cue-Fenster zusätzlich Anzeige gemäß obiger Zuordnung. Nur während Hintergrundaufnahme. |
-| `status` | Zeigt den Zustand und die zuletzt erfassten Werte der Hintergrundaufnahme; keine Verbindung nötig. |
+| `mark LABEL` | Speichert den gesamten Text als Ereignislabel während einer Aufnahme. Bei manuellem `record` zusätzlich Cue-Anzeige; während einer automatischen Sitzung reine Beobachtung. |
+| `status` | Zeigt Aufnahmezustand und zuletzt erfasste Werte sowie, falls vorhanden, Sitzungsstatus, Countdown und Trial. Keine Verbindung nötig. |
 | `outputs` | Liest die acht digitalen Ausgangsbits als Dezimalzahl. Verbindung erforderlich. |
 | `outputs WERT` | Setzt die Bits mit einer Dezimalzahl 0–255 und liest sie zurück. Hardwareunterstützung erforderlich. |
 | `quit` / `exit` | Versucht Aufnahme zu stoppen und Gerät zu schließen, dann Programmende. |
 
-Während einer Hintergrundaufnahme sind nur `Where`, `ListExp`, `help`, `status`, `mark`, alle `cue`-Befehle, `stop`,
+Alle `cue`-Tabellenzeilen gelten außerhalb der automatischen Sitzung. Dort sind manuelle Cue-Befehle gesperrt; `mark` ist ein reiner Beobachtungsmarker und `session pause`/`session resume` sind verfügbar.
+
+Während einer manuellen Hintergrundaufnahme mit `record` sind nur `Where`, `ListExp`, `help`, `status`, `mark`, alle `cue`-Befehle, `stop`,
 `close`, `quit` und `exit` erlaubt. Die Bibliothek wird ausschließlich vom
 Aufnahmethread verwendet. Nach automatischem Aufnahmeende sind die anderen
 Befehle wieder verfügbar. Eine manuelle Aufnahme muss vor `record` gestoppt werden.
@@ -284,7 +307,7 @@ dass dein Headset physisch nutzbare Ausgänge besitzt. Das Programm setzt diese
 Ausgänge beim Beenden nicht automatisch zurück. Sie sind keine Ereignismarker
 in den gespeicherten EEG-Daten.
 
-## Experiment aufnehmen
+## Manuelles Experiment aufnehmen
 
 Wähle zuerst den Versuch. Für einen neuen Ordner verwende `NewExp`, für einen
 vorhandenen `GoToExp`. Das folgende Beispiel setzt einen vorhandenen Ordner voraus:
@@ -358,8 +381,7 @@ deutsches Excel diese Einstellungen ausdrücklich wählen.
 Messwerte werden ungefähr einmal pro Sekunde und beim normalen Abschluss
 geschrieben bzw. geflusht; Marker werden nach jeder Eingabe geflusht. Ein
 Prozessabbruch oder Stromausfall kann die letzten gepufferten Werte verlieren.
-Dateien speichern keine Teilnehmermetadaten, Kanaleinheiten, Firmwareversion
-oder Versuchsprotokolle; diese separat dokumentieren.
+Die oben beschriebenen Dateien eines manuellen `record` speichern keine Teilnehmermetadaten, Kanaleinheiten, Firmwareversion oder Versuchsprotokolle; diese separat dokumentieren. `start session` ergänzt dagegen einen vollständigen Phasenplan und JSON-Metadaten mit pseudonymer Teilnehmer-ID, Gerätekonfiguration samt Einheiten und Abschlussstatus. Die ersten vier Eventspalten bleiben erhalten; zusätzliche Spalten dokumentieren Lauf, Trial, Attempt und Rechenparameter. Dateinamen und Schema stehen in der [Sitzungsanleitung](SESSION_ANLEITUNG.md).
 
 ## Status, Qualität und Zeitgenauigkeit
 
@@ -372,7 +394,7 @@ fehlender Samples. Batterie und Validierung werden unverändert ausgegeben,
 ohne automatische Grenzwertwarnung oder Interpretation.
 
 Die Software bietet keine Impedanzmessung, automatische Artefaktentfernung,
-Livegrafik, Klassifikation oder automatische Versuchssteuerung. Der Status
+Livegrafik oder Klassifikation. Die automatische Versuchssteuerung übernimmt `start session`. Der Status
 allein bestätigt deshalb keine wissenschaftlich ausreichende Signalqualität.
 
 Host-Zeitstempel beschreiben Empfang bzw. Befehlsverarbeitung. Bluetooth-Puffer,
@@ -416,13 +438,17 @@ Alle 18 Funktionen des mitgelieferten Headers sind über Terminalbefehle abgedec
 C++17-Syntaxprüfung und simulierte Integrationstests wurden auf macOS bestanden.
 Die Simulation prüft zeitbegrenzte Aufnahme, Marker/CSV-Maskierung, Ausschluss
 gleichzeitiger API-Aufrufe, Stoppen, Überschreibschutz und Verbindungsfehler.
-Windows-Build, Laden der echten DLL und Hardwareverhalten sind noch nicht geprüft.
+Die aktuelle automatische Sitzung einschließlich Windows-Anzeige, Terminal-Countdown und Verhalten mit der echten DLL muss noch auf dem Messrechner geprüft werden.
 
 Die Simulation lässt sich mit Python 3 und `clang++` ausführen:
 
 ```sh
 python3 gtec_Clib/terminal/test_recorder.py
+python3 gtec_Clib/terminal/test_session.py
+python3 -m unittest analysis.test_event_annotations
 ```
 
-`mock_api.cpp` ist ausschließlich für diese Tests; der normale CMake-Build
+Die Annotationstests benötigen MNE, NumPy und pandas und prüfen beide Viewer einschließlich FIF-Speichern/Laden. Die Sitzungstests umfassen 250 Seeds, alle sechs Laufreihenfolgen, vollständigen beschleunigten Ablauf, Unterbrechungen und Fehler. Regressionstests prüfen verzögerte Anzeige-/Schreiboperationen und PAUSE vor einem blockierenden Aufnahme-Stopp.
+
+`mock_api.cpp` ist ausschließlich für die C++-Tests; der normale CMake-Build
 verwendet immer die Herstellerbibliothek.

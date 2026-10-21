@@ -1,5 +1,7 @@
 # Hand Motor Imagery
 
+Design/background note. For the implemented timings, trial counts and displays, use the current [pilot protocol](../experiment-protocol.md) and [automatic session guide](../../gtec_Clib/terminal/SESSION_ANLEITUNG.md). Alternatives below are not CLI settings.
+
 ## Objective
 
 The hand motor imagery condition tests whether imagined bilateral hand movement can be detected and distinguished using the available EEG headset.

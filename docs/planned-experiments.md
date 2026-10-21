@@ -1,5 +1,7 @@
 # Planned Experiments
 
+**Status, 19 October 2026:** This is the broader initial task catalogue. The implemented pilot uses three runs: motor execution (arms, legs, blinking), imagery (arms, legs), and mental subtraction. Word generation is an extension idea and is not part of `start session`. Use the current [pilot protocol](experiment-protocol.md) for timings and counts, and the [session guide](../gtec_Clib/terminal/SESSION_ANLEITUNG.md) for execution. The notes below describe the earlier research scope.
+
 The study will investigate how well different motor and cognitive tasks can be distinguished using an EEG headset. The experimental design is based on the tasks used in the MEGBCI2020 dataset.
 
 ## Reference Tasks

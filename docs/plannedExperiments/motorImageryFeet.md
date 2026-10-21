@@ -1,5 +1,7 @@
 # Foot Motor Imagery
 
+Design/background note. For the implemented timings, trial counts and displays, use the current [pilot protocol](../experiment-protocol.md) and [automatic session guide](../../gtec_Clib/terminal/SESSION_ANLEITUNG.md). Alternatives below are not CLI settings.
+
 ## Objective
 
 The foot motor imagery condition tests whether imagined bilateral foot movement can be detected and distinguished using the available EEG headset.

@@ -1,5 +1,9 @@
 # Unicorn API terminal
 
+**Automatische Sitzung (38:16 min):** [SESSION_ANLEITUNG.md](SESSION_ANLEITUNG.md).
+`start session` runs baselines, randomized motor/imagery/arithmetic trials, breaks, recording and markers.
+Use `session pause`, `session resume`, and `stop` to intervene; `mark LABEL` logs observations without changing session cues.
+
 **Vollständige deutsche Bedienungsanleitung:** [VERWENDUNG.md](VERWENDUNG.md)
 
 **CSV-Aufnahmen mit MNE ansehen:** [MNE_ANLEITUNG.md](MNE_ANLEITUNG.md).
@@ -7,8 +11,8 @@ Use `view_eeg.py` in the repository root to import EEG and event labels,
 view recordings, and optionally export FIF or PNG files. The CSV unit must
 be supplied explicitly (for example `--unit uV`, after checking `config`).
 
-Participant display: `cue open` opens a Windows window. During background
-recording, `mark hands_up`, `mark legs_up`, `mark substract 7 from 100` and
+Manual participant display: `cue open` opens a Windows window. During a manual
+background recording started with `record`, `mark hands_up`, `mark legs_up`, `mark substract 7 from 100` and
 `mark rest` both update it and log the marker. For arbitrary instructions use
 `cue trial_01 | Hebe deine Hände hoch`. See the German guide for timing limits.
 
@@ -16,7 +20,8 @@ Interactive hardware test utility covering every function in the supplied
 `unicorn.h`. Requires 64-bit Windows, the supplied Unicorn DLL, a working
 Bluetooth adapter and a compatible headset. This is a manual diagnostic tool,
 not an automated hardware test. It also supports background CSV recording
-with a separate event log.
+with a separate event log and an automated pilot session. See the
+[project overview](../../README.md) for the current workflow.
 
 ## Build on Windows
 
@@ -62,9 +67,11 @@ GoToExp "Pilot 01"
 `GoToExp` activates an existing folder. `ListExp` marks the active folder with
 `*`; `Where` prints its full path. The prompt always shows the active experiment,
 for example `[Pilot 01] >`. Each new terminal session starts without a selected
-experiment. Select one before `record` or manual `start`.
+experiment. Select one before `record`, manual `start`, or `start session`.
 
-Commands are case-insensitive. Names support spaces and Unicode; quote names
+Top-level command names are case-insensitive; `session`, `pause`, `resume`,
+`order`, `real`, `test` and cue subcommands use the lowercase spelling shown.
+Names support spaces and Unicode; quote names
 containing spaces. Windows reserved names, invalid characters and path traversal
 are rejected. `record` and `read` accept filenames only, never other directories.
 EEG data and `.events.csv` labels stay together. Existing files are refused,
@@ -78,7 +85,30 @@ while the existing terminal remains open.
 
 ## Example session
 
-### New experiment and cue commands
+### Automatic pilot session
+
+```text
+NewExp "VP01"
+scan paired
+open YOUR_SERIAL
+config
+cue open
+start session
+```
+
+Use `GoToExp "VP01"` for an existing folder. All eight EEG channels must be enabled.
+Move the cue window to the participant monitor before starting. The session enters
+fullscreen and records continuously, including breaks. The planned duration is
+38:16; unplanned pauses and trial repeats extend it.
+
+`session pause` freezes the schedule; `session resume` repeats an interrupted trial
+or baseline. `stop` displays PAUSE before waiting for recorder cleanup.
+During an automated session, `mark LABEL` logs an observation without changing
+the display, and manual `cue` commands are blocked. Use `session order imagery
+motorik kognitiv` before starting to change run order. See
+[SESSION_ANLEITUNG.md](SESSION_ANLEITUNG.md) for displays, files and recovery.
+
+### Manual experiment and cue commands
 
 | Command | Behavior |
 |---|---|
@@ -91,7 +121,10 @@ while the existing terminal remains open.
 | `cue rest` | Shows `+` in the open window without writing a marker. |
 | `cue text TEXT` | Shows custom text in the open window without writing a marker. |
 | `cue LABEL \| TEXT` | Shows text and logs the label; requires an open window and active background recording. |
-| `mark LABEL` | Logs a label during background recording; also updates the participant window when open. |
+| `mark LABEL` | With manual `record`, logs a label and updates an open cue window. During `start session`, logs an observation only. |
+
+The cue commands in this table describe manual operation outside an automatic
+session. During `start session`, the session controls the display.
 
 `open SERIAL` connects the headset, whereas `cue open` opens the display.
 `close` stops acquisition and disconnects the headset; it leaves the display open.
@@ -168,14 +201,25 @@ access, manual stopping, overwrite protection and simulated connection failure:
 
 ```sh
 python gtec_Clib/terminal/test_recorder.py
+python gtec_Clib/terminal/test_session.py
+python -m unittest analysis.test_event_annotations
 ```
 
 Run with MSVC `cl` available in an x64 Developer Command Prompt, or with `clang++` on PATH. Test recordings use a temporary folder.
 
 The test links `mock_api.cpp` instead of the vendor DLL; the normal CMake build
-never includes this simulated implementation. Bluetooth communication and hardware behavior require a connected headset. The experiment changes were built on Windows with MSVC; DLL loading and hardware-free integration tests passed.
+never includes this simulated implementation. Bluetooth communication and hardware behavior require a connected headset. Earlier experiment-folder work was documented as built with MSVC. The current
+automatic-session changes were tested with Clang on macOS and simulated hardware;
+a current Windows build, real cue window, terminal rendering and vendor-DLL run
+remain to be validated. The session tests cover 250 seeds, six run orders, a full
+accelerated session, pause/repeat, window loss, recorder errors, delayed transitions
+and PAUSE display before a blocked stop. MNE tests require mne, numpy and pandas
+and verify annotations through a real FIF round trip.
 
-## Background recording and task markers
+## Manual background recording and task markers
+
+This section describes `record`. For automatic task timing use `start session`
+as described above; manual markers then remain observations only.
 
 ```text
 GoToExp "Pilot 01"

@@ -1,5 +1,7 @@
 # Baseline / Resting-State Recording
 
+Design/background note. For the implemented timings, trial counts and displays, use the current [pilot protocol](../experiment-protocol.md) and [automatic session guide](../../gtec_Clib/terminal/SESSION_ANLEITUNG.md). Alternatives below are not CLI settings.
+
 ## Purpose
 
 The baseline condition provides a reference recording before or between task blocks. It is intended for signal-quality validation and for comparison against active task conditions.

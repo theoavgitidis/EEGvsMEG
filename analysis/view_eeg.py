@@ -7,6 +7,10 @@ import warnings
 
 import numpy as np
 import mne
+if __package__:
+    from .event_annotations import event_descriptions
+else:
+    from event_annotations import event_descriptions
 
 
 def load_recording(path, unit):
@@ -43,13 +47,14 @@ def load_recording(path, unit):
             required = {"samples_received", "label"}
             if not required.issubset(reader.fieldnames or []):
                 raise ValueError("Ereignisdatei enthält nicht samples_received und label.")
-            for row in reader:
-                onset = float(row["samples_received"]) / 250
-                if not np.isfinite(onset) or not 0 <= onset <= raw.times[-1]:
-                    warnings.warn(f"Marker außerhalb der Aufnahme übersprungen: {row['label']}")
-                    continue
-                onsets.append(onset)
-                descriptions.append(row["label"])
+            rows = list(reader)
+        for row, description in zip(rows, event_descriptions(rows)):
+            onset = float(row["samples_received"]) / 250
+            if not np.isfinite(onset) or not 0 <= onset <= raw.times[-1]:
+                warnings.warn(f"Marker außerhalb der Aufnahme übersprungen: {row['label']}")
+                continue
+            onsets.append(onset)
+            descriptions.append(description)
         raw.set_annotations(mne.Annotations(onsets, [0] * len(onsets), descriptions))
         print(f"{len(onsets)} Marker importiert (Positionen sind Näherungen aus samples_received / 250).")
     else:

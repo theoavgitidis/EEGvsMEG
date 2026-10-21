@@ -21,12 +21,15 @@ static void check(int code) {
 #include "recorder.h"
 #include "experiments.h"
 #include "cues.h"
+#include "session.h"
+#include "console.h"
 static void help() {
     std::cout <<
         "NewExp NAME | GoToExp NAME | ListExp | Where\n"
         "version | error | bluetooth | scan paired|unpaired\n"
         "open SERIAL | close | info | config | channels | index CHANNEL NAME\n"
         "enable CONFIG_INDEX 0|1   (indices 0..16; acquisition stopped)\n"
+        "start session | session pause|resume | session order motorik imagery kognitiv\n"
         "start real|test | read SCANS [CSV_NAME] | stop\n"
         "record SECONDS CSV_NAME [real|test] (0 = until stop)\n"
         "mark LABEL | status (background recorder)\n"
@@ -45,12 +48,14 @@ int main() {
     bool opened = false, acquiring = false;
     Recorder recorder;
     Cues cues;
-    auto stop = [&]() { recorder.stop(); if (acquiring) { check(UNICORN_StopAcquisition(handle)); acquiring = false; } };
+    Session session(recorder, cues);
+    Console console;
+    auto stop = [&]() { session.stop("operator stop"); recorder.stop(); if (acquiring) { check(UNICORN_StopAcquisition(handle)); acquiring = false; } };
     auto close = [&]() { if (opened) { stop(); check(UNICORN_CloseDevice(&handle)); opened = false; } };
     std::cout << "Unicorn API terminal (250 Hz). Type help for commands.\n";
     help();
     std::string line;
-    while (std::cout << experiments.prompt() && std::getline(std::cin, line)) {
+    while (console.read(experiments.prompt(), line, [&]() { return session.lines(); })) {
         try {
             std::istringstream in(line);
             std::string cmd; in >> cmd;
@@ -59,13 +64,49 @@ int main() {
             if (cmd == "where") { experiments.where(); continue; }
             if (cmd == "listexp") { experiments.list(); continue; }
             if (cmd == "newexp" || cmd == "gotoexp") {
-                if (acquiring || recorder.active()) throw std::runtime_error("Stop acquisition before changing experiments.");
+                if (acquiring || recorder.active() || session.active()) throw std::runtime_error("Stop acquisition before changing experiments.");
                 experiments.select(in, cmd == "newexp"); continue;
             }
-            if (cmd == "quit" || cmd == "exit") break;
+            if (cmd == "quit" || cmd == "exit") { session.stop("operator "+cmd); break; }
             if (cmd == "help") { help(); continue; }
-            if (cmd == "status") { recorder.status(); continue; }
+            if (cmd == "status") { for (const auto& row : session.lines()) std::cout << row << '\n'; recorder.status(); continue; }
+            if (cmd == "session") {
+                std::string action, extra; in >> action;
+                if (action == "order") {
+                    std::vector<int> order; std::string name;
+                    while (in >> name) {
+                        std::transform(name.begin(),name.end(),name.begin(),[](unsigned char c) { return char(std::tolower(c)); });
+                        if (name == "motorik") order.push_back(0);
+                        else if (name == "imagery") order.push_back(1);
+                        else if (name == "kognitiv") order.push_back(2);
+                        else throw std::runtime_error("Use session order motorik imagery kognitiv (any permutation).");
+                    }
+                    session.setOrder(order); std::cout << "Session run order updated.\n"; continue;
+                }
+                if (in >> extra) throw std::runtime_error("Use session pause|resume");
+                if (action == "pause") session.pause();
+                else if (action == "resume") session.resume();
+                else throw std::runtime_error("Use session pause|resume");
+                continue;
+            }
+            if (cmd == "start") {
+                auto position = in.tellg(); std::string action; in >> action;
+                if (action == "session") {
+                    std::string extra; if (in >> extra) throw std::runtime_error("Use start session");
+                    if (!opened) throw std::runtime_error("Open a device first.");
+                    if (acquiring) throw std::runtime_error("Stop manual acquisition first.");
+                    session.start(handle,experiments);
+                    for (const auto& row : session.lines()) std::cout << row << '\n';
+                    continue;
+                }
+                in.clear(); in.seekg(position);
+            }
+#ifdef UNICORN_SESSION_TEST
+            if (cmd == "test-jump") { double seconds; if (in >> seconds) session.testJump(seconds); continue; }
+            if (cmd == "test-close-window") { cues.close(); continue; }
+#endif
             if (cmd == "cue") {
+                if (session.active()) throw std::runtime_error("Automatic session controls the participant window.");
                 std::string argument; std::getline(in >> std::ws, argument);
                 if (argument == "open") { cues.open(); continue; }
                 if (argument == "close") { cues.close(); continue; }
@@ -87,12 +128,13 @@ int main() {
             if (cmd == "mark") {
                 std::string label; std::getline(in >> std::ws, label);
                 if (label.empty()) throw std::runtime_error("Use mark LABEL");
+                if (session.active()) { session.mark(label); continue; }
                 if (!recorder.active()) throw std::runtime_error("No background recording is active.");
                 auto text = cueForMarker(label);
                 if (cues.active()) cues.show(text);
                 recorder.mark(label); continue;
             }
-            if (recorder.active() && cmd != "stop" && cmd != "close")
+            if ((recorder.active() || session.active()) && cmd != "stop" && cmd != "close")
                 throw std::runtime_error("Background recording active. Use mark, cue, status, stop, close, help or quit.");
             if (!recorder.active()) recorder.stop(); // join completed timed recordings
             if (cmd == "version") { std::cout << UNICORN_GetApiVersion() << '\n'; continue; }
@@ -127,7 +169,7 @@ int main() {
                 std::cout << "Connected.\n"; continue;
             }
             if (!opened) throw std::runtime_error("Open a device first (or use help).");
-            if (cmd == "close") { close(); std::cout << "Disconnected.\n"; }
+            if (cmd == "close") { session.stop("operator close"); close(); std::cout << "Disconnected.\n"; }
             else if (cmd == "info") {
                 UNICORN_DEVICE_INFORMATION d{}; check(UNICORN_GetDeviceInformation(handle, &d));
                 std::cout << "Serial: " << d.serial << "\nFirmware: " << d.firmwareVersion
@@ -226,6 +268,6 @@ int main() {
             } else throw std::runtime_error("Unknown command. Type help.");
         } catch (const std::exception& e) { std::cerr << e.what() << '\n'; }
     }
-    try { close(); } catch (const std::exception& e) { std::cerr << "Cleanup: " << e.what() << '\n'; return 1; }
+    try { session.stop("input EOF"); close(); } catch (const std::exception& e) { std::cerr << "Cleanup: " << e.what() << '\n'; return 1; }
     return 0;
 }

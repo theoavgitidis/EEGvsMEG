@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <sstream>
 #include <cmath>
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(UNICORN_SESSION_TEST)
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
@@ -30,6 +30,10 @@ class Cues {
             SetWindowLongPtrW(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(self));
         }
         if (!self) return DefWindowProcW(hwnd, message, w, l);
+        if (message == WM_APP + 2) {
+            if (!self->fullscreen) SendMessageW(hwnd, WM_KEYDOWN, VK_F11, 0);
+            return 0;
+        }
         if (message == displayMessage) {
             self->text = *reinterpret_cast<const std::wstring*>(l);
             InvalidateRect(hwnd, nullptr, TRUE);
@@ -97,6 +101,7 @@ public:
         ready.wait(lock, [this] { return initialized; });
         if (!active()) throw std::runtime_error("Could not create participant window.");
     }
+    void fullscreenOn() { if (auto hwnd = window.load()) SendMessageW(hwnd, WM_APP + 2, 0, 0); }
     void close() {
         if (auto hwnd = window.load()) PostMessageW(hwnd, WM_CLOSE, 0, 0);
         if (ui.joinable()) ui.join();
@@ -112,12 +117,24 @@ public:
         if (!IsWindow(hwnd)) throw std::runtime_error("Participant window was closed; cue was not confirmed.");
     }
 };
+#elif defined(UNICORN_SESSION_TEST)
+// Explicit compile-time test seam; never present in the vendor build.
+class Cues {
+    bool opened = false;
+public:
+    bool active() const { return opened; }
+    void open() { opened = true; }
+    void close() { opened = false; }
+    void fullscreenOn() {}
+    void show(const std::string&) { if (!opened) throw std::runtime_error("Participant window closed."); }
+};
 #else
 class Cues {
 public:
     bool active() const { return false; }
     void open() { throw std::runtime_error("Participant window requires Windows."); }
     void close() {}
+    void fullscreenOn() {}
     void show(const std::string&) { throw std::runtime_error("Participant window requires Windows."); }
 };
 #endif

@@ -17,6 +17,7 @@ class Recorder {
     bool hasBattery = false, hasValidation = false;
     std::string failure;
     std::ofstream events;
+    bool extendedEvents = false;
     std::chrono::steady_clock::time_point origin;
     static double utc() {
         return std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -32,6 +33,16 @@ class Recorder {
 public:
     ~Recorder() { stop(); }
     bool active() const { return running.load(); }
+    struct Snapshot { bool running; uint64_t samples, discontinuities; std::string failure; };
+    Snapshot snapshot() const {
+        std::lock_guard<std::mutex> lock(mutex);
+        return {running.load(), samples, discontinuities, failure};
+    }
+    struct Context {
+        std::string source = "manual", run, condition, phase, reason;
+        int block = 0, trial = 0, attempt = 0, startNumber = 0;
+        double planned = 0, actual = 0;
+    };
     void stop() {
         cancel = true;
         if (worker.joinable()) worker.join();
@@ -47,15 +58,22 @@ public:
         if (!failure.empty()) std::cout << " error=" << failure;
         std::cout << '\n';
     }
-    void mark(const std::string& label) {
+    void mark(const std::string& label) { mark(label, Context{}); }
+    void mark(const std::string& label, const Context& context, bool finalEvent = false) {
         std::lock_guard<std::mutex> lock(mutex);
-        if (!running) throw std::runtime_error("No background recording is active.");
-        events << std::setprecision(17) << utc() << ',' << elapsed() << ',' << samples << ',' << csv(label) << '\n';
+        if (!running && !(finalEvent && events.is_open())) throw std::runtime_error("No background recording is active.");
+        events << std::setprecision(17) << utc() << ',' << elapsed() << ',' << samples << ',' << csv(label);
+        if (extendedEvents) events << ',' << csv(context.source) << ',' << csv(context.run)
+            << ',' << context.block << ',' << context.trial << ',' << context.attempt
+            << ',' << csv(context.condition) << ',' << csv(context.phase) << ',' << context.planned
+            << ',' << context.actual << ',' << csv(context.reason) << ',' << context.startNumber << ',' << (context.startNumber ? 7 : 0);
+        events << '\n';
         events.flush();
         if (!events) throw std::runtime_error("Event log write failed.");
     }
-    void start(UNICORN_HANDLE handle, const std::filesystem::path& path, uint64_t target, bool test) {
+    void start(UNICORN_HANDLE handle, const std::filesystem::path& path, uint64_t target, bool test, bool extended = false) {
         stop();
+        extendedEvents = extended;
         auto eventPath = path; eventPath += ".events.csv";
         if (std::filesystem::exists(path) || std::filesystem::exists(eventPath))
             throw std::runtime_error("Recording files already exist; choose a new path.");
@@ -79,7 +97,9 @@ public:
         data << "sample_index,nominal_time_s,host_read_utc_s";
         for (const auto& name : names) data << ',' << csv(name);
         data << '\n' << std::setprecision(17);
-        events << "host_utc_s,elapsed_s,samples_received,label\n";
+        events << "host_utc_s,elapsed_s,samples_received,label";
+        if (extendedEvents) events << ",source,run,block,trial,attempt,condition,phase,planned_elapsed_s,actual_session_elapsed_s,reason,start_number,subtract";
+        events << '\n';
         data.flush(); events.flush();
         if (!data || !events) throw std::runtime_error("Cannot write recording headers.");
         { std::lock_guard<std::mutex> lock(mutex);

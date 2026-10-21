@@ -1,5 +1,7 @@
 # Eigenständige Demo: Build, Start und EEG-Aufnahme
 
+Stand: 19. Oktober 2026. Diese kurze Vorführung bleibt manuell. Für den vollständigen automatischen Ablauf mit 38:16 Minuten siehe [SESSION_ANLEITUNG.md](../gtec_Clib/terminal/SESSION_ANLEITUNG.md).
+
 ## 1. Voraussetzungen unter Windows
 
 Windows 64 Bit, Visual Studio 2022 oder Build Tools mit „Desktopentwicklung mit C++“ und Windows SDK sowie CMake installieren. Das Projekt muss inklusive `gtec_Clib/lib/Unicorn.dll` und `Unicorn.lib` lokal vorliegen. Headset einschalten und über Windows oder Unicorn Suite koppeln. Unicorn Recorder und andere Programme, die das Headset benutzen, vor der CLI-Demo schließen.
@@ -70,7 +72,7 @@ quit
 
 `cue LABEL | TEXT` gehört vollständig in die CLI, nicht in PowerShell. Das Zeichen `|` trennt dort Marker und Anzeigetext. Das Teilnehmerfenster kann nach `cue open` mit F11 in den Vollbildmodus wechseln. Zum Eingeben weiterer Befehle wieder die CLI fokussieren.
 
-`record 0` läuft bis zum manuellen Stoppen. Die Anweisung aktualisiert sich automatisch, sobald der Versuchsleiter einen passenden `mark`- oder `cue`-Befehl auslöst. Die Wartezeiten werden nicht automatisch gesteuert. Die Rechenanweisung bleibt in dieser kurzen Demo während des Rechnens sichtbar. Im Studienprotokoll ist dagegen eine separate Instruktionsphase mit anschließendem Fixationskreuz vorgesehen.
+`record 0` läuft bis zum manuellen Stoppen. Die Anweisung aktualisiert sich automatisch, sobald der Versuchsleiter einen passenden `mark`- oder `cue`-Befehl auslöst. Die Wartezeiten werden nicht automatisch gesteuert. Die Rechenanweisung bleibt in dieser kurzen Demo während des Rechnens sichtbar. Der aktuelle automatische Studienablauf zeigt zuvor 2 s `READY`, anschließend 10 s die Rechenanweisung mit `FORTLAUFEND` und erst zur Erholung das Fixationskreuz. Ein zusätzlicher STOPP-Hinweis ist nicht vorgesehen.
 
 ## 4. Ergebnis prüfen
 

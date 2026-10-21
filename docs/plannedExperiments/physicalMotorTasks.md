@@ -1,5 +1,7 @@
 # Physical Motor Tasks
 
+Design/background note. For the implemented timings, trial counts and displays, use the current [pilot protocol](../experiment-protocol.md) and [automatic session guide](../../gtec_Clib/terminal/SESSION_ANLEITUNG.md). Alternatives below are not CLI settings.
+
 ## Purpose
 
 Physical motor execution tasks are included as reference conditions. They allow comparison between actual movement and motor imagery for similar body parts.

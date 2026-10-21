@@ -1,5 +1,7 @@
 # Study Design
 
+Design/background note. For the implemented timings, trial counts and displays, use the current [pilot protocol](../experiment-protocol.md) and [automatic session guide](../../gtec_Clib/terminal/SESSION_ANLEITUNG.md). Alternatives below are not CLI settings.
+
 ## Background
 
 The planned EEG study is inspired by the MEGBCI2020 project. The reference dataset was recorded with a high-density MEG system and contains motor imagery and cognitive imagery tasks intended for brain-computer-interface research.

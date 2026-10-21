@@ -8,3 +8,9 @@
 *.vcxproj.user
 __pycache__/
 *.py[cod]
+
+# Local Python environment
+.venv-mne/
+
+# Local Python environment
+.venv-mne/

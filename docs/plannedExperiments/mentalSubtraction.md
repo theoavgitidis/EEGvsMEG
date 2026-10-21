@@ -1,5 +1,7 @@
 # Mental Subtraction
 
+Design/background note. For the implemented timings, trial counts and displays, use the current [pilot protocol](../experiment-protocol.md) and [automatic session guide](../../gtec_Clib/terminal/SESSION_ANLEITUNG.md). Alternatives below are not CLI settings.
+
 ## Objective
 
 The mental-subtraction condition tests whether an internal calculation task can be distinguished from motor imagery and from word generation using EEG.

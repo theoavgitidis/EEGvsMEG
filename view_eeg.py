@@ -6,6 +6,7 @@ import re
 import mne
 import numpy as np
 import pandas as pd
+from analysis.event_annotations import event_descriptions
 
 
 def load_recording(path, unit):
@@ -36,10 +37,11 @@ def load_recording(path, unit):
         valid = np.isfinite(onsets) & (onsets >= 0) & (onsets <= raw.times[-1])
         if not valid.all():
             print(f"Skipped {np.count_nonzero(~valid)} markers outside the sample timeline.")
+        descriptions = event_descriptions(events.to_dict("records"))
         raw.set_annotations(mne.Annotations(onsets[valid], np.zeros(valid.sum()),
-                                           events.loc[valid, "label"].astype(str).tolist()))
+                                           [text for text, keep in zip(descriptions, valid) if keep]))
         print("\nLabels (positions are approximate):")
-        print(events[["samples_received", "label"]].to_string(index=False))
+        print(events[["samples_received"]].assign(description=descriptions).to_string(index=False))
     else:
         print("No event CSV found; displaying EEG without labels.")
     return raw

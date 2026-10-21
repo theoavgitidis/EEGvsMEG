@@ -1,5 +1,7 @@
 # Unicorn-Aufnahmen mit MNE ansehen
 
+Stand: 19. Oktober 2026. Beide mitgelieferten Viewer übernehmen die erweiterten Sitzungsmarker; die Befehle für FIF-/PNG-Export in dieser Anleitung beziehen sich auf `view_eeg.py` im Projektstamm.
+
 Das Skript `view_eeg.py` im Projektstamm liest die EEG-Kanäle deiner CSV und
 die Labels aus der danebenliegenden `.events.csv` in MNE ein. Die Originaldateien
 bleiben unverändert. Es funktioniert für neue Versuche unter `EEG/recordings`
@@ -16,13 +18,12 @@ cd C:\Users\DHBWQ\Desktop\EEG\EEGvsMEG
 & .\.venv-mne\Scripts\python.exe -c "import mne, pandas; print('MNE-Version:', mne.__version__)"
 ```
 
-Die Umgebung ist auf diesem Rechner bereits eingerichtet. Bei einer neuen
-Installation einmalig:
+Die folgenden Beispiele verwenden die Umgebung `.venv-mne` im Repository. Falls sie noch nicht vorhanden ist, einmalig anlegen:
 
 ```powershell
 python -m venv .venv-mne
 & .\.venv-mne\Scripts\python.exe -m pip install --upgrade pip
-& .\.venv-mne\Scripts\python.exe -m pip install mne pandas matplotlib
+& .\.venv-mne\Scripts\python.exe -m pip install mne numpy pandas matplotlib
 ```
 
 Eine Aktivierung mit `Activate.ps1` ist nicht nötig. Rufe immer den Interpreter
@@ -49,9 +50,21 @@ eine Annahme, keine aus der CSV verifizierte Einheit.
 | `mV` | `--unit mV` | Wert × 0,001 |
 | `V` | `--unit V` | Wert unverändert |
 
-## 3. Deine aktuelle Aufnahme öffnen
+## 3. Aufnahme auswählen und öffnen
 
-Für die vorhandene Aufnahme `Test01/test01.csv`:
+Für eine automatische Sitzung zeigt das Unicorn-Terminal den vollständigen Dateipfad an; `Where` nennt den Experimentordner. Den tatsächlichen Namensstamm aus dieser Ausgabe übernehmen. Beispiel für `VP01` (bei bestätigter EEG-Einheit `uV`):
+
+```powershell
+& .\.venv-mne\Scripts\python.exe .\view_eeg.py "..\recordings\VP01\session_20261019_143000.csv" --unit uV
+```
+
+Die danebenliegende `.csv.events.csv` wird automatisch mit eingelesen. Aufgabenart, Trial und Attempt erscheinen bei automatischen Ereignissen in den Annotationen; siehe Abschnitt 5. Plan-CSV und Session-JSON bleiben separate Begleitdateien. FIF-Export ohne interaktives Fenster:
+
+```powershell
+& .\.venv-mne\Scripts\python.exe .\view_eeg.py "..\recordings\VP01\session_20261019_143000.csv" --unit uV --no-show --save-fif "..\recordings\VP01\session_20261019_143000_raw.fif"
+```
+
+Die folgenden Beispiele beziehen sich auf ältere Testaufnahmen. Für `Test01/test01.csv`:
 
 ```powershell
 & .\.venv-mne\Scripts\python.exe .\view_eeg.py "..\recordings\Test01\test01.csv" --unit uV
@@ -118,9 +131,7 @@ Test01-Aufnahme liegen die Labels ungefähr bei:
 | `imagine hands` | 21200 | 84,8 s |
 | `rest` | 23825 | 95,3 s |
 
-Das Skript übernimmt Labels wortgetreu. `imagine hands` und `imagine_hands`
-sind verschiedene Labels. In der Cue-CLI ist nur `imagine_hands` eine
-vordefinierte Anweisung; das andere Label wird als Text angezeigt.
+Manuelle Labels und Labels älterer Aufnahmen werden wortgetreu übernommen. `imagine hands` und `imagine_hands` sind verschiedene Labels. In der aktuellen manuellen Cue-CLI besitzen beide keine eigene Zuordnung und erscheinen als freier Text. Die automatische Sitzung verwendet dagegen `imagine_arms` beziehungsweise `imagine_legs` als Bedingungen und zeigt `ARME VORSTELLEN` beziehungsweise `BEINE VORSTELLEN`.
 
 Die Positionen sind Näherungen: Die empfangene Samplezahl beschreibt den
 Verarbeitungsstand bei Eingabe, keinen gemessenen physikalischen Cue-Beginn.
@@ -128,6 +139,14 @@ Bluetooth-Puffer und blockweises Lesen erzeugen Unsicherheit. `elapsed_s`
 beschreibt dagegen verstrichene Host-Zeit; beide Zeitachsen können auseinanderliegen.
 Marker außerhalb der Sample-Zeitachse werden mit einem Hinweis ausgelassen.
 Für präzise EEG–MEG-Synchronisation sind validierte gemeinsame Trigger erforderlich.
+
+Bei Aufnahmen aus `start session` enthält die Annotationsbeschreibung außerdem die Aufgabenart, Trial- und Attempt-ID, Block, Phase und gegebenenfalls Rechenzahlen. Beispiel:
+
+```text
+task_onset | run=Motorik | condition=arms | block=1 | trial=1 | attempt=2 | phase=task | status=completed
+```
+
+`status=invalid` markiert einen später invalidierten Versuch, `status=completed` einen Versuch mit Abschlussmarker ohne Invalidierung und `status=incomplete` einen Versuch ohne dokumentierten Abschluss. Eine Invalidierung gilt für alle Marker desselben Attempts, auch wenn sie erst später in der Ereignisdatei steht. Diese Angaben bleiben im FIF-Export erhalten. Die Auswahl gültiger Trials erfolgt weiterhin ausdrücklich in der Auswertung; die Punktannotationen schließen Daten nicht automatisch aus. Manuelle Labels und ältere Ereignisdateien werden weiterhin wortgetreu übernommen.
 
 Start- und Endlabels werden als einzelne Marker importiert, nicht automatisch
 als zusammenhängende Phasen. Die Dauer der Annotationspunkte ist null.

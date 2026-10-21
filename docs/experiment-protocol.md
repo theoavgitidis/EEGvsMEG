@@ -1,8 +1,10 @@
 # EEG-Experiment: Motorik, Motor Imagery und Konzentration
 
-Stand: 13. Oktober 2026  
+Stand: 19. Oktober 2026
 Status: Wissenschaftlich begründeter Entwurf für einen Pilotversuch  
-Zielzeit: ungefähr 30 Minuten reine Messzeit pro Versuchsperson
+Geplanter Standardablauf: 29:16 Minuten Baselines und Trials einschließlich Erholung, 38:16 Minuten mit geplanten Zusatzpausen pro Versuchsperson.
+
+Die automatische Durchführung ist in [SESSION_ANLEITUNG.md](../gtec_Clib/terminal/SESSION_ANLEITUNG.md) beschrieben. Der detaillierte technische Plan steht in [session-automation-plan.md](session-automation-plan.md).
 
 ## 1. Grundprinzip
 
@@ -23,7 +25,7 @@ Als vorläufiges Auswertungsziel wird die Unterscheidung der Bedingungen innerha
 | Ruheaufnahme zu Beginn | Augen offen, Fixationspunkt | 1 × 60 s | Ruhig sitzen | 1:00 min |
 | Lauf 1: Motorik | Arme heben, Beine heben, blinzeln | 20 je Aufgabe; 60 insgesamt | 2 s Fixation → 4 s Aufgabe → 6–8 s Rest | 13:00 min |
 | Lauf 2: Imagery | Armbewegung vorstellen, Beinbewegung vorstellen | 20 je Aufgabe; 40 insgesamt | 2 s Fixation → 4 s Imagery → 6–8 s Rest | 8:40 min |
-| Lauf 3: Konzentration | Stilles serielles Subtrahieren | 12 Trials | 2 s Instruktion → 10 s Rechnen → 15–17 s Rest | 5:36 min |
+| Lauf 3: Konzentration | Stilles serielles Subtrahieren | 12 Trials | 2 s READY → 10 s sichtbare Rechenanweisung / Rechnen → 15–17 s Rest | 5:36 min |
 | Ruheaufnahme am Ende | Augen offen, Fixationspunkt | 1 × 60 s | Ruhig sitzen | 1:00 min |
 | **Gesamt** | | **112 Aufgaben-Trials** | Einschließlich der Erholungsphasen | **29:16 min** |
 
@@ -54,7 +56,7 @@ Es wird nicht verlangt, „an nichts zu denken“. Rest ist eine angeleitete Erh
 | 2–6 s | Aufgabe | Aufgabenhinweis erscheint bei 2 s; Aufgabe beginnt sofort und dauert 4 s |
 | Ab 6 s | Rest | Aufgabe beenden; für 6, 7 oder 8 s erholen |
 
-Der Aufgabenhinweis erscheint für die Dauer der Aufgabe. Danach bleibt bis zum Ende des Aufgabenfensters der Fixationspunkt sichtbar. Ein einheitliches Stoppsignal markiert den Beginn von Rest. Darstellung und Signalfolge werden für alle drei Aufgaben gleich gestaltet.
+Der Aufgabenhinweis erscheint während der gesamten viersekündigen Aufgabe. Der anschließende Wechsel zum Fixationspunkt markiert den Beginn von Rest; es gibt kein zusätzliches Stoppsignal. Darstellung und Signalfolge werden für alle drei Aufgaben gleich gestaltet.
 
 ### Aufgaben
 
@@ -84,7 +86,7 @@ Der Lauf wird in **4 Abschnitte mit jeweils 15 Trials** aufgeteilt: je 5 Arm-, B
 
 **2 s Fixation → 4 s Bewegungsvorstellung → 6, 7 oder 8 s Rest.**
 
-Zeitpunkte, Aufgabenanzeige und Stoppsignal entsprechen dem motorischen Lauf. Während Imagery wird die Bewegung ausschließlich vorgestellt.
+Zeitpunkte und Wechsel von Aufgabenanzeige auf Fixationskreuz entsprechen dem motorischen Lauf. Während Imagery wird die Bewegung ausschließlich vorgestellt.
 
 ### Aufgaben
 
@@ -123,15 +125,15 @@ Dies ist ein Beispiel. Für jede Versuchsperson wird eine konkrete, zufällig er
 
 | Zeit ab Trial-Beginn | Phase | Anweisung / Anzeige |
 |---|---|---|
-| 0–2 s | Instruktion | Startzahl und Subtraktionszahl merken; noch nicht rechnen |
-| 2–12 s | Kopfrechnen | Zahlenanzeige durch Fixationspunkt ersetzen; 10 s lang still seriell subtrahieren |
-| Ab 12 s | Rest | Rechnen beenden; 15, 16 oder 17 s erholen |
+| 0–2 s | Vorbereitung | `READY`; Zahlen noch nicht sichtbar, noch nicht rechnen |
+| 2–12 s | Kopfrechnen | Beispielsweise `347 − 7` und `FORTLAUFEND` anzeigen; 10 s lang still seriell subtrahieren |
+| Ab 12 s | Rest | Wechsel zum Fixationskreuz: Rechnen beenden; 15, 16 oder 17 s erholen |
 
-Beispiel: Die Instruktion lautet `347 − 7`. Die Versuchsperson rechnet anschließend im Kopf `340, 333, 326, …` bis zum Stoppsignal. Während des Aufgabenfensters keine Zahl aussprechen und keine Taste drücken.
+Beispiel: Die Instruktion lautet `347 − 7`. Die Versuchsperson rechnet anschließend im Kopf `340, 333, 326, …` bis zum Wechsel zum Fixationskreuz. Während des Aufgabenfensters keine Zahl aussprechen und keine Taste drücken.
 
 ### Aufgabenparameter
 
-- 12 Rechen-Trials, jeweils mit einer neuen dreistelligen Startzahl.
+- 12 Rechen-Trials, jeweils mit einer neuen dreistelligen Startzahl (automatischer Pilotablauf: ohne Wiederholung aus 300–899).
 - Subtraktionszahl zunächst einheitlich 7; Eignung vorab in der Übung prüfen.
 - Eine notwendige Anpassung der Schwierigkeit vor der Hauptmessung festlegen und dokumentieren. Keine unangekündigte Anpassung während der Hauptmessung.
 - 3 Trials mit 15 s Rest, 6 mit 16 s Rest und 3 mit 17 s Rest; durchschnittlich 16 s.
@@ -159,7 +161,7 @@ Alle Versuchspersonen üben die tatsächlichen Bewegungen vor der Hauptmessung, 
 ### Reihenfolge innerhalb eines Hauptlaufs
 
 - Aufgaben innerhalb jedes Abschnitts zufällig anordnen, unter Einhaltung der oben festgelegten Häufigkeiten.
-- Höchstens zwei unmittelbar aufeinanderfolgende Trials derselben Aufgabe zulassen. Das ist eine vorab festgelegte praktische Einschränkung der Randomisierung.
+- In Motorik und Imagery höchstens zwei unmittelbar aufeinanderfolgende Trials derselben Aufgabe zulassen, auch über Blockgrenzen. Diese Regel gilt nicht für den ausschließlich aus Rechenaufgaben bestehenden kognitiven Lauf. Das ist eine vorab festgelegte praktische Einschränkung der Randomisierung.
 - Rest-Dauern aus den festgelegten Kontingenten unabhängig von der Aufgabenreihenfolge vergeben.
 - Keine unterschiedliche Pausenverteilung für Arm-, Bein- oder Blinzel-Trials.
 - Startzahlen beim Kopfrechnen vorab erzeugen und speichern.
@@ -179,7 +181,7 @@ Zusätzlich zu Rest innerhalb jedes Trials:
 
 **Geplante Messung plus zusätzliche Pausen: 38:16 min.** Aufbau, Einweisung, Übung, eventuelle Leistungsabfragen und zusätzliche Bedarfspausen kommen hinzu. Abschnittspausen werden separat markiert und nicht als weitere Aufgaben-Trials gezählt.
 
-Die EEG-Aufzeichnung kann auch während zusätzlicher Pausen weiterlaufen. Dann ist die gesamte aufgezeichnete Dateidauer entsprechend länger als die 29:16 min des experimentellen Zeitplans.
+Bei `start session` läuft die EEG-Aufzeichnung während aller geplanten und ungeplanten Pausen weiter. Ohne Unterbrechung beträgt der Ablauf 38:16 min. Ungeplante Pausen und Wiederholungen verlängern die tatsächliche Aufnahme. Bei manueller Durchführung ist eine kontinuierliche Aufzeichnung ebenfalls möglich.
 
 ## 9. Ereignismarker und Dokumentation
 
@@ -190,12 +192,16 @@ Alle Marker müssen zeitlich zur EEG-Aufzeichnung zugeordnet werden können. Min
 | `baseline_start`, `baseline_end` | Anfang und Ende der zusätzlichen Ruheaufnahme |
 | `run_start`, `run_end` | Hauptlauf und seine Aufgabenart |
 | `block_start`, `block_end` | Abschnitt innerhalb des Hauptlaufs |
-| `trial_start` | Beginn der Vorbereitung beziehungsweise Recheninstruktion |
-| `cue_onset` | Tatsächlicher Beginn der sichtbaren Aufgabeninstruktion |
+| `trial_start` | Beginn der Vorbereitung: Kreuz bei Motorik/Imagery, READY bei Kognitiv |
+| `cue_onset` | Softwareseitig protokollierter Beginn der Aufgabenanzeige; kein physikalisch gemessener Bildschirm-Onset |
 | `task_onset` | Beginn der Bewegung, Imagery oder Rechenzeit laut Ablauf |
 | `task_offset` | Ende des Aufgabenfensters; zugleich Beginn von Rest |
 | `rest_end` | Ende der Erholung |
 | `break_start`, `break_end` | Zusätzliche Pause zwischen Abschnitten oder Hauptläufen |
+
+Die automatische Sitzung dokumentiert zusätzlich `session_start`, `session_end`, `session_abort`, `session_error`, `trial_end`, Phasenwechsel, `pause_start`/`pause_end`, `trial_invalidated`, `trial_repeat`, Fensterverlust und Timingabweichungen. Ein unterbrochener Trial wird vollständig mit derselben Aufgabe und gegebenenfalls Rechenzahl wiederholt; die geplante Trial-ID bleibt gleich, die Attempt-ID erhöht sich. Baselines beginnen nach Unterbrechung erneut mit 60 s, geplante Pausen werden mit ihrer Restdauer fortgesetzt.
+
+Mehr als 250 ms Verspätung beim Phasenwechsel, einschließlich verzögerter Anzeige oder Marker-Ausgabe, lösen eine protokollierte Unterbrechung aus. Diese technische Pilotvorgabe wird auf dem Messrechner geprüft. Beim Abbruch wechselt die Teilnehmeranzeige vor dem Beenden der Aufnahme auf PAUSE.
 
 Zu jedem Trial gehören Versuchsperson-ID, Hauptlauf, Abschnitt, Trial-ID, Bedingung, geplante Dauer und tatsächliche Zeitstempel. Beim Kopfrechnen zusätzlich Startzahl und Subtraktionszahl speichern.
 
@@ -207,7 +213,7 @@ Ein Aufgabenmarker beschreibt zunächst den angewiesenen Beginn. Er garantiert n
 
 Aufgabenfenster und Rest werden getrennt markiert. Die erste Zeit nach einer Bewegung wird nicht automatisch als neutrale Ruhe behandelt: Sie kann noch Bewegungsartefakte und eine neuronale Nachreaktion enthalten.
 
-Konkrete Auswertungsfenster werden vor der Hauptauswertung festgelegt. Für eine Klassifikation von Aufgabe gegen Rest sollen die verglichenen Fenster gleich lang sein und möglichst keine unmittelbaren Cue- oder Stoppsignal-Reaktionen enthalten. Ob die späten Rest-Fenster ausreichend erholt sind, wird im Pilot geprüft. Bei Bedarf werden die Rest-Dauern verlängert und die Messzeit neu berechnet.
+Konkrete Auswertungsfenster werden vor der Hauptauswertung festgelegt. Für eine Klassifikation von Aufgabe gegen Rest sollen die verglichenen Fenster gleich lang sein und möglichst keine unmittelbaren Reaktionen auf Aufgabenhinweise oder den Wechsel zum Fixationskreuz enthalten. Ob die späten Rest-Fenster ausreichend erholt sind, wird im Pilot geprüft. Bei Bedarf werden die Rest-Dauern verlängert und die Messzeit neu berechnet.
 
 Für Arm- und Beinheben ist die Übertragung der unten genannten Befunde zu kurzen Tastendrücken nicht gesichert. Sechs bis acht Sekunden Rest sind deshalb ein begründeter Ausgangspunkt und keine garantierte artefaktfreie Baseline.
 
@@ -216,6 +222,8 @@ Für Arm- und Beinheben ist die Übertragung der unten genannten Befunde zu kurz
 Die Blinzelbedingung wird separat beurteilt. Das Augensignal ist hier Teil der gewollten Aufgabe; in Imagery und Kopfrechnen kann es dagegen die Auswertung verfälschen. Eine Artefaktbereinigung, die Blinzeln entfernt, darf daher nicht ohne Anpassung auf die Blinzelklassifikation übertragen werden.
 
 ### Datenaufteilung
+
+Ungültige und unvollständige Attempts vor der Auswertung ausdrücklich ausschließen. Wiederholungen gehören weiterhin zur selben geplanten Trial-ID und dürfen nicht als unabhängige neue Trials auf Training und Test verteilt werden. Die MNE-Viewer erhalten diese Zuordnung und den aus Ereignissen abgeleiteten Status in den Annotationen; ein automatischer Ausschluss ist damit nicht verbunden.
 
 - Auswertung zunächst innerhalb jedes Hauptlaufs; eine gemeinsame Klassifikation aller Aufgaben über die drei Läufe kann durch Unterschiede zwischen den Aufzeichnungsabschnitten beeinflusst werden.
 - Alle Ausschnitte desselben Trials bleiben bei der Aufteilung auf Training und Test zusammen.
@@ -255,7 +263,7 @@ Quelle: Bailey, L. M. & Bardouille, T. (2025). **Demonstrating the need for long
 
 ### Konzentration: konkrete Rechenaufgabe und längere Rest-Phase
 
-Shin et al. stellten einen Datensatz für Motor Imagery und mentales Rechnen gegen Ruhe bereit. Für das Rechenparadigma sind 2 s Instruktion, 10 s Aufgabenzeit und 15–17 s Rest dokumentiert. Wir übernehmen diese Zeitfenster und die Idee des seriellen Subtrahierens. Der Originalversuch enthielt zusätzlich ausdrücklich angeleitete Ruhe-Trials; diese übernehmen wir nicht, weil Rest in unserem Plan die Erholung zwischen den Aufgaben bezeichnet.
+Shin et al. stellten einen Datensatz für Motor Imagery und mentales Rechnen gegen Ruhe bereit. Für das Rechenparadigma sind 2 s Instruktion, 10 s Aufgabenzeit und 15–17 s Rest dokumentiert. Wir übernehmen die Dauern dieser Zeitfenster und die Idee des seriellen Subtrahierens. Unser automatischer Ablauf verändert die Anzeige: zwei Sekunden READY, danach zehn Sekunden sichtbare Zahlen während des Rechnens. Er entspricht damit nicht der ursprünglichen Aufteilung aus Zahleninstruktion und anschließendem Rechnen am Fixationskreuz. Der Originalversuch enthielt zusätzlich ausdrücklich angeleitete Ruhe-Trials; diese übernehmen wir nicht, weil Rest in unserem Plan die Erholung zwischen den Aufgaben bezeichnet.
 
 Das Originalprotokoll wurde für gleichzeitiges EEG und NIRS entwickelt. Die lange Pause ist damit ein dokumentierter Ausgangspunkt, kein Nachweis eines notwendigen EEG-Minimums. Unsere gewählten 12 Rechen-Trials und die feste Subtraktionszahl sind eigene Planungsentscheidungen.
 

@@ -1,5 +1,7 @@
 # Planned EEG Experiments
 
+**Current execution, 19 October 2026:** The authoritative [pilot protocol](../experiment-protocol.md) defines Motorik, Imagery and Kognitiv, with a planned session duration of 38:16. The [session guide](../../gtec_Clib/terminal/SESSION_ANLEITUNG.md) documents `start session`. The files in this folder are earlier design/background notes with possible alternatives; their illustrative timings do not configure the CLI. Word generation and eyes-closed baseline are not included in the current automatic session.
+
 This folder documents the planned experimental design for an EEG study inspired by the MEGBCI2020 project. The central scientific question is:
 
 > To what extent can different motor and cognitive imagery tasks be reliably distinguished and classified using EEG signals?
