@@ -1,44 +1,125 @@
-# OSCAR: Integrationsstand
+# OSCAR aktivieren: recherchierter Integrationsweg
 
-Geprüft am 27.10.2026. OSCAR ist noch **nicht in der Pipeline aktiv**.
+Stand: 27.10.2026. **OSCAR ist in unserer Aufnahme- und Analysepipeline noch nicht aktiv.** Die folgende Anleitung beschreibt den aktuellen offiziellen g.Pype-Weg. Lizenzaktivierung und Headset-Lauf wurden nicht ausgeführt.
 
-## Verifizierter Stand
+## Ergebnis und Korrektur der bisherigen Einschätzung
 
-- Die mitgelieferte Unicorn-C-API (`gtec_Clib/lib/unicorn.h`) stellt keine OSCAR-Funktion bereit. Der C++-Recorder speichert weiterhin die vom Treiber gelieferten Werte.
-- Das offizielle Python-Paket `gtec-oscar==1.3.2` wurde lokal in `.venv-mne` unter Python 3.12 installiert. Der systemweite Python 3.15 wird von dieser Paketversion nicht unterstützt.
-- Die öffentliche Laufzeitschnittstelle bietet `OscarLive(enable_oscar=True)`, `setup(fs, n_ch)` und `step(data)`.
-- Bereits `OscarLive().setup(250.0, 8)` bricht mit `RuntimeError: gtec_oscar is not authenticated. Call gtec_oscar.authenticate(key) first.` ab. Installation allein aktiviert die Verarbeitung nicht.
-- Es wurde kein bereinigtes Signal erzeugt. Die vorhandenen Viewer und ML-Pipelines wurden nicht auf OSCAR umgestellt.
+Die offizielle g.Pype-FAQ nennt für `HybridBlack` eine aktive **Unicorn Python Hybrid Black**-Lizenz. Dieselbe FAQ dokumentiert OSCAR als integrierte Funktion der Verstärkerknoten: `enable_oscar=True`. Eine separate OSCAR-Kauflizenz wird für diesen Weg dort nicht gefordert. g.Pype ist für private und Bildungsnutzung innerhalb einer IDE kostenlos; kommerzielle Bereitstellung hat eigene Lizenzbedingungen.
 
-## Nächster notwendiger Schritt
+Damit ist unsere frühere Annahme, zunächst einen eigenen OSCAR-Schlüssel beschaffen zu müssen, nicht begründet. Der beobachtete Fehler beim direkten `OscarLive().setup(...)` zeigt nur, dass die isolierte Nutzung von `gtec_oscar` noch nicht authentifiziert war. Er beweist keinen fehlenden Kaufanspruch. Der Unicorn-Lizenzschlüssel sollte nicht auf Verdacht an `gtec_oscar.authenticate` übergeben werden: Der dokumentierte Einstieg ist die g.Pype-Pipeline.
 
-Einen von g.tec unterstützten Authentifizierungsweg für die direkte Python-Nutzung klären oder den offiziellen g.Pype-Workflow mit freigeschaltetem OSCAR einsetzen. Schlüssel nicht ins Repository oder in Chat-Nachrichten schreiben. Nach geklärtem Zugang müssen zuerst Einheiten, Array-Ausrichtung, Blockgrößen, Ausgabebedeutung sowie Anlauf- und Verzögerungsverhalten mit dem echten Paket geprüft werden.
+Quellen: [g.Pype-FAQ](https://gpype.gtec.at/content/5_faq/index.html), [HybridBlack-Referenz](https://gpype.gtec.at/content/7_sdk_reference/backend_sources/hybrid_black.html).
 
-## Prüfung der lokal ergänzten Unicorn Python API
+## 1. Installation auf dem Messrechner
 
-Das Paket liegt unter `gtec_PythonAPI/Unicorn Python/` (geprüfter Ausgangscommit: `85d5752`). Die beiden Acquisition-Beispiele importieren `UnicornPy` und verwenden Geräteerkennung, Konfiguration, `StartAcquisition`, `GetData` und `StopAcquisition`. In den mitgelieferten Textdateien ist kein OSCAR-Aufruf und keine OSCAR-Konfiguration enthalten. Daraus folgt keine Aussage über andere, nicht mitgelieferte SDK-Versionen.
-
-Im eingecheckten Paket fehlt die Implementierung des importierten Moduls `UnicornPy`: Es enthält weder eine entsprechende Python-Datei noch eine `.pyd`-Erweiterung oder ein Wheel. Die Visual-Studio-Projekte setzen ihren Suchpfad auf `Lib`, dort liegen jedoch nur die Lizenzdatei und drei DLLs. `file` identifiziert alle drei DLLs als Windows-x86-64-Binärdateien; sie sind hier unter macOS nicht direkt ausführbar. Ein Windows-Hardwaretest wurde nicht durchgeführt.
-
-Der vorhandene Schlüssel gilt laut Nutzer für die **Unicorn Python API**. Seine Gültigkeit für `gtec_oscar.authenticate` ist nicht belegt. Der Schlüssel wurde weder angefordert noch getestet. Für die weitere Integration werden die vollständige Python-Modulinstallation samt API-Dokumentation und ein bestätigter OSCAR-Zugangsweg benötigt. Die vorhandenen Acquisition-Beispiele allein lösen die OSCAR-Authentifizierungsblockade nicht.
-
-## Geplanter erster Einbau
-
-OSCAR zunächst optional auf einer Kopie gespeicherter Aufnahmen anwenden, bevor Anzeige-Filter laufen. Beide Viewer sollen denselben Adapter nutzen. Roh-CSV und Ereignisdatei bleiben erhalten. Korrigierte Signale müssen eindeutig als OSCAR-Ausgabe gekennzeichnet werden.
-
-Die Verzögerung muss aus der tatsächlichen Konfiguration stammen: Die g.Pype-Dokumentation nennt bei 250 Hz beispielhaft 83 Samples und warnt ausdrücklich davor, `K` als Verzögerung zu interpretieren. Ereignisse, Anlaufbereich und Aufnahmeende müssen entsprechend geprüft werden; keine pauschale Verschiebung ohne verifiziertes Ausgabetiming. Erst danach die Verarbeitung in Merkmalsberechnung oder Klassifikation übernehmen und Rohdaten gegen korrigierte Daten vergleichen.
-
-## Herstellerquellen
-
-- [Offizielles Paket](https://pypi.org/project/gtec-oscar/)
-- [g.Pype: OSCAR und Authentifizierungs-/Installationsumgebung](https://gpype.gtec.at/content/5_faq/index.html)
-- [HybridBlack mit enable_oscar](https://gpype.gtec.at/content/7_sdk_reference/backend_sources/hybrid_black.html)
-- [AmplifierSource: tatsächliche OSCAR-Verzögerung](https://github.com/gtec-medical-engineering/gpype/blob/main/gpype/backend/sources/base/amplifier_source.py)
-
-## Lokale Reproduktion der aktuellen Blockade
+Python 3.12 verwenden; g.Pype 4.1.0 unterstützt Python 3.10–3.14. Eine neue Umgebung außerhalb des synchronisierten Checkouts anlegen. Beispiel für macOS mit installiertem `python3.12`:
 
 ```sh
-.venv-mne/bin/python -c 'from gtec_oscar import OscarLive; print(OscarLive().setup(250.0, 8))'
+python3.12 -m venv "$HOME/.venvs/eeg-oscar"
+source "$HOME/.venvs/eeg-oscar/bin/activate"
+python -m pip install 'gpype[gui,devices]==4.1.0' 'gtec-oscar==1.3.2' 'gtec-licensing==2.4.0' 'gtec-unicorn==1.0.0'
 ```
 
-Erwartetes Ergebnis ohne Hersteller-Authentifizierung: die oben genannte Fehlermeldung. Dies ist kein Nachweis einer funktionierenden Artefaktkorrektur.
+Windows PowerShell, mit installiertem Python 3.12:
+
+```powershell
+py -3.12 -m venv "$env:LOCALAPPDATA\EEGvsMEG\venvs\oscar"
+& "$env:LOCALAPPDATA\EEGvsMEG\venvs\oscar\Scripts\Activate.ps1"
+python -m pip install 'gpype[gui,devices]==4.1.0' 'gtec-oscar==1.3.2' 'gtec-licensing==2.4.0' 'gtec-unicorn==1.0.0'
+```
+
+`gui` liefert das Fenster, `devices` unter anderem den aktuellen `gtec_unicorn`-Treiber. Das alte `UnicornPy`-Modul aus dem lokal ergänzten Windows-SDK ist für diesen Weg nicht erforderlich. Die genannten Versionen wurden als offizielle Wheels heruntergeladen und ihre öffentlichen Python-Schnittstellen geprüft; die vollständige Installation dieser Kombination wurde hier nicht ausgeführt.
+
+Quellen: [Installation und unterstützte Python-Versionen](https://gpype.gtec.at/), [Treiberpaket](https://pypi.org/project/gtec-unicorn/), [g.Pype-Changelog](https://gpype.gtec.at/content/8_appendix/index.html).
+
+## 2. Vorhandene Unicorn-Python-Lizenz prüfen und aktivieren
+
+Auf dem Rechner und unter dem Benutzerkonto ausführen, die später die Aufnahme durchführen:
+
+```sh
+python -c 'from gtec_licensing import api; print(api.check_license("Unicorn Python Hybrid Black").name)'
+```
+
+`SUCCESS` bestätigt die lokale Lizenzprüfung. Der Produktname stammt aus der g.Pype-Dokumentation; nennt ein tatsächlicher `gtec_unicorn.LicenseError` einen anderen Produktnamen, diesen mit den Kaufunterlagen abgleichen.
+
+Unter Windows ist die Aktivierung über Unicorn Suite → **Licensing** der offiziell beschriebene Weg. Dort den vorhandenen Python-API-Lizenzschlüssel eingeben. Anschließend die obige Prüfung im verwendeten Python-Interpreter wiederholen. Eine aktive Lizenz auf einem anderen Rechner bestätigt keine Aktivierung auf dem Messrechner.
+
+Alternativ bietet die öffentliche API des offiziellen Pakets `gtec-licensing==2.4.0` eine Aktivierung mit Schlüssel, Produktname und Kauf-E-Mail. Diesen Code lokal in einem Terminal ausführen; er fragt den Schlüssel verdeckt ab und gibt nur den Statusnamen aus:
+
+```python
+from getpass import getpass
+from gtec_licensing import api
+
+product = "Unicorn Python Hybrid Black"
+status = api.check_license(product)
+print("Lizenzstatus:", status.name)
+if status != api.ErrorCode.SUCCESS:
+    email = input("Lizenz-E-Mail: ").strip()
+    key = getpass("Unicorn-Python-Lizenzschlüssel: ")
+    status = api.activate(key, product, email)
+    del key
+    print("Aktivierung:", status.name)
+```
+
+Dieser Aufruf wurde anhand von `gtec_licensing/api.py` des offiziellen PyPI-Wheels geprüft, aber nicht mit einem Kundenschlüssel ausgeführt. Keine Schlüssel in Code, Git oder Kommandozeilenargumenten speichern. Bei `NO_ACTIVATIONS_LEFT` oder einem Produktkonflikt die bestehende Aktivierung beziehungsweise g.tec-Support klären; keine automatische Deaktivierung vornehmen. Ob der vorhandene individuelle Schlüssel akzeptiert wird, entscheidet erst dieser Lizenztest.
+
+Quellen: [Unicorn-FAQ zur Aktivierung und Rechnerbindung](https://www.gtec.at/unicorn-faq/), [offizielles Licensing-Paket](https://pypi.org/project/gtec-licensing/).
+
+## 3. Headset vorbereiten
+
+- Unter Windows das Unicorn zuerst per Bluetooth mit dem Messrechner koppeln. Den bestehenden C++-Recorder und andere Programme schließen, die das Headset geöffnet halten.
+- Unter macOS benötigt der aktuelle Treiber Apple Silicon und macOS 14 oder neuer. Der App, die Python startet, Bluetooth-Zugriff geben. Der Hauptthread muss eine Ereignisschleife ausführen; `MainApp.run()` übernimmt dies. Ein bloßes `time.sleep()` im Hauptthread genügt nicht.
+
+Quellen: [g.Pype-FAQ](https://gpype.gtec.at/content/5_faq/index.html), [Plattformhinweise](https://gpype.gtec.at/content/4_advanced_topics/platform_notes.html).
+
+## 4. OSCAR in der Pipeline einschalten
+
+Das ist der entscheidende Schalter:
+
+```python
+source = gp.HybridBlack(enable_oscar=True)
+```
+
+Vollständiges Minimalbeispiel für einen separaten Live-Test, etwa als lokale Datei `oscar_live_test.py` speichern und aus der IDE mit der obigen Umgebung starten:
+
+```python
+import gpype as gp
+
+app = gp.MainApp(caption="Unicorn – OSCAR Live-Test")
+pipeline = gp.Pipeline()
+source = gp.HybridBlack(
+    channel_count=8,
+    frame_size=4,
+    enable_oscar=True,
+)
+scope = gp.TimeSeriesScope(name="OSCAR-Ausgabe", time_window=10)
+pipeline.connect(source, scope)
+app.add_widget(scope)
+
+try:
+    pipeline.start()
+    delay = source.oscar_delay_samples
+    print("OSCAR-Verzögerung:", delay, "Samples")
+    if delay is None:
+        raise RuntimeError("OSCAR-Verzögerung nach Start nicht verfügbar.")
+    print("OSCAR-Verzögerung in Sekunden:", delay / 250.0)
+    app.run()
+finally:
+    pipeline.close()
+```
+
+Das Beispiel wurde gegen die öffentlichen Konstruktoren und Methoden im offiziellen g.Pype-4.1.0-Wheel geprüft. Kein Hardwarelauf durchgeführt. Es ersetzt weder unseren Sitzungsrecorder noch die bestehende Markersteuerung und speichert keine Aufnahme. `pipeline.start()` muss ohne Lizenz-/Authentifizierungsfehler durchlaufen; eine gesetzte `oscar_delay_samples` und sichtbare Signalblöcke dienen als erste Funktionsprüfung. Die Wirksamkeit der Korrektur ist damit noch nicht wissenschaftlich validiert.
+
+Die tatsächliche Verzögerung nach dem Start auslesen; `K` ist nicht die Verzögerung. Der Hersteller nennt bei 250 Hz beispielhaft 83 Samples. Zusätzlich setzt g.Pype bei aktivem OSCAR seinen Event-Margin auf null. Ereignistiming muss deshalb neu geprüft werden.
+
+Quellen: [HybridBlack](https://gpype.gtec.at/content/7_sdk_reference/backend_sources/hybrid_black.html), [öffentlicher Pipeline-Quelltext](https://gpype.gtec.at/_modules/gpype/backend/pipeline.html), [AmplifierSource-Quelltext](https://github.com/gtec-medical-engineering/gpype/blob/main/gpype/backend/sources/base/amplifier_source.py), [OSCAR-FAQ](https://gpype.gtec.at/content/5_faq/index.html).
+
+## Bedeutung für unser Projekt
+
+Der C++-Recorder besitzt in der mitgelieferten C-API keinen OSCAR-Schalter. Der oben beschriebene Live-Weg verwendet eine separate Python-Aufnahmequelle. Eine Umstellung unserer Sitzungssteuerung ist damit nicht automatisch erledigt.
+
+Für die eigentliche Integration zuerst den separaten Headset-Test bestehen lassen. Danach Rohdaten und OSCAR-Ausgabe getrennt erhalten, Kanalreihenfolge und Einheiten prüfen, Verzögerung und Ereignisse abgleichen und beide Viewer-Einstiegspunkte konsistent anbinden. Die Blinzelbedingung unseres Protokolls erfasst bewusst auch das Augensignal; ihre Auswertung darf nicht unbemerkt durch Artefaktkorrektur verändert werden.
+
+Die alternative Hersteller-App Unicorn Recorder bietet ebenfalls OSCAR sowie LSL/UDP. Die Produktseite belegt jedoch nicht eindeutig, ob deren exportierter Stream jeweils die korrigierten Daten oder Rohdaten führt. Dies vor einer LSL-Integration praktisch prüfen: [Unicorn Suite](https://www.gtec.at/product/unicorn-suite/).
+
+Die lokal ergänzte alte API unter `gtec_PythonAPI/Unicorn Python/` enthält Acquisition-Beispiele und Windows-DLLs, aber keine Implementierung des importierten `UnicornPy`-Moduls und keine dokumentierte OSCAR-Konfiguration. Diese Unvollständigkeit blockiert den aktuellen g.Pype-Weg nicht.
