@@ -1,0 +1,5 @@
+# Python 3.12; use an environment outside the synchronized checkout.
+gpype[devices]==4.1.0
+gtec-oscar==1.3.2
+gtec-unicorn==1.0.0
+gtec-licensing==2.4.0

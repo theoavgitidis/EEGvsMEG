@@ -1,5 +1,7 @@
 # Unicorn API terminal
 
+**OSCAR-Stand 27.10.2026:** `start session` nimmt standardmäßig mit OSCAR über Python auf; `start session raw` wählt ausdrücklich Rohdaten. Beide Varianten bleiben getrennt gespeichert. Einrichtung, Geräteübergabe, Signalwahl und noch erforderliche Windows-/Headset-Abnahme: [OSCAR-Anleitung](../../acquisition/README.md). Beide Viewer bevorzugen für neue OSCAR-Sitzungen die bereinigten Daten; `--signal raw` wählt Rohdaten. FIF-Exporte enthalten die gewählte Variante vor zusätzlichen Anzeigefiltern.
+
 **Automatische Sitzung (38:16 min):** [SESSION_ANLEITUNG.md](SESSION_ANLEITUNG.md).
 `start session` runs baselines, randomized motor/imagery/arithmetic trials, breaks, recording and markers.
 Use `session pause`, `session resume`, and `stop` to intervene; `mark LABEL` logs observations without changing session cues.

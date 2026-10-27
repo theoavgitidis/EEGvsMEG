@@ -8,6 +8,7 @@ import pandas as pd
 from scipy.signal import butter, resample_poly, sosfiltfilt, welch
 
 from analysis.ml_feasibility import features
+from analysis.recording_files import resolve_recording
 
 CHANNELS = [f"EEG {i}" for i in range(1, 9)]
 POSITIONS = ["Fz", "C3", "Cz", "C4", "Pz", "PO7", "Oz", "PO8"]
@@ -84,14 +85,16 @@ def bandpower_processed(signal_uv):
         for lo, hi in [(1, 4), (4, 8), (8, 13), (13, 30), (30, 40)]])
 
 
-def load_recording(path):
-    path = Path(path)
-    meta_path, event_path = Path(str(path) + ".session.json"), Path(str(path) + ".events.csv")
+def load_recording(path, signal="auto"):
+    selected = resolve_recording(path, signal)
+    path = selected.data
+    meta_path, event_path = selected.session, selected.events
     meta = json.loads(meta_path.read_text(errors="replace"))
     eeg_channels = {c["name"]: c for c in meta["device"]["channels"]}
     if any(not eeg_channels[c]["enabled"] or eeg_channels[c]["unit"] not in ("µV", "μV", "uV") for c in CHANNELS):
         raise ValueError("All eight enabled EEG channels must be confirmed in microvolts.")
     frame = pd.read_csv(path)
+    selected.validate_length(len(frame))
     if not np.array_equal(frame.sample_index.to_numpy(), np.arange(len(frame))):
         raise ValueError("Non-contiguous sample indices; event offsets cannot be trusted.")
     rows, exclusions = trial_windows(pd.read_csv(event_path), len(frame), meta["sampling_rate_hz"])
@@ -115,6 +118,9 @@ def load_recording(path):
         raise ValueError("Non-finite model input.")
     provenance = {"participant_id": meta["participant_id"], "session_id": meta["session_id"],
                   "inputs": {str(p.resolve()): sha256(p) for p in [path, event_path, meta_path]},
+                  "signal": selected.signal, "signal_description": selected.label,
+                  "processing": selected.metadata,
+                  "processing_metadata_sha256": sha256(selected.processing) if selected.signal == "oscar" else None,
                   "channel_order": CHANNELS, "assumed_positions": POSITIONS,
                   "montage_status": "standard project mapping; physical placement not independently verified",
                   "input_shape": list(x.shape), "exclusions": exclusions,

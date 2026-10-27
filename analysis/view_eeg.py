@@ -9,11 +9,18 @@ import numpy as np
 import mne
 if __package__:
     from .event_annotations import event_descriptions
+    from .recording_files import resolve_recording
 else:
     from event_annotations import event_descriptions
+    from recording_files import resolve_recording
 
 
-def load_recording(path, unit):
+def load_recording(path, unit, signal="auto"):
+    selected = resolve_recording(path, signal)
+    if selected.signal == "oscar" and unit != "uV":
+        raise ValueError("OSCAR-Ausgabe hat die Einheit uV; --unit uV verwenden.")
+    path = selected.data
+    print(f"Signal: {selected.label}; Datei: {path}")
     with path.open(encoding="utf-8-sig", newline="") as file:
         reader = csv.DictReader(file)
         names = [name for name in reader.fieldnames or [] if re.fullmatch(r"EEG [1-8]", name)]
@@ -29,6 +36,7 @@ def load_recording(path, unit):
                 counters.append(float(row["Counter"]))
     if not values:
         raise ValueError("Die Aufnahme hat keine Datenzeilen.")
+    selected.validate_length(len(values))
     data = np.asarray(values, dtype=float).T
     if not np.isfinite(data).all():
         raise ValueError("Die EEG-Daten enthalten NaN oder unendliche Werte.")
@@ -39,7 +47,8 @@ def load_recording(path, unit):
     scale = {"uV": 1e-6, "mV": 1e-3, "V": 1}[unit]
     info = mne.create_info(names, sfreq=250, ch_types="eeg")
     raw = mne.io.RawArray(data * scale, info)
-    events_path = Path(str(path) + ".events.csv")
+    raw.info["description"] = selected.label
+    events_path = selected.events
     if events_path.exists():
         onsets, descriptions = [], []
         with events_path.open(encoding="utf-8-sig", newline="") as file:
@@ -65,6 +74,8 @@ def load_recording(path, unit):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("csv", type=Path)
+    parser.add_argument("--signal", choices=["auto", "raw", "oscar"], default="auto",
+                        help="OSCAR-Sitzungen standardmäßig bereinigt; raw wählt Rohdaten")
     parser.add_argument("--unit", required=True, choices=["uV", "mV", "V"],
                         help="EEG-Einheit aus dem Recorder-Befehl config; nicht raten.")
     parser.add_argument("--view", choices=["traces", "waterfall"], default="traces",
@@ -85,7 +96,8 @@ def main():
     if args.psd and args.view == "waterfall":
         parser.error("--psd und --view waterfall können nicht gemeinsam verwendet werden.")
     try:
-        raw = load_recording(args.csv, args.unit)
+        raw = load_recording(args.csv, args.unit, args.signal)
+        signal_label = (raw.info.get("description") + "; ") if raw.info.get("description") else ""
         print(f"Kanäle: {raw.ch_names}; Samples: {raw.n_times}; nominale Dauer: {raw.n_times / 250:.3f} s")
         if not np.isfinite(args.duration) or args.duration <= 0 or not np.isfinite(args.start) or not 0 <= args.start <= raw.times[-1]:
             raise ValueError("duration muss positiv sein und start innerhalb der Aufnahme liegen.")
@@ -97,7 +109,7 @@ def main():
             raise ValueError("spectrogram-max muss endlich und größer als 0.5 Hz sein.")
         if args.filtered:
             raw = raw.copy().notch_filter(50).filter(0.5, 30)
-            print("Gefilterte Anzeigekopie; die CSV bleibt unverändert. Kein OSCAR/keine Bewegungskorrektur.")
+            print("Zusätzliche Filter auf Anzeigekopie; Quelldateien bleiben unverändert.")
         if args.no_show:
             return
         if args.psd:
@@ -114,7 +126,7 @@ def main():
                 from waterfall_browser import serve_waterfall
             serve_waterfall(raw, start=args.start, duration=args.duration,
                             scale_uv=args.scale_uv, title=args.csv.name,
-                            filter_label="50 Hz notch + 0.5–30 Hz band-pass" if args.filtered else "Unfiltered")
+                            filter_label=signal_label + ("50 Hz notch + 0.5–30 Hz band-pass" if args.filtered else "Unfiltered"))
         else:
             from matplotlib import pyplot as plt
             if __package__:
@@ -123,7 +135,7 @@ def main():
                 from eeg_browser import create_browser
             create_browser(raw, start=args.start, duration=args.duration,
                            scale_uv=args.scale_uv, title=args.csv.name,
-                           filter_label="50 Hz notch + 0.5–30 Hz band-pass" if args.filtered else "Unfiltered",
+                           filter_label=signal_label + ("50 Hz notch + 0.5–30 Hz band-pass" if args.filtered else "Unfiltered"),
                            spectrogram_channel=args.spectrogram_channel,
                            frequency_scale=args.frequency_scale, spectrogram_max=args.spectrogram_max)
             plt.show(block=True)

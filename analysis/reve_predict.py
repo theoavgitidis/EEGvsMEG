@@ -15,6 +15,7 @@ from analysis.ml_data import load_recording
 
 def main():
     parser = argparse.ArgumentParser(__doc__)
+    parser.add_argument("--signal", choices=["auto", "raw", "oscar"], default="auto")
     parser.add_argument("recording", type=Path)
     parser.add_argument("--model", type=Path, required=True)
     parser.add_argument("--checkpoint-manifest", type=Path, default=Path(".ml-cache/reve-checkpoint.json"))
@@ -30,7 +31,7 @@ def main():
     model = Classifier(LastBlock(base.transformer.layers[-1]), len(state["classes"]), state["tune"])
     model.load_state_dict(state["state_dict"], strict=True)
     model.eval()
-    rows, x, _, _, _ = load_recording(args.recording)
+    rows, x, _, _, _ = load_recording(args.recording, signal=args.signal)
     keep = (rows.run == state["run"]).to_numpy()
     rows = rows[keep].copy()
     if not len(rows):

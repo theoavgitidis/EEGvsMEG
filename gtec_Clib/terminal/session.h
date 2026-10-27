@@ -8,6 +8,7 @@
 #include <thread>
 #include <atomic>
 #include <cstdlib>
+#include <functional>
 
 class Session {
     Recorder& recorder;
@@ -21,6 +22,7 @@ class Session {
     double speed = 1, endedAt = 0;
     std::string shown;
     std::vector<int> runOrder{0,1,2};
+    bool oscarRequested = false;
     struct TimingDeviation {};
     bool checkingTransition = false;
     double transitionTarget = 0;
@@ -109,6 +111,13 @@ class Session {
             << ",\n  \"repetitions\": " << timeline->repeats
             << ",\n  \"samples\": " << snap.samples << ",\n  \"counter_discontinuities\": " << snap.discontinuities
             << ",\n  \"sampling_rate_hz\": " << UNICORN_SAMPLING_RATE
+            << ",\n  \"processing_mode\": " << quote(oscarRequested ? "oscar" : "raw")
+            << ",\n  \"default_signal\": " << quote(oscarRequested ? "oscar" : "raw")
+            << ",\n  \"oscar_file\": " << (oscarRequested ? quote(dataPath.filename().u8string()+".oscar.csv") : "null")
+            << ",\n  \"processing_file\": " << (oscarRequested ? quote(dataPath.filename().u8string()+".processing.json") : "null")
+            << ",\n  \"oscar_samples\": " << snap.cleanedSamples
+            << ",\n  \"oscar_delay_samples\": " << snap.delaySamples
+            << ",\n  \"event_position_method\": " << quote(oscarRequested ? "latest raw sample count from worker status; approximate (40 ms status interval plus queue/IPC/scheduling latency)" : "latest raw sample count from C API read; approximate")
             << ",\n  \"test_clock_speed\": " << speed
             << ",\n  \"eeg_file\": " << quote(dataPath.filename().u8string())
             << ",\n  \"event_file\": " << quote(dataPath.filename().u8string()+".events.csv")
@@ -171,12 +180,14 @@ public:
         if (check != std::vector<int>{0,1,2}) throw std::runtime_error("Specify each run once: motorik imagery kognitiv.");
         runOrder = order;
     }
-    void start(UNICORN_HANDLE handle, Experiments& experiments) {
+    void start(UNICORN_HANDLE handle, Experiments& experiments, bool useOscar = false,
+               std::function<void()> releaseDevice = {}) {
         if (active()) throw std::runtime_error("A session is already active.");
         if (worker.joinable()) worker.join();
         std::lock_guard<std::mutex> lock(mutex);
         if (recorder.active()) throw std::runtime_error("Stop background recording before starting a session.");
         experiments.require();
+        oscarRequested = useOscar;
         UNICORN_AMPLIFIER_CONFIGURATION config{}; check(UNICORN_GetConfiguration(handle,&config));
         UNICORN_DEVICE_INFORMATION device{}; check(UNICORN_GetDeviceInformation(handle,&device));
         for (int i = 1; i <= 8; ++i) {
@@ -238,7 +249,16 @@ public:
             plan.flush(); if (!plan) throw std::runtime_error("Cannot write session plan."); plan.close();
             saveMetadata();
             cues.open(); cues.fullscreenOn();
-            recorder.start(handle,dataPath,0,false,true);
+            display("AUFNAHME WIRD VORBEREITET");
+            if (oscarRequested) {
+                if (!releaseDevice) throw std::runtime_error("OSCAR requires exclusive device handoff.");
+                releaseDevice();
+                recorder.startOscar(device.serial,dataPath);
+                std::ifstream actual(companion(".device.json"));
+                if (!actual) throw std::runtime_error("OSCAR device metadata missing.");
+                configJson.assign(std::istreambuf_iterator<char>(actual),std::istreambuf_iterator<char>());
+                if (configJson.empty()) throw std::runtime_error("OSCAR device metadata empty.");
+            } else recorder.start(handle,dataPath,0,false,true);
             epoch = std::chrono::steady_clock::now(); startedUtc = date(false,"%Y-%m-%dT%H:%M:%SZ");
             state = "running"; transition(0,[&]() { timeline->start(0); }); saveMetadata();
             std::filesystem::remove(reservation); reservation.clear();
@@ -314,7 +334,7 @@ public:
         int blocks = p.run == "Kognitiv" ? 3 : 4;
         return {"SITZUNG "+id+" | "+state+" | REST "+session::clockText(timeline->remaining(at))+" | VERSTRICHEN "+session::clockText(state == "running" || state == "paused" ? at : endedAt),
             p.run+" : "+p.instruction()+" : "+trials,
-            "Block "+std::to_string(p.block)+"/"+std::to_string(p.block ? blocks : 0)+" | "+p.stage+" Rest "+session::clockText(timeline->phaseRemaining(at))+" | Aufnahme "+(recorder.active() ? "AKTIV" : "STOPP"),
+            "Block "+std::to_string(p.block)+"/"+std::to_string(p.block ? blocks : 0)+" | "+p.stage+" Rest "+session::clockText(timeline->phaseRemaining(at))+" | Aufnahme "+(recorder.active() ? "AKTIV" : "STOPP")+" | "+(oscarRequested ? "OSCAR" : "RAW"),
             "Datei: "+dataPath.u8string()+" | abgeschlossen "+std::to_string(timeline->completedTrials)+"/112 | Wiederholungen "+std::to_string(timeline->repeats)+(reason.empty() ? "" : " | "+reason)};
     }
 };

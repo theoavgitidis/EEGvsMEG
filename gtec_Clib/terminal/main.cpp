@@ -29,7 +29,7 @@ static void help() {
         "version | error | bluetooth | scan paired|unpaired\n"
         "open SERIAL | close | info | config | channels | index CHANNEL NAME\n"
         "enable CONFIG_INDEX 0|1   (indices 0..16; acquisition stopped)\n"
-        "start session | session pause|resume | session order motorik imagery kognitiv\n"
+        "start session [oscar|raw] (default: OSCAR) | session pause|resume | session order motorik imagery kognitiv\n"
         "start real|test | read SCANS [CSV_NAME] | stop\n"
         "record SECONDS CSV_NAME [real|test] (0 = until stop)\n"
         "mark LABEL | status (background recorder)\n"
@@ -51,7 +51,7 @@ int main() {
     Session session(recorder, cues);
     Console console;
     auto stop = [&]() { session.stop("operator stop"); recorder.stop(); if (acquiring) { check(UNICORN_StopAcquisition(handle)); acquiring = false; } };
-    auto close = [&]() { if (opened) { stop(); check(UNICORN_CloseDevice(&handle)); opened = false; } };
+    auto close = [&]() { stop(); if (opened) { check(UNICORN_CloseDevice(&handle)); opened = false; } };
     std::cout << "Unicorn API terminal (250 Hz). Type help for commands.\n";
     help();
     std::string line;
@@ -70,6 +70,8 @@ int main() {
             if (cmd == "quit" || cmd == "exit") { session.stop("operator "+cmd); break; }
             if (cmd == "help") { help(); continue; }
             if (cmd == "status") { for (const auto& row : session.lines()) std::cout << row << '\n'; recorder.status(); continue; }
+            if (cmd == "stop") { stop(); std::cout << "Stopped.\n"; continue; }
+            if (cmd == "close") { session.stop("operator close"); close(); std::cout << "Disconnected.\n"; continue; }
             if (cmd == "session") {
                 std::string action, extra; in >> action;
                 if (action == "order") {
@@ -92,10 +94,14 @@ int main() {
             if (cmd == "start") {
                 auto position = in.tellg(); std::string action; in >> action;
                 if (action == "session") {
-                    std::string extra; if (in >> extra) throw std::runtime_error("Use start session");
+                    std::string mode="oscar", extra;
+                    in >> mode;
+                    if ((mode != "oscar" && mode != "raw") || (in >> extra)) throw std::runtime_error("Use start session [oscar|raw]");
                     if (!opened) throw std::runtime_error("Open a device first.");
                     if (acquiring) throw std::runtime_error("Stop manual acquisition first.");
-                    session.start(handle,experiments);
+                    session.start(handle,experiments,mode == "oscar",[&]() {
+                        check(UNICORN_CloseDevice(&handle)); opened=false;
+                    });
                     for (const auto& row : session.lines()) std::cout << row << '\n';
                     continue;
                 }
@@ -162,6 +168,7 @@ int main() {
                 continue;
             }
             if (cmd == "open") {
+                if (session.active() || recorder.active()) throw std::runtime_error("Stop acquisition before opening a device.");
                 if (opened) throw std::runtime_error("Close the current device first.");
                 std::string serial; in >> serial;
                 if (serial.empty()) throw std::runtime_error("Use open SERIAL");
@@ -169,8 +176,7 @@ int main() {
                 std::cout << "Connected.\n"; continue;
             }
             if (!opened) throw std::runtime_error("Open a device first (or use help).");
-            if (cmd == "close") { session.stop("operator close"); close(); std::cout << "Disconnected.\n"; }
-            else if (cmd == "info") {
+            if (cmd == "info") {
                 UNICORN_DEVICE_INFORMATION d{}; check(UNICORN_GetDeviceInformation(handle, &d));
                 std::cout << "Serial: " << d.serial << "\nFirmware: " << d.firmwareVersion
                     << "\nDevice version: " << d.deviceVersion << "\nEEG channels: " << d.numberOfEegChannels << '\n';
@@ -218,8 +224,7 @@ int main() {
                 experiments.require();
                 check(UNICORN_StartAcquisition(handle, mode == "test" ? TRUE : FALSE)); acquiring = true;
                 std::cout << "Started. Read promptly: the API buffer can overflow while waiting for commands.\n";
-            } else if (cmd == "stop") { stop(); std::cout << "Stopped.\n"; }
-            else if (cmd == "read") {
+            } else if (cmd == "read") {
                 int scans; std::string path;
                 if (!(in >> scans) || scans < 1 || scans > 2500) throw std::runtime_error("Use read SCANS [CSV_NAME], 1..2500");
                 if (!acquiring) throw std::runtime_error("Start acquisition first.");

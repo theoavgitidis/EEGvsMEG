@@ -1,5 +1,7 @@
 # EEG-Experiment: Motorik, Motor Imagery und Konzentration
 
+Aufnahme-Erweiterung vom 27.10.2026: `start session` verwendet standardmäßig OSCAR und speichert zusätzlich Rohdaten; `start session raw` wählt den bisherigen Recorder. Aufgaben, Zeitplan und Trialregeln bleiben gleich. Implementierung und ausstehende Windows-/Headset-Abnahme: [OSCAR-Anleitung](../acquisition/README.md).
+
 Stand: 19. Oktober 2026
 Status: Wissenschaftlich begründeter Entwurf für einen Pilotversuch  
 Geplanter Standardablauf: 29:16 Minuten Baselines und Trials einschließlich Erholung, 38:16 Minuten mit geplanten Zusatzpausen pro Versuchsperson.

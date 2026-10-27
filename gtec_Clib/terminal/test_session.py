@@ -44,7 +44,7 @@ with tempfile.TemporaryDirectory() as directory:
         env = dict(os.environ, UNICORN_SESSION_SPEED=str(speed), UNICORN_SESSION_SEED="42", **environment)
         p = subprocess.Popen([str(exe)], cwd=work, env=env, stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8")
-        send(p, f'NewExp "{name}"', "open MOCK", "start session")
+        send(p, f'NewExp "{name}"', "open MOCK", "start session raw")
         return p, recordings / name
 
     def send(p, *commands):
@@ -105,7 +105,7 @@ with tempfile.TemporaryDirectory() as directory:
     wait_for(lambda: any(e["label"] == "trial_start" for e in events(folder)) if list(folder.glob("*.events.csv")) else False)
     send(p, "session pause")
     wait_for(lambda: state_is(folder, "paused"))
-    send(p, 'mark Baseline', 'mark Husten, "leicht"', "cue rest", 'NewExp "Blocked"', "start session", "session pause")
+    send(p, 'mark Baseline', 'mark Husten, "leicht"', "cue rest", 'NewExp "Blocked"', "start session raw", "session pause")
     time.sleep(.05)
     send(p, "session resume")
     wait_for(lambda: state_is(folder, "running"))
@@ -152,7 +152,7 @@ with tempfile.TemporaryDirectory() as directory:
     # Repeated sessions in one experiment never reuse or overwrite prior files.
     p, folder = launch("Repeated", speed=1)
     wait_for(lambda: state_is(folder, "running"))
-    send(p, "stop", "session order kognitiv imagery motorik", "start session")
+    send(p, "stop", "session order kognitiv imagery motorik", "start session raw")
     wait_for(lambda: len(list(folder.glob("*.session.json"))) == 2)
     finish(p, "stop")
     metas = [json.loads(path.read_text()) for path in folder.glob("*.session.json")]

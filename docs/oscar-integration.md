@@ -1,6 +1,6 @@
 # OSCAR aktivieren: recherchierter Integrationsweg
 
-Stand: 27.10.2026. **OSCAR ist in unserer Aufnahme- und Analysepipeline noch nicht aktiv.** Die folgende Anleitung beschreibt den aktuellen offiziellen g.Pype-Weg. Lizenzaktivierung und Headset-Lauf wurden nicht ausgeführt.
+Stand: 27.10.2026. **Der OSCAR-Aufnahmeweg ist jetzt implementiert und Standard bei `start session`; Windows-/Headset-Abnahme steht aus.** Maßgeblich für die Bedienung sind die [Aufnahmeanleitung](../acquisition/README.md) und der [Umsetzungsplan](oscar-session-plan.md). Die folgenden Abschnitte dokumentieren die Herstellerrecherche. Lizenzaktivierung und Headset-Lauf wurden nicht ausgeführt.
 
 ## Ergebnis und Korrektur der bisherigen Einschätzung
 
@@ -98,17 +98,14 @@ app.add_widget(scope)
 
 try:
     pipeline.start()
-    delay = source.oscar_delay_samples
-    print("OSCAR-Verzögerung:", delay, "Samples")
-    if delay is None:
-        raise RuntimeError("OSCAR-Verzögerung nach Start nicht verfügbar.")
-    print("OSCAR-Verzögerung in Sekunden:", delay / 250.0)
+    # setup() erfolgt erst mit dem ersten Datenblock; der Produktionsworker
+    # wartet deshalb auf erste ausgerichtete Samples, bevor er READY meldet.
     app.run()
 finally:
     pipeline.close()
 ```
 
-Das Beispiel wurde gegen die öffentlichen Konstruktoren und Methoden im offiziellen g.Pype-4.1.0-Wheel geprüft. Kein Hardwarelauf durchgeführt. Es ersetzt weder unseren Sitzungsrecorder noch die bestehende Markersteuerung und speichert keine Aufnahme. `pipeline.start()` muss ohne Lizenz-/Authentifizierungsfehler durchlaufen; eine gesetzte `oscar_delay_samples` und sichtbare Signalblöcke dienen als erste Funktionsprüfung. Die Wirksamkeit der Korrektur ist damit noch nicht wissenschaftlich validiert.
+Das Beispiel wurde gegen die öffentlichen Konstruktoren und Methoden im offiziellen g.Pype-4.1.0-Wheel geprüft. Kein Hardwarelauf durchgeführt. Es ersetzt weder unseren Sitzungsrecorder noch die bestehende Markersteuerung und speichert keine Aufnahme. `pipeline.start()` muss ohne Lizenz-/Authentifizierungsfehler durchlaufen; sichtbare Signalblöcke und die nach den ersten Blöcken verfügbare `oscar_delay_samples` dienen als erste Funktionsprüfung. Die Wirksamkeit der Korrektur ist damit noch nicht wissenschaftlich validiert.
 
 Die tatsächliche Verzögerung nach dem Start auslesen; `K` ist nicht die Verzögerung. Der Hersteller nennt bei 250 Hz beispielhaft 83 Samples. Zusätzlich setzt g.Pype bei aktivem OSCAR seinen Event-Margin auf null. Ereignistiming muss deshalb neu geprüft werden.
 
@@ -116,7 +113,7 @@ Quellen: [HybridBlack](https://gpype.gtec.at/content/7_sdk_reference/backend_sou
 
 ## Bedeutung für unser Projekt
 
-Der C++-Recorder besitzt in der mitgelieferten C-API keinen OSCAR-Schalter. Der oben beschriebene Live-Weg verwendet eine separate Python-Aufnahmequelle. Eine Umstellung unserer Sitzungssteuerung ist damit nicht automatisch erledigt.
+Der C++-Recorder besitzt in der mitgelieferten C-API keinen OSCAR-Schalter. Der oben beschriebene Live-Weg verwendet eine separate Python-Aufnahmequelle. Die implementierte C++-Anbindung an diesen Python-Aufnahmeweg ist in der Aufnahmeanleitung beschrieben.
 
 Für die eigentliche Integration zuerst den separaten Headset-Test bestehen lassen. Danach Rohdaten und OSCAR-Ausgabe getrennt erhalten, Kanalreihenfolge und Einheiten prüfen, Verzögerung und Ereignisse abgleichen und beide Viewer-Einstiegspunkte konsistent anbinden. Die Blinzelbedingung unseres Protokolls erfasst bewusst auch das Augensignal; ihre Auswertung darf nicht unbemerkt durch Artefaktkorrektur verändert werden.
 

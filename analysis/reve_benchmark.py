@@ -144,6 +144,7 @@ def metrics(y, predicted, classes):
 
 def main():
     parser = argparse.ArgumentParser(__doc__)
+    parser.add_argument("--signal", choices=["auto", "raw", "oscar"], default="auto")
     parser.add_argument("recording", type=Path)
     parser.add_argument("--checkpoint-manifest", type=Path, default=Path(".ml-cache/reve-checkpoint.json"))
     parser.add_argument("--output", type=Path, required=True)
@@ -161,7 +162,7 @@ def main():
     torch.set_num_threads(args.threads)
     torch.use_deterministic_algorithms(True)
     started = time.monotonic()
-    rows, x, old_features, matched_features, data_info = load_recording(args.recording)
+    rows, x, old_features, matched_features, data_info = load_recording(args.recording, signal=args.signal)
     rows.to_csv(args.output / "epochs.csv", index_label="epoch_index")
     model, checkpoint_info = load_pretrained(args.checkpoint_manifest)
     config = {"data": data_info, "checkpoint": checkpoint_info,

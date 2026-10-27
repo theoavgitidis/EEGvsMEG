@@ -1,5 +1,7 @@
 # Automatische EEG-Sitzung: Spezifikation und Umsetzungsstand
 
+Aufnahme-Erweiterung vom 27.10.2026: `start session` verwendet standardmäßig OSCAR und speichert zusätzlich Rohdaten; `start session raw` wählt den bisherigen Recorder. Aufgaben, Zeitplan und Trialregeln bleiben gleich. Implementierung und ausstehende Windows-/Headset-Abnahme: [OSCAR-Anleitung](../acquisition/README.md).
+
 Stand: 19. Oktober 2026
 
 Status: Spezifikation mit erster Implementierung und hardwarefreien Tests. Plan, CLI-Steuerung, Countdown, Anzeigeintegration, Aufnahme, Unterbrechung und Protokollierung sind umgesetzt. Die Windows-Anzeige, interaktive Terminaldarstellung und Vendor-Hardware müssen auf dem Messrechner validiert werden. Bedienung und tatsächliche Dateinamen: [SESSION_ANLEITUNG.md](../gtec_Clib/terminal/SESSION_ANLEITUNG.md).

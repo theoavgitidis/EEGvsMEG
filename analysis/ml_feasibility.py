@@ -69,13 +69,17 @@ def evaluate(rows, feature_key, permutations=199):
 
 def main():
     parser = argparse.ArgumentParser(__doc__)
+    parser.add_argument("--signal", choices=["auto", "raw", "oscar"], default="auto")
     parser.add_argument("recording", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    meta = json.loads(Path(str(args.recording) + ".session.json").read_text(errors="replace"))
+    from analysis.recording_files import resolve_recording
+    selected = resolve_recording(args.recording, args.signal)
+    meta = json.loads(Path(str(selected.raw) + ".session.json").read_text(errors="replace"))
     fs = meta["sampling_rate_hz"]
-    data = pd.read_csv(args.recording)
-    events = pd.read_csv(str(args.recording) + ".events.csv").fillna("")
+    data = pd.read_csv(selected.data)
+    selected.validate_length(len(data))
+    events = pd.read_csv(selected.events).fillna("")
     key = ["run", "block", "trial", "attempt"]
     invalid = {tuple(r[k] for k in key) for r in events.to_dict("records") if r["label"] == "trial_invalidated"}
     eeg_cols = [f"EEG {i}" for i in range(1, 9)]
@@ -113,6 +117,8 @@ def main():
                          "imu": np.concatenate([movement.std(0), np.ptp(movement, axis=0)]),
                          "time": np.array([left / fs])})
     result = {"recording": str(args.recording.resolve()), "participant": meta["participant_id"],
+              "signal": selected.signal, "signal_description": selected.label,
+              "selected_recording": str(selected.data.resolve()), "processing": selected.metadata,
               "samples": len(data), "duration_seconds": len(data) / fs,
               "sample_index_contiguous": bool(np.all(np.diff(data.sample_index) == 1)),
               "nonfinite_eeg_values": int((~np.isfinite(eeg)).sum()),

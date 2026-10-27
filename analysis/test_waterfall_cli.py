@@ -76,7 +76,7 @@ class WaterfallCLITest(unittest.TestCase):
                 code, _, errors, load = self.invoke(module, "--view", "waterfall", "--no-show",
                                                      waterfall_module=False)
                 self.assertEqual(code, 0, errors)
-                load.assert_called_once_with(self.path, "uV")
+                load.assert_called_once_with(self.path, "uV", "auto")
 
     def test_primary_headless_waterfall_can_export_unfiltered_fif(self):
         fif = Path(self.directory.name) / "imported_raw.fif"

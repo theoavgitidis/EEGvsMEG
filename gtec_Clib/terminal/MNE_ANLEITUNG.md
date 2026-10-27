@@ -1,5 +1,7 @@
 # Unicorn-Aufnahmen mit MNE ansehen
 
+**OSCAR-Stand 27.10.2026:** `start session` nimmt standardmäßig mit OSCAR über Python auf; `start session raw` wählt ausdrücklich Rohdaten. Beide Varianten bleiben getrennt gespeichert. Einrichtung, Geräteübergabe, Signalwahl und noch erforderliche Windows-/Headset-Abnahme: [OSCAR-Anleitung](../../acquisition/README.md). Beide Viewer bevorzugen für neue OSCAR-Sitzungen die bereinigten Daten; `--signal raw` wählt Rohdaten. FIF-Exporte enthalten die gewählte Variante vor zusätzlichen Anzeigefiltern.
+
 Stand: 21. Oktober 2026. Beide mitgelieferten Viewer verwenden dieselbe Zeitansicht mit getrennten EEG-Spuren, einer eigenen Marker-Zeitleiste und einem Spektrogramm auf gemeinsamer Zeitachse. Die Befehle für FIF-/PNG-Export in dieser Anleitung beziehen sich auf `view_eeg.py` im Projektstamm.
 
 Das Skript `view_eeg.py` im Projektstamm liest die EEG-Kanäle deiner CSV und

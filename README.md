@@ -2,12 +2,15 @@
 
 EEG-Aufnahme und Pilotversuche mit dem Unicorn-Headset. Die Windows-CLI führt Motorik, Motor Imagery und stilles Kopfrechnen automatisch durch. Aufnahmen und Aufgabenmarker können anschließend mit Python/MNE angezeigt und als FIF exportiert werden.
 
-Stand: 19. Oktober 2026. Sitzungsprotokoll: `eeg-session-1.0`.
+Stand: 27. Oktober 2026. Sitzungsprotokoll: `eeg-session-1.0`.
+
+`start session` verwendet jetzt standardmäßig **OSCAR** über einen Python-Aufnahmeprozess; Rohdaten und bereinigte Daten werden getrennt gespeichert. `start session raw` wählt ausdrücklich den bisherigen C-API-Rohdatenrecorder. Einrichtung und Windows-/Headset-Abnahme: [OSCAR-Aufnahme](acquisition/README.md). Die C++-Sitzungssteuerung und das Pilotprotokoll bleiben erhalten. Windows-/Hardwareabnahme steht noch aus.
 
 ## Dokumentation
 
 | Thema | Anleitung |
 |---|---|
+| OSCAR-Einrichtung, Signalwahl und Hardware-Abnahme | [OSCAR-Aufnahme](acquisition/README.md) |
 | Automatische Sitzung und Bedienung im Versuch | [SESSION_ANLEITUNG.md](gtec_Clib/terminal/SESSION_ANLEITUNG.md) |
 | Windows-Build und technische Übersicht | [Terminal-README](gtec_Clib/terminal/README.md) |
 | Alle CLI-Befehle und manuelle Aufnahme | [VERWENDUNG.md](gtec_Clib/terminal/VERWENDUNG.md) |

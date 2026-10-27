@@ -7,11 +7,17 @@ import mne
 import numpy as np
 import pandas as pd
 from analysis.event_annotations import event_descriptions
+from analysis.recording_files import resolve_recording
 
 
-def load_recording(path, unit):
-    path = Path(path)
+def load_recording(path, unit, signal="auto"):
+    selected = resolve_recording(path, signal)
+    if selected.signal == "oscar" and unit != "uV":
+        raise ValueError("OSCAR output is in uV; use --unit uV.")
+    path = selected.data
     table = pd.read_csv(path)
+    selected.validate_length(len(table))
+    print(f"Signal: {selected.label}; Datei: {path}")
     names = sorted((c for c in table.columns if re.fullmatch(r"EEG \d+", c)),
                    key=lambda c: int(c.split()[-1]))
     if table.empty or not names:
@@ -27,7 +33,8 @@ def load_recording(path, unit):
     if "Counter" in table:
         count = np.count_nonzero(np.diff(table.Counter.to_numpy(dtype=float)) != 1)
         print(f"Counter discontinuities (including resets/wraps): {count}")
-    event_path = path.with_name(path.name + ".events.csv")
+    raw.info["description"] = selected.label
+    event_path = selected.events
     if event_path.exists():
         events = pd.read_csv(event_path, keep_default_na=False)
         if not {"samples_received", "label"}.issubset(events.columns):
@@ -50,6 +57,8 @@ def load_recording(path, unit):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("csv", type=Path, help="Path to the EEG CSV")
+    parser.add_argument("--signal", choices=["auto", "raw", "oscar"], default="auto",
+                        help="Neue OSCAR-Sitzungen: bereinigte Daten; raw wählt ausdrücklich Rohdaten")
     parser.add_argument("--unit", required=True, choices=["uV", "mV", "V"],
                         help="EEG unit reported by the terminal's config command")
     parser.add_argument("--view", choices=["traces", "waterfall"], default="traces",
@@ -74,7 +83,7 @@ def main():
         for output in (args.save_fif, args.snapshot):
             if output and output.exists():
                 raise ValueError(f"Output already exists: {output}")
-        raw = load_recording(args.csv, args.unit)
+        raw = load_recording(args.csv, args.unit, args.signal)
         print(f"\nCSV: {args.csv.resolve()}\nChannels: {raw.ch_names}")
         print(f"Samples: {raw.n_times}; nominal duration: {raw.n_times / 250:.3f} s; labels: {len(raw.annotations)}")
         print(f"Assumed CSV unit: {args.unit}; MNE data unit: V")
@@ -101,7 +110,7 @@ def main():
             cutoffs.append(f"high-pass {args.highpass:g} Hz")
         if args.lowpass is not None:
             cutoffs.append(f"low-pass {args.lowpass:g} Hz")
-        filter_label = ", ".join(cutoffs) if cutoffs else "Unfiltered"
+        filter_label = ((raw.info.get("description") + "; ") if raw.info.get("description") else "") + (", ".join(cutoffs) if cutoffs else "Unfiltered")
         if args.view == "waterfall":
             if not args.no_show:
                 from analysis.waterfall_browser import serve_waterfall

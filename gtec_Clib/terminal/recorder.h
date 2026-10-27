@@ -5,10 +5,14 @@
 #include <filesystem>
 #include <mutex>
 #include <thread>
+#include <condition_variable>
+#include <cstdlib>
+#include "worker_process.h"
 
 // The worker exclusively owns API calls while recording. Terminal commands
 // use cached status and a separate event file; they never touch the DLL.
 class Recorder {
+    WorkerProcess child;
     std::thread worker;
     std::atomic<bool> cancel{false}, running{false};
     mutable std::mutex mutex;
@@ -18,6 +22,11 @@ class Recorder {
     std::string failure;
     std::ofstream events;
     bool extendedEvents = false;
+    bool oscar = false, ready = false, done = false;
+    uint64_t cleanedSamples = 0;
+    int delaySamples = 0;
+    std::condition_variable startup;
+    std::chrono::steady_clock::time_point lastStatus;
     std::chrono::steady_clock::time_point origin;
     static double utc() {
         return std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -33,10 +42,12 @@ class Recorder {
 public:
     ~Recorder() { stop(); }
     bool active() const { return running.load(); }
-    struct Snapshot { bool running; uint64_t samples, discontinuities; std::string failure; };
+    struct Snapshot { bool running; uint64_t samples, discontinuities; std::string failure; bool oscar; uint64_t cleanedSamples; int delaySamples; };
     Snapshot snapshot() const {
         std::lock_guard<std::mutex> lock(mutex);
-        return {running.load(), samples, discontinuities, failure};
+        if (oscar && running && std::chrono::steady_clock::now()-lastStatus > std::chrono::seconds(6))
+            return {false,samples,discontinuities,"OSCAR worker status timed out.",oscar,cleanedSamples,delaySamples};
+        return {running.load(), samples, discontinuities, failure, oscar, cleanedSamples, delaySamples};
     }
     struct Context {
         std::string source = "manual", run, condition, phase, reason;
@@ -45,7 +56,16 @@ public:
     };
     void stop() {
         cancel = true;
+        if (child.active()) {
+            child.requestStop();
+            if (!child.wait(8000)) {
+                { std::lock_guard<std::mutex> lock(mutex); failure = "OSCAR worker shutdown timed out."; }
+                child.kill(); child.wait(1000);
+            }
+            if (!child.successful()) { std::lock_guard<std::mutex> lock(mutex); if (failure.empty()) failure="OSCAR worker returned a nonzero exit code."; }
+        }
         if (worker.joinable()) worker.join();
+        child.dispose();
         if (events.is_open()) { events.flush(); events.close(); }
     }
     void status() const {
@@ -53,6 +73,8 @@ public:
         std::cout << "Recording: " << running << " samples=" << samples
             << " nominal_seconds=" << samples / double(UNICORN_SAMPLING_RATE)
             << " counter_discontinuities=" << discontinuities;
+        std::cout << " processing=" << (oscar ? "OSCAR" : "RAW");
+        if (oscar) std::cout << " oscar_samples=" << cleanedSamples << " oscar_delay_samples=" << delaySamples;
         if (hasBattery) std::cout << " battery=" << battery;
         if (hasValidation) std::cout << " validation=" << validation;
         if (!failure.empty()) std::cout << " error=" << failure;
@@ -73,6 +95,7 @@ public:
     }
     void start(UNICORN_HANDLE handle, const std::filesystem::path& path, uint64_t target, bool test, bool extended = false) {
         stop();
+        oscar = false; cleanedSamples = 0; delaySamples = 0;
         extendedEvents = extended;
         auto eventPath = path; eventPath += ".events.csv";
         if (std::filesystem::exists(path) || std::filesystem::exists(eventPath))
@@ -153,5 +176,76 @@ public:
                 running = false;
             });
         } catch (...) { running = false; UNICORN_StopAcquisition(handle); throw; }
+    }
+    void startOscar(const std::string& serial, const std::filesystem::path& path) {
+        stop();
+        for (const auto& suffix : {"", ".events.csv", ".oscar.csv", ".processing.json", ".device.json", ".worker.log"}) {
+            auto candidate=path; candidate+=suffix;
+            if (std::filesystem::exists(candidate)) throw std::runtime_error("Recording files already exist; choose a new path.");
+        }
+        std::filesystem::path script;
+#ifdef _WIN32
+        if (auto value=_wgetenv(L"EEG_OSCAR_WORKER")) script=value;
+#else
+        if (auto value=std::getenv("EEG_OSCAR_WORKER")) script=std::filesystem::u8path(value);
+#endif
+#ifdef EEG_OSCAR_WORKER
+        else script=std::filesystem::u8path(EEG_OSCAR_WORKER);
+#else
+        else script=std::filesystem::path("acquisition")/"oscar_worker.py";
+#endif
+        if (!std::filesystem::is_regular_file(script)) throw std::runtime_error("OSCAR worker missing; set EEG_OSCAR_WORKER to acquisition/oscar_worker.py.");
+        std::string python="python";
+#ifdef _WIN32
+        if (auto value=_wgetenv(L"EEG_OSCAR_PYTHON")) python=std::filesystem::path(value).u8string();
+#else
+        if (auto value=std::getenv("EEG_OSCAR_PYTHON")) python=value;
+#endif
+        auto eventPath=path; eventPath+=".events.csv";
+        events.open(eventPath);
+        if (!events) throw std::runtime_error("Cannot create event log.");
+        events << "host_utc_s,elapsed_s,samples_received,label,source,run,block,trial,attempt,condition,phase,planned_elapsed_s,actual_session_elapsed_s,reason,start_number,subtract\n";
+        events.flush();
+        if (!events) throw std::runtime_error("Cannot write event log header.");
+        {
+            std::lock_guard<std::mutex> lock(mutex);
+            samples=discontinuities=cleanedSamples=0; failure.clear(); ready=done=false; oscar=true;
+            delaySamples=0; hasBattery=hasValidation=false; extendedEvents=true;
+            lastStatus=std::chrono::steady_clock::now();
+        }
+        origin=std::chrono::steady_clock::now(); cancel=false;
+        child.start(python,script,serial,path);
+        worker=std::thread([this]() {
+            try {
+                std::string line;
+                while (child.line(line)) {
+                    std::lock_guard<std::mutex> lock(mutex);
+                    std::istringstream input(line); std::string type; input>>type;
+                    lastStatus=std::chrono::steady_clock::now();
+                    if (type == "READY") {
+                        int version=0, delay=0; std::string extra;
+                        if (!(input>>version>>delay) || version != 1 || delay <= 0 || ready || (input>>extra)) throw std::runtime_error("Invalid OSCAR READY protocol.");
+                        ready=true; delaySamples=delay; running=true; startup.notify_all();
+                    } else if (type == "SAMPLES") {
+                        uint64_t raw=0, clean=0; std::string extra;
+                        if (!(input>>raw>>clean) || raw < samples || clean < cleanedSamples || clean > raw || (input>>extra)) throw std::runtime_error("Invalid OSCAR sample counters.");
+                        samples=raw; cleanedSamples=clean;
+                    } else if (type == "DONE") { done=true; }
+                    else if (type == "ERROR") { std::getline(input>>std::ws,failure); if (failure.empty()) failure="OSCAR worker failed."; running=false; startup.notify_all(); }
+                    else throw std::runtime_error("Unknown OSCAR worker protocol message.");
+                }
+                std::lock_guard<std::mutex> lock(mutex);
+                if (!done && failure.empty()) failure="OSCAR worker exited without confirmed file finalization. Check .worker.log.";
+            } catch (const std::exception& e) {
+                std::lock_guard<std::mutex> lock(mutex); failure=e.what();
+            }
+            { std::lock_guard<std::mutex> lock(mutex); running=false; startup.notify_all(); }
+        });
+        std::unique_lock<std::mutex> lock(mutex);
+        bool signaled=startup.wait_for(lock,std::chrono::seconds(35),[&]() { return ready || !failure.empty(); });
+        if (!signaled || !ready || !failure.empty() || !running) {
+            std::string error=failure.empty() ? "OSCAR startup failed or timed out." : failure;
+            lock.unlock(); stop(); throw std::runtime_error(error);
+        }
     }
 };

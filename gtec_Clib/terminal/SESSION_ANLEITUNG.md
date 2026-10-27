@@ -1,5 +1,7 @@
 # Automatische Sitzung mit `start session`
 
+**OSCAR-Stand 27.10.2026:** `start session` nimmt standardmäßig mit OSCAR über Python auf; `start session raw` wählt ausdrücklich Rohdaten. Beide Varianten bleiben getrennt gespeichert. Einrichtung, Geräteübergabe, Signalwahl und noch erforderliche Windows-/Headset-Abnahme: [OSCAR-Anleitung](../../acquisition/README.md). Beide Viewer bevorzugen für neue OSCAR-Sitzungen die bereinigten Daten; `--signal raw` wählt Rohdaten. FIF-Exporte enthalten die gewählte Variante vor zusätzlichen Anzeigefiltern.
+
 Die CLI kann das vollständige Pilotprotokoll automatisch durchführen: Anfangsbaseline, Motorik, Imagery, Kopfrechnen, Endbaseline. Ohne Unterbrechungen beträgt der Zeitplan **38:16 Minuten** einschließlich Erholung, acht Blockpausen und zwei Experimentpausen.
 
 ## Vorbereitung und Start
@@ -24,7 +26,7 @@ Bei zwei Monitoren das Teilnehmerfenster auf den gewünschten Bildschirm verschi
 start session
 ```
 
-Der Befehl verwendet das verbundene Gerät und den ausgewählten Experimentordner. Er erstellt den vollständigen Plan, öffnet das Teilnehmerfenster, schaltet es auf dem aktuellen Monitor in den Vollbildmodus und beginnt die echte Aufnahme. Der Countdown startet zusammen mit der Anfangsbaseline. Keine zusätzliche Eingabe von `record` oder Aufgabenmarkern ist erforderlich.
+Der Befehl verwendet das verbundene Gerät und den ausgewählten Experimentordner. Er erstellt den vollständigen Plan, öffnet das Teilnehmerfenster, schaltet es auf dem aktuellen Monitor in den Vollbildmodus und beginnt die echte Aufnahme. Bei OSCAR wird das Headset exklusiv an Python übergeben und auf die ersten gültigen bereinigten Samples gewartet. Erst danach startet der Countdown zusammen mit der Anfangsbaseline. Nach der Sitzung vor weiteren Gerätebefehlen erneut `open SERIENNUMMER` ausführen. Keine zusätzliche Eingabe von `record` oder Aufgabenmarkern ist erforderlich.
 
 Optional vor Sitzungsbeginn die Reihenfolge ändern:
 
@@ -106,6 +108,10 @@ session_20261019_143000.csv
 session_20261019_143000.csv.events.csv
 session_20261019_143000.csv.plan.csv
 session_20261019_143000.csv.session.json
+session_20261019_143000.csv.oscar.csv
+session_20261019_143000.csv.processing.json
+session_20261019_143000.csv.device.json
+session_20261019_143000.csv.worker.log
 ```
 
 Bei gleichen Zeitstempeln wird ein nummerierter Zusatz verwendet. Bestehende Dateien werden nicht überschrieben. Die pseudonyme Versuchsperson-ID wird aus dem ausgewählten Ordnernamen übernommen.
