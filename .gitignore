@@ -15,6 +15,16 @@ __pycache__/
 # Local Python environments (MNE, ML, REVE).
 .venv/
 .venv-*/
+venv/
+venv-*/
+env/
+ENV/
+
+# Local dependency/tool caches (also keep these outside cloud-synced folders).
+.cache/
+.tox/
+.nox/
+.ipynb_checkpoints/
 
 # Downloaded ML weights, caches, and fitted model parameters.
 /.ml-cache/
@@ -25,3 +35,13 @@ __pycache__/
 
 # macOS Finder metadata.
 .DS_Store
+._*
+.AppleDouble/
+.LSOverride
+
+# Cloud placeholder sidecars; ignoring these does not disable cloud syncing.
+*.icloud
+
+# Windows Explorer metadata.
+Thumbs.db
+Desktop.ini

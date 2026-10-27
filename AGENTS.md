@@ -19,6 +19,17 @@ Diese Regeln gelten für das gesamte Repository. Explizite Anweisungen des Nutze
 - Implementierten Stand, geplante Experimente und explorative ML-Piloten klar unterscheiden. Dokumentation nicht als Beleg für bereits validierte Funktionen behandeln.
 - Änderungen auf den Auftrag begrenzen und bestehende Architektur bevorzugen. Keine unabhängigen Refactorings, neuen Frameworks oder zusätzlichen Abhängigkeiten ohne konkreten Nutzen.
 
+## Lokale Ablage und Cloud-Synchronisation
+
+- Git-Repositories bevorzugt außerhalb synchronisierter Desktop-/Dokumente-Ordner ablegen, beispielsweise unter `~/Developer/EEGvsMEG`. Einen bestehenden Checkout nicht ohne Auftrag verschieben.
+- `.gitignore` verhindert Git-Commits, aber keine iCloud-/OneDrive-Synchronisation oder Auslagerung. Auch ignorierte virtuelle Umgebungen und Build-Verzeichnisse können deshalb tausende Cloud-Downloads verursachen.
+- Neue Python-Umgebungen, Modell-Caches und größere Build-Verzeichnisse möglichst außerhalb des synchronisierten Checkouts anlegen. Bestehende Umgebungen nicht einfach verschieben; bei Bedarf anhand der dokumentierten Abhängigkeiten neu erstellen.
+- Wenn Git oder Dateizugriffe ungewöhnlich lange ohne Fortschritt warten, früh auf Cloud-Platzhalter prüfen (macOS: `ls -lO PFAD`, Kennzeichen `dataless`). Freien Speicher und den konkreten blockierenden Prozess prüfen, statt wiederholt dieselbe Operation zu starten.
+- Benötigte Dateien einschließlich `.git` gezielt herunterladen; bei einem weiterhin synchronisierten Checkout im Finder „Keep Downloaded“ aktivieren. Einen Download erst als abgeschlossen melden, wenn die benötigten Dateien tatsächlich lokal lesbar sind. Hintergrunddownloads und erfolgreich abgeschlossene Git-Operationen getrennt benennen.
+- Keine Git-Objekte oder internen Codex-Referenzen löschen, ersetzen oder manuell rekonstruieren, um Cloud-Wartezeiten zu umgehen. Keine parallelen Commit-/Push-Versuche starten; blockierte eigene Prozesse vor einem erneuten Versuch kontrolliert beenden.
+- Keine iCloud-Abmeldung, Cache-Löschung oder Änderung der systemweiten Synchronisation als beiläufigen Reparaturschritt durchführen. Bei ausbleibendem Download den konkreten Blocker zeitnah melden.
+- Nach einem ausdrücklich beauftragten Push den Remote-Commit prüfen. Ein lokaler Commit oder ein gestarteter Upload allein bestätigt keinen erfolgreichen Push.
+
 ## Aufnahme und wissenschaftliche Datenintegrität
 
 - Originalaufnahmen unverändert erhalten. Filter, Zentrierung, Referenzierung und Artefaktbehandlung auf Kopien beziehungsweise als klar gekennzeichnete Verarbeitung ausführen. Exporte dürfen Quelldateien nicht überschreiben.
