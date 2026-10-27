@@ -14,6 +14,14 @@ Geprüft am 27.10.2026. OSCAR ist noch **nicht in der Pipeline aktiv**.
 
 Einen von g.tec unterstützten Authentifizierungsweg für die direkte Python-Nutzung klären oder den offiziellen g.Pype-Workflow mit freigeschaltetem OSCAR einsetzen. Schlüssel nicht ins Repository oder in Chat-Nachrichten schreiben. Nach geklärtem Zugang müssen zuerst Einheiten, Array-Ausrichtung, Blockgrößen, Ausgabebedeutung sowie Anlauf- und Verzögerungsverhalten mit dem echten Paket geprüft werden.
 
+## Prüfung der lokal ergänzten Unicorn Python API
+
+Das Paket liegt unter `gtec_PythonAPI/Unicorn Python/` (geprüfter Ausgangscommit: `85d5752`). Die beiden Acquisition-Beispiele importieren `UnicornPy` und verwenden Geräteerkennung, Konfiguration, `StartAcquisition`, `GetData` und `StopAcquisition`. In den mitgelieferten Textdateien ist kein OSCAR-Aufruf und keine OSCAR-Konfiguration enthalten. Daraus folgt keine Aussage über andere, nicht mitgelieferte SDK-Versionen.
+
+Im eingecheckten Paket fehlt die Implementierung des importierten Moduls `UnicornPy`: Es enthält weder eine entsprechende Python-Datei noch eine `.pyd`-Erweiterung oder ein Wheel. Die Visual-Studio-Projekte setzen ihren Suchpfad auf `Lib`, dort liegen jedoch nur die Lizenzdatei und drei DLLs. `file` identifiziert alle drei DLLs als Windows-x86-64-Binärdateien; sie sind hier unter macOS nicht direkt ausführbar. Ein Windows-Hardwaretest wurde nicht durchgeführt.
+
+Der vorhandene Schlüssel gilt laut Nutzer für die **Unicorn Python API**. Seine Gültigkeit für `gtec_oscar.authenticate` ist nicht belegt. Der Schlüssel wurde weder angefordert noch getestet. Für die weitere Integration werden die vollständige Python-Modulinstallation samt API-Dokumentation und ein bestätigter OSCAR-Zugangsweg benötigt. Die vorhandenen Acquisition-Beispiele allein lösen die OSCAR-Authentifizierungsblockade nicht.
+
 ## Geplanter erster Einbau
 
 OSCAR zunächst optional auf einer Kopie gespeicherter Aufnahmen anwenden, bevor Anzeige-Filter laufen. Beide Viewer sollen denselben Adapter nutzen. Roh-CSV und Ereignisdatei bleiben erhalten. Korrigierte Signale müssen eindeutig als OSCAR-Ausgabe gekennzeichnet werden.
