@@ -1,0 +1,8 @@
+{
+  "repository": "https://github.com/wjq-learning/CBraMod",
+  "commit": "b9e961003214326972c567eff390e75b0287e32a",
+  "files": ["models/cbramod.py", "models/criss_cross_transformer.py", "LICENSE"],
+  "modifications": "Changed cbramod.py import to package-relative; otherwise upstream source.",
+  "weights_repository": "weighting666/CBraMod",
+  "weights_file": "pretrained_weights.pth"
+}

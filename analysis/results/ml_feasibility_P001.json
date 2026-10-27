@@ -1,0 +1,290 @@
+{
+  "recording": "/Users/theoa/Desktop/Projects/recordings/P-001/session_20261021_194704.csv",
+  "participant": "P-001",
+  "samples": 574425,
+  "duration_seconds": 2297.7,
+  "sample_index_contiguous": true,
+  "nonfinite_eeg_values": 0,
+  "validation_counts": {
+    "1": 574425
+  },
+  "zero_fraction_by_eeg_channel": {
+    "EEG 1": 0.0,
+    "EEG 2": 0.0,
+    "EEG 3": 0.0,
+    "EEG 4": 0.0,
+    "EEG 5": 0.0,
+    "EEG 6": 0.0,
+    "EEG 7": 0.0,
+    "EEG 8": 0.0
+  },
+  "task_duration_range_s": [
+    3.9,
+    10.1
+  ],
+  "skipped": 0,
+  "method": "Fixed ridge penalty=10, training-fold standardization; leave-one-block-out; 3s epochs; 199 label permutations within blocks (cognitive: within trial pairs). Exploratory, no multiplicity correction.",
+  "results": {
+    "Motorik": {
+      "eeg": {
+        "n": 60,
+        "classes": [
+          "arms",
+          "blink",
+          "legs"
+        ],
+        "balanced_accuracy": 0.6666666666666666,
+        "fold_balanced_accuracy": [
+          0.9333333333333332,
+          0.6,
+          0.4666666666666666,
+          0.6666666666666666
+        ],
+        "confusion_true_rows": [
+          [
+            13,
+            0,
+            7
+          ],
+          [
+            2,
+            14,
+            4
+          ],
+          [
+            3,
+            4,
+            13
+          ]
+        ],
+        "permutation_p_exploratory": 0.005,
+        "permutations": 199
+      },
+      "imu": {
+        "n": 60,
+        "classes": [
+          "arms",
+          "blink",
+          "legs"
+        ],
+        "balanced_accuracy": 0.9666666666666667,
+        "fold_balanced_accuracy": [
+          0.9333333333333332,
+          1.0,
+          0.9333333333333332,
+          1.0
+        ],
+        "confusion_true_rows": [
+          [
+            20,
+            0,
+            0
+          ],
+          [
+            0,
+            20,
+            0
+          ],
+          [
+            1,
+            1,
+            18
+          ]
+        ],
+        "permutation_p_exploratory": 0.005,
+        "permutations": 199
+      },
+      "time": {
+        "n": 60,
+        "classes": [
+          "arms",
+          "blink",
+          "legs"
+        ],
+        "balanced_accuracy": 0.3333333333333333,
+        "fold_balanced_accuracy": [
+          0.3333333333333333,
+          0.3333333333333333,
+          0.3333333333333333,
+          0.3333333333333333
+        ],
+        "confusion_true_rows": [
+          [
+            10,
+            10,
+            0
+          ],
+          [
+            10,
+            10,
+            0
+          ],
+          [
+            10,
+            10,
+            0
+          ]
+        ],
+        "permutation_p_exploratory": 1.0,
+        "permutations": 199
+      }
+    },
+    "Imagery": {
+      "eeg": {
+        "n": 40,
+        "classes": [
+          "imagine_arms",
+          "imagine_legs"
+        ],
+        "balanced_accuracy": 0.47500000000000003,
+        "fold_balanced_accuracy": [
+          0.7,
+          0.2,
+          0.5,
+          0.5
+        ],
+        "confusion_true_rows": [
+          [
+            8,
+            12
+          ],
+          [
+            9,
+            11
+          ]
+        ],
+        "permutation_p_exploratory": 0.615,
+        "permutations": 199
+      },
+      "imu": {
+        "n": 40,
+        "classes": [
+          "imagine_arms",
+          "imagine_legs"
+        ],
+        "balanced_accuracy": 0.525,
+        "fold_balanced_accuracy": [
+          0.5,
+          0.5,
+          0.5,
+          0.6000000000000001
+        ],
+        "confusion_true_rows": [
+          [
+            4,
+            16
+          ],
+          [
+            3,
+            17
+          ]
+        ],
+        "permutation_p_exploratory": 0.34,
+        "permutations": 199
+      },
+      "time": {
+        "n": 40,
+        "classes": [
+          "imagine_arms",
+          "imagine_legs"
+        ],
+        "balanced_accuracy": 0.5,
+        "fold_balanced_accuracy": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "confusion_true_rows": [
+          [
+            10,
+            10
+          ],
+          [
+            10,
+            10
+          ]
+        ],
+        "permutation_p_exploratory": 1.0,
+        "permutations": 199
+      }
+    },
+    "Kognitiv": {
+      "eeg": {
+        "n": 24,
+        "classes": [
+          "mental_arithmetic",
+          "rest"
+        ],
+        "balanced_accuracy": 0.5833333333333334,
+        "fold_balanced_accuracy": [
+          0.5,
+          0.625,
+          0.625
+        ],
+        "confusion_true_rows": [
+          [
+            7,
+            5
+          ],
+          [
+            5,
+            7
+          ]
+        ],
+        "permutation_p_exploratory": 0.265,
+        "permutations": 199
+      },
+      "imu": {
+        "n": 24,
+        "classes": [
+          "mental_arithmetic",
+          "rest"
+        ],
+        "balanced_accuracy": 0.45833333333333337,
+        "fold_balanced_accuracy": [
+          0.5,
+          0.25,
+          0.625
+        ],
+        "confusion_true_rows": [
+          [
+            5,
+            7
+          ],
+          [
+            6,
+            6
+          ]
+        ],
+        "permutation_p_exploratory": 0.705,
+        "permutations": 199
+      },
+      "time": {
+        "n": 24,
+        "classes": [
+          "mental_arithmetic",
+          "rest"
+        ],
+        "balanced_accuracy": 0.5,
+        "fold_balanced_accuracy": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "confusion_true_rows": [
+          [
+            6,
+            6
+          ],
+          [
+            6,
+            6
+          ]
+        ],
+        "permutation_p_exploratory": 1.0,
+        "permutations": 199
+      }
+    }
+  }
+}

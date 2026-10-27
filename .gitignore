@@ -8,9 +8,20 @@
 *.vcxproj.user
 __pycache__/
 *.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
-# Local Python environment
-.venv-mne/
+# Local Python environments (MNE, ML, REVE).
+.venv/
+.venv-*/
 
-# Local Python environment
-.venv-mne/
+# Downloaded ML weights, caches, and fitted model parameters.
+/.ml-cache/
+/analysis/results/**/checkpoints/
+
+# Intermediate presentation renders and build files.
+/.presentation-build/
+
+# macOS Finder metadata.
+.DS_Store

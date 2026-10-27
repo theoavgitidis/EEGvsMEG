@@ -1,0 +1,2754 @@
+{
+  "Motorik": {
+    "bandpower_original": {
+      "balanced_accuracy": 0.6666666666666666,
+      "macro_f1": 0.6706539074960127,
+      "confusion_true_rows": [
+        [
+          13,
+          0,
+          7
+        ],
+        [
+          2,
+          14,
+          4
+        ],
+        [
+          3,
+          4,
+          13
+        ]
+      ],
+      "classes": [
+        "arms",
+        "blink",
+        "legs"
+      ],
+      "n_windows": 60,
+      "folds": [
+        {
+          "test_block": 1,
+          "balanced_accuracy": 0.9333333333333332,
+          "macro_f1": 0.9326599326599326,
+          "confusion_true_rows": [
+            [
+              4,
+              0,
+              1
+            ],
+            [
+              0,
+              5,
+              0
+            ],
+            [
+              0,
+              0,
+              5
+            ]
+          ],
+          "classes": [
+            "arms",
+            "blink",
+            "legs"
+          ],
+          "n_windows": 15
+        },
+        {
+          "test_block": 2,
+          "balanced_accuracy": 0.6,
+          "macro_f1": 0.594017094017094,
+          "confusion_true_rows": [
+            [
+              4,
+              0,
+              1
+            ],
+            [
+              2,
+              3,
+              0
+            ],
+            [
+              2,
+              1,
+              2
+            ]
+          ],
+          "classes": [
+            "arms",
+            "blink",
+            "legs"
+          ],
+          "n_windows": 15
+        },
+        {
+          "test_block": 3,
+          "balanced_accuracy": 0.4666666666666666,
+          "macro_f1": 0.48340548340548334,
+          "confusion_true_rows": [
+            [
+              2,
+              0,
+              3
+            ],
+            [
+              0,
+              3,
+              2
+            ],
+            [
+              0,
+              3,
+              2
+            ]
+          ],
+          "classes": [
+            "arms",
+            "blink",
+            "legs"
+          ],
+          "n_windows": 15
+        },
+        {
+          "test_block": 4,
+          "balanced_accuracy": 0.6666666666666666,
+          "macro_f1": 0.6773504273504273,
+          "confusion_true_rows": [
+            [
+              3,
+              0,
+              2
+            ],
+            [
+              0,
+              3,
+              2
+            ],
+            [
+              1,
+              0,
+              4
+            ]
+          ],
+          "classes": [
+            "arms",
+            "blink",
+            "legs"
+          ],
+          "n_windows": 15
+        }
+      ]
+    },
+    "bandpower_matched": {
+      "balanced_accuracy": 0.6666666666666666,
+      "macro_f1": 0.6644110275689223,
+      "confusion_true_rows": [
+        [
+          11,
+          5,
+          4
+        ],
+        [
+          3,
+          15,
+          2
+        ],
+        [
+          4,
+          2,
+          14
+        ]
+      ],
+      "classes": [
+        "arms",
+        "blink",
+        "legs"
+      ],
+      "n_windows": 60,
+      "folds": [
+        {
+          "test_block": 1,
+          "balanced_accuracy": 0.6,
+          "macro_f1": 0.6032763532763533,
+          "confusion_true_rows": [
+            [
+              2,
+              0,
+              3
+            ],
+            [
+              1,
+              3,
+              1
+            ],
+            [
+              1,
+              0,
+              4
+            ]
+          ],
+          "classes": [
+            "arms",
+            "blink",
+            "legs"
+          ],
+          "n_windows": 15
+        },
+        {
+          "test_block": 2,
+          "balanced_accuracy": 0.6666666666666666,
+          "macro_f1": 0.6773504273504273,
+          "confusion_true_rows": [
+            [
+              4,
+              0,
+              1
+            ],
+            [
+              2,
+              3,
+              0
+            ],
+            [
+              2,
+              0,
+              3
+            ]
+          ],
+          "classes": [
+            "arms",
+            "blink",
+            "legs"
+          ],
+          "n_windows": 15
+        },
+        {
+          "test_block": 3,
+          "balanced_accuracy": 0.8666666666666667,
+          "macro_f1": 0.865993265993266,
+          "confusion_true_rows": [
+            [
+              4,
+              1,
+              0
+            ],
+            [
+              0,
+              4,
+              1
+            ],
+            [
+              0,
+              0,
+              5
+            ]
+          ],
+          "classes": [
+            "arms",
+            "blink",
+            "legs"
+          ],
+          "n_windows": 15
+        },
+        {
+          "test_block": 4,
+          "balanced_accuracy": 0.5333333333333333,
+          "macro_f1": 0.49404761904761907,
+          "confusion_true_rows": [
+            [
+              1,
+              4,
+              0
+            ],
+            [
+              0,
+              5,
+              0
+            ],
+            [
+              1,
+              2,
+              2
+            ]
+          ],
+          "classes": [
+            "arms",
+            "blink",
+            "legs"
+          ],
+          "n_windows": 15
+        }
+      ]
+    },
+    "frozen_encoder": {
+      "mean_balanced_accuracy": 0.55,
+      "min_balanced_accuracy": 0.44999999999999996,
+      "max_balanced_accuracy": 0.6333333333333333,
+      "seeds": [
+        {
+          "seed": 11,
+          "balanced_accuracy": 0.6333333333333333,
+          "macro_f1": 0.6279939550104918,
+          "confusion_true_rows": [
+            [
+              9,
+              5,
+              6
+            ],
+            [
+              1,
+              14,
+              5
+            ],
+            [
+              1,
+              4,
+              15
+            ]
+          ],
+          "classes": [
+            "arms",
+            "blink",
+            "legs"
+          ],
+          "n_windows": 60,
+          "folds": [
+            {
+              "test_block": 1,
+              "balanced_accuracy": 0.4666666666666666,
+              "macro_f1": 0.4686609686609686,
+              "confusion_true_rows": [
+                [
+                  2,
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2,
+                  3
+                ],
+                [
+                  1,
+                  1,
+                  3
+                ]
+              ],
+              "classes": [
+                "arms",
+                "blink",
+                "legs"
+              ],
+              "n_windows": 15
+            },
+            {
+              "test_block": 2,
+              "balanced_accuracy": 0.7999999999999999,
+              "macro_f1": 0.7944444444444444,
+              "confusion_true_rows": [
+                [
+                  4,
+                  0,
+                  1
+                ],
+                [
+                  1,
+                  3,
+                  1
+                ],
+                [
+                  0,
+                  0,
+                  5
+                ]
+              ],
+              "classes": [
+                "arms",
+                "blink",
+                "legs"
+              ],
+              "n_windows": 15
+            },
+            {
+              "test_block": 3,
+              "balanced_accuracy": 0.6,
+              "macro_f1": 0.5555555555555555,
+              "confusion_true_rows": [
+                [
+                  1,
+                  2,
+                  2
+                ],
+                [
+                  0,
+                  4,
+                  1
+                ],
+                [
+                  0,
+                  1,
+                  4
+                ]
+              ],
+              "classes": [
+                "arms",
+                "blink",
+                "legs"
+              ],
+              "n_windows": 15
+            },
+            {
+              "test_block": 4,
+              "balanced_accuracy": 0.6666666666666666,
+              "macro_f1": 0.6507936507936507,
+              "confusion_true_rows": [
+                [
+                  2,
+                  2,
+                  1
+                ],
+                [
+                  0,
+                  5,
+                  0
+                ],
+                [
+                  0,
+                  2,
+                  3
+                ]
+              ],
+              "classes": [
+                "arms",
+                "blink",
+                "legs"
+              ],
+              "n_windows": 15
+            }
+          ],
+          "selected_epochs": [
+            20,
+            16,
+            10,
+            20
+          ]
+        },
+        {
+          "seed": 22,
+          "balanced_accuracy": 0.5666666666666668,
+          "macro_f1": 0.5656824989302525,
+          "confusion_true_rows": [
+            [
+              13,
+              4,
+              3
+            ],
+            [
+              4,
+              11,
+              5
+            ],
+            [
+              4,
+              6,
+              10
+            ]
+          ],
+          "classes": [
+            "arms",
+            "blink",
+            "legs"
+          ],
+          "n_windows": 60,
+          "folds": [
+            {
+              "test_block": 1,
+              "balanced_accuracy": 0.39999999999999997,
+              "macro_f1": 0.3966329966329966,
+              "confusion_true_rows": [
+                [
+                  3,
+                  1,
+                  1
+                ],
+                [
+                  0,
+                  2,
+                  3
+                ],
+                [
+                  3,
+                  1,
+                  1
+                ]
+              ],
+              "classes": [
+                "arms",
+                "blink",
+                "legs"
+              ],
+              "n_windows": 15
+            },
+            {
+              "test_block": 2,
+              "balanced_accuracy": 0.6666666666666666,
+              "macro_f1": 0.6158730158730159,
+              "confusion_true_rows": [
+                [
+                  5,
+                  0,
+                  0
+                ],
+                [
+                  3,
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  0,
+                  4
+                ]
+              ],
+              "classes": [
+                "arms",
+                "blink",
+                "legs"
+              ],
+              "n_windows": 15
+            },
+            {
+              "test_block": 3,
+              "balanced_accuracy": 0.5333333333333333,
+              "macro_f1": 0.537037037037037,
+              "confusion_true_rows": [
+                [
+                  3,
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  3,
+                  1
+                ],
+                [
+                  0,
+                  3,
+                  2
+                ]
+              ],
+              "classes": [
+                "arms",
+                "blink",
+                "legs"
+              ],
+              "n_windows": 15
+            },
+            {
+              "test_block": 4,
+              "balanced_accuracy": 0.6666666666666666,
+              "macro_f1": 0.6507936507936507,
+              "confusion_true_rows": [
+                [
+                  2,
+                  2,
+                  1
+                ],
+                [
+                  0,
+                  5,
+                  0
+                ],
+                [
+                  0,
+                  2,
+                  3
+                ]
+              ],
+              "classes": [
+                "arms",
+                "blink",
+                "legs"
+              ],
+              "n_windows": 15
+            }
+          ],
+          "selected_epochs": [
+            19,
+            14,
+            15,
+            17
+          ]
+        },
+        {
+          "seed": 33,
+          "balanced_accuracy": 0.44999999999999996,
+          "macro_f1": 0.42692277816616175,
+          "confusion_true_rows": [
+            [
+              14,
+              3,
+              3
+            ],
+            [
+              7,
+              9,
+              4
+            ],
+            [
+              10,
+              6,
+              4
+            ]
+          ],
+          "classes": [
+            "arms",
+            "blink",
+            "legs"
+          ],
+          "n_windows": 60,
+          "folds": [
+            {
+              "test_block": 1,
+              "balanced_accuracy": 0.4000000000000001,
+              "macro_f1": 0.4074074074074074,
+              "confusion_true_rows": [
+                [
+                  2,
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2,
+                  3
+                ],
+                [
+                  2,
+                  1,
+                  2
+                ]
+              ],
+              "classes": [
+                "arms",
+                "blink",
+                "legs"
+              ],
+              "n_windows": 15
+            },
+            {
+              "test_block": 2,
+              "balanced_accuracy": 0.6666666666666666,
+              "macro_f1": 0.6158730158730158,
+              "confusion_true_rows": [
+                [
+                  5,
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  4,
+                  0
+                ],
+                [
+                  3,
+                  1,
+                  1
+                ]
+              ],
+              "classes": [
+                "arms",
+                "blink",
+                "legs"
+              ],
+              "n_windows": 15
+            },
+            {
+              "test_block": 3,
+              "balanced_accuracy": 0.39999999999999997,
+              "macro_f1": 0.39285714285714285,
+              "confusion_true_rows": [
+                [
+                  2,
+                  2,
+                  1
+                ],
+                [
+                  1,
+                  3,
+                  1
+                ],
+                [
+                  0,
+                  4,
+                  1
+                ]
+              ],
+              "classes": [
+                "arms",
+                "blink",
+                "legs"
+              ],
+              "n_windows": 15
+            },
+            {
+              "test_block": 4,
+              "balanced_accuracy": 0.3333333333333333,
+              "macro_f1": 0.16666666666666666,
+              "confusion_true_rows": [
+                [
+                  5,
+                  0,
+                  0
+                ],
+                [
+                  5,
+                  0,
+                  0
+                ],
+                [
+                  5,
+                  0,
+                  0
+                ]
+              ],
+              "classes": [
+                "arms",
+                "blink",
+                "legs"
+              ],
+              "n_windows": 15
+            }
+          ],
+          "selected_epochs": [
+            20,
+            19,
+            12,
+            4
+          ]
+        }
+      ]
+    },
+    "finetune_last_block": {
+      "mean_balanced_accuracy": 0.5666666666666668,
+      "min_balanced_accuracy": 0.5333333333333333,
+      "max_balanced_accuracy": 0.5833333333333334,
+      "seeds": [
+        {
+          "seed": 11,
+          "balanced_accuracy": 0.5833333333333334,
+          "macro_f1": 0.5808747412008282,
+          "confusion_true_rows": [
+            [
+              9,
+              6,
+              5
+            ],
+            [
+              1,
+              14,
+              5
+            ],
+            [
+              2,
+              6,
+              12
+            ]
+          ],
+          "classes": [
+            "arms",
+            "blink",
+            "legs"
+          ],
+          "n_windows": 60,
+          "folds": [
+            {
+              "test_block": 1,
+              "balanced_accuracy": 0.4666666666666666,
+              "macro_f1": 0.4686609686609686,
+              "confusion_true_rows": [
+                [
+                  2,
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2,
+                  3
+                ],
+                [
+                  1,
+                  1,
+                  3
+                ]
+              ],
+              "classes": [
+                "arms",
+                "blink",
+                "legs"
+              ],
+              "n_windows": 15
+            },
+            {
+              "test_block": 2,
+              "balanced_accuracy": 0.7999999999999999,
+              "macro_f1": 0.7944444444444444,
+              "confusion_true_rows": [
+                [
+                  4,
+                  0,
+                  1
+                ],
+                [
+                  1,
+                  3,
+                  1
+                ],
+                [
+                  0,
+                  0,
+                  5
+                ]
+              ],
+              "classes": [
+                "arms",
+                "blink",
+                "legs"
+              ],
+              "n_windows": 15
+            },
+            {
+              "test_block": 3,
+              "balanced_accuracy": 0.5333333333333333,
+              "macro_f1": 0.5015873015873016,
+              "confusion_true_rows": [
+                [
+                  1,
+                  3,
+                  1
+                ],
+                [
+                  0,
+                  4,
+                  1
+                ],
+                [
+                  0,
+                  2,
+                  3
+                ]
+              ],
+              "classes": [
+                "arms",
+                "blink",
+                "legs"
+              ],
+              "n_windows": 15
+            },
+            {
+              "test_block": 4,
+              "balanced_accuracy": 0.5333333333333333,
+              "macro_f1": 0.484126984126984,
+              "confusion_true_rows": [
+                [
+                  2,
+                  2,
+                  1
+                ],
+                [
+                  0,
+                  5,
+                  0
+                ],
+                [
+                  1,
+                  3,
+                  1
+                ]
+              ],
+              "classes": [
+                "arms",
+                "blink",
+                "legs"
+              ],
+              "n_windows": 15
+            }
+          ],
+          "selected_epochs": [
+            19,
+            20,
+            11,
+            19
+          ]
+        },
+        {
+          "seed": 22,
+          "balanced_accuracy": 0.5333333333333333,
+          "macro_f1": 0.5294086279528608,
+          "confusion_true_rows": [
+            [
+              10,
+              5,
+              5
+            ],
+            [
+              1,
+              14,
+              5
+            ],
+            [
+              4,
+              8,
+              8
+            ]
+          ],
+          "classes": [
+            "arms",
+            "blink",
+            "legs"
+          ],
+          "n_windows": 60,
+          "folds": [
+            {
+              "test_block": 1,
+              "balanced_accuracy": 0.3333333333333333,
+              "macro_f1": 0.34208754208754205,
+              "confusion_true_rows": [
+                [
+                  2,
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2,
+                  3
+                ],
+                [
+                  3,
+                  1,
+                  1
+                ]
+              ],
+              "classes": [
+                "arms",
+                "blink",
+                "legs"
+              ],
+              "n_windows": 15
+            },
+            {
+              "test_block": 2,
+              "balanced_accuracy": 0.7333333333333334,
+              "macro_f1": 0.7106782106782106,
+              "confusion_true_rows": [
+                [
+                  5,
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  4,
+                  0
+                ],
+                [
+                  1,
+                  2,
+                  2
+                ]
+              ],
+              "classes": [
+                "arms",
+                "blink",
+                "legs"
+              ],
+              "n_windows": 15
+            },
+            {
+              "test_block": 3,
+              "balanced_accuracy": 0.4000000000000001,
+              "macro_f1": 0.3861693861693862,
+              "confusion_true_rows": [
+                [
+                  1,
+                  2,
+                  2
+                ],
+                [
+                  0,
+                  3,
+                  2
+                ],
+                [
+                  0,
+                  3,
+                  2
+                ]
+              ],
+              "classes": [
+                "arms",
+                "blink",
+                "legs"
+              ],
+              "n_windows": 15
+            },
+            {
+              "test_block": 4,
+              "balanced_accuracy": 0.6666666666666666,
+              "macro_f1": 0.6507936507936507,
+              "confusion_true_rows": [
+                [
+                  2,
+                  2,
+                  1
+                ],
+                [
+                  0,
+                  5,
+                  0
+                ],
+                [
+                  0,
+                  2,
+                  3
+                ]
+              ],
+              "classes": [
+                "arms",
+                "blink",
+                "legs"
+              ],
+              "n_windows": 15
+            }
+          ],
+          "selected_epochs": [
+            19,
+            19,
+            17,
+            18
+          ]
+        },
+        {
+          "seed": 33,
+          "balanced_accuracy": 0.5833333333333334,
+          "macro_f1": 0.5848021934978457,
+          "confusion_true_rows": [
+            [
+              12,
+              3,
+              5
+            ],
+            [
+              2,
+              10,
+              8
+            ],
+            [
+              3,
+              4,
+              13
+            ]
+          ],
+          "classes": [
+            "arms",
+            "blink",
+            "legs"
+          ],
+          "n_windows": 60,
+          "folds": [
+            {
+              "test_block": 1,
+              "balanced_accuracy": 0.4000000000000001,
+              "macro_f1": 0.4074074074074074,
+              "confusion_true_rows": [
+                [
+                  2,
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2,
+                  3
+                ],
+                [
+                  2,
+                  1,
+                  2
+                ]
+              ],
+              "classes": [
+                "arms",
+                "blink",
+                "legs"
+              ],
+              "n_windows": 15
+            },
+            {
+              "test_block": 2,
+              "balanced_accuracy": 0.6666666666666666,
+              "macro_f1": 0.6444444444444445,
+              "confusion_true_rows": [
+                [
+                  5,
+                  0,
+                  0
+                ],
+                [
+                  1,
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  1,
+                  3
+                ]
+              ],
+              "classes": [
+                "arms",
+                "blink",
+                "legs"
+              ],
+              "n_windows": 15
+            },
+            {
+              "test_block": 3,
+              "balanced_accuracy": 0.5333333333333333,
+              "macro_f1": 0.5291005291005291,
+              "confusion_true_rows": [
+                [
+                  2,
+                  1,
+                  2
+                ],
+                [
+                  0,
+                  2,
+                  3
+                ],
+                [
+                  0,
+                  1,
+                  4
+                ]
+              ],
+              "classes": [
+                "arms",
+                "blink",
+                "legs"
+              ],
+              "n_windows": 15
+            },
+            {
+              "test_block": 4,
+              "balanced_accuracy": 0.7333333333333334,
+              "macro_f1": 0.7313131313131315,
+              "confusion_true_rows": [
+                [
+                  3,
+                  1,
+                  1
+                ],
+                [
+                  1,
+                  4,
+                  0
+                ],
+                [
+                  0,
+                  1,
+                  4
+                ]
+              ],
+              "classes": [
+                "arms",
+                "blink",
+                "legs"
+              ],
+              "n_windows": 15
+            }
+          ],
+          "selected_epochs": [
+            20,
+            18,
+            14,
+            3
+          ]
+        }
+      ]
+    }
+  },
+  "Imagery": {
+    "bandpower_original": {
+      "balanced_accuracy": 0.47500000000000003,
+      "macro_f1": 0.47203016970458833,
+      "confusion_true_rows": [
+        [
+          8,
+          12
+        ],
+        [
+          9,
+          11
+        ]
+      ],
+      "classes": [
+        "imagine_arms",
+        "imagine_legs"
+      ],
+      "n_windows": 40,
+      "folds": [
+        {
+          "test_block": 1,
+          "balanced_accuracy": 0.7,
+          "macro_f1": 0.696969696969697,
+          "confusion_true_rows": [
+            [
+              3,
+              2
+            ],
+            [
+              1,
+              4
+            ]
+          ],
+          "classes": [
+            "imagine_arms",
+            "imagine_legs"
+          ],
+          "n_windows": 10
+        },
+        {
+          "test_block": 2,
+          "balanced_accuracy": 0.2,
+          "macro_f1": 0.16666666666666666,
+          "confusion_true_rows": [
+            [
+              0,
+              5
+            ],
+            [
+              3,
+              2
+            ]
+          ],
+          "classes": [
+            "imagine_arms",
+            "imagine_legs"
+          ],
+          "n_windows": 10
+        },
+        {
+          "test_block": 3,
+          "balanced_accuracy": 0.5,
+          "macro_f1": 0.4949494949494949,
+          "confusion_true_rows": [
+            [
+              2,
+              3
+            ],
+            [
+              2,
+              3
+            ]
+          ],
+          "classes": [
+            "imagine_arms",
+            "imagine_legs"
+          ],
+          "n_windows": 10
+        },
+        {
+          "test_block": 4,
+          "balanced_accuracy": 0.5,
+          "macro_f1": 0.4949494949494949,
+          "confusion_true_rows": [
+            [
+              3,
+              2
+            ],
+            [
+              3,
+              2
+            ]
+          ],
+          "classes": [
+            "imagine_arms",
+            "imagine_legs"
+          ],
+          "n_windows": 10
+        }
+      ]
+    },
+    "bandpower_matched": {
+      "balanced_accuracy": 0.625,
+      "macro_f1": 0.6228786926461345,
+      "confusion_true_rows": [
+        [
+          11,
+          9
+        ],
+        [
+          6,
+          14
+        ]
+      ],
+      "classes": [
+        "imagine_arms",
+        "imagine_legs"
+      ],
+      "n_windows": 40,
+      "folds": [
+        {
+          "test_block": 1,
+          "balanced_accuracy": 0.6000000000000001,
+          "macro_f1": 0.5833333333333333,
+          "confusion_true_rows": [
+            [
+              2,
+              3
+            ],
+            [
+              1,
+              4
+            ]
+          ],
+          "classes": [
+            "imagine_arms",
+            "imagine_legs"
+          ],
+          "n_windows": 10
+        },
+        {
+          "test_block": 2,
+          "balanced_accuracy": 0.5,
+          "macro_f1": 0.4949494949494949,
+          "confusion_true_rows": [
+            [
+              2,
+              3
+            ],
+            [
+              2,
+              3
+            ]
+          ],
+          "classes": [
+            "imagine_arms",
+            "imagine_legs"
+          ],
+          "n_windows": 10
+        },
+        {
+          "test_block": 3,
+          "balanced_accuracy": 0.8,
+          "macro_f1": 0.8,
+          "confusion_true_rows": [
+            [
+              4,
+              1
+            ],
+            [
+              1,
+              4
+            ]
+          ],
+          "classes": [
+            "imagine_arms",
+            "imagine_legs"
+          ],
+          "n_windows": 10
+        },
+        {
+          "test_block": 4,
+          "balanced_accuracy": 0.6,
+          "macro_f1": 0.6,
+          "confusion_true_rows": [
+            [
+              3,
+              2
+            ],
+            [
+              2,
+              3
+            ]
+          ],
+          "classes": [
+            "imagine_arms",
+            "imagine_legs"
+          ],
+          "n_windows": 10
+        }
+      ]
+    },
+    "frozen_encoder": {
+      "mean_balanced_accuracy": 0.5416666666666666,
+      "min_balanced_accuracy": 0.5,
+      "max_balanced_accuracy": 0.575,
+      "seeds": [
+        {
+          "seed": 11,
+          "balanced_accuracy": 0.575,
+          "macro_f1": 0.5747342088805503,
+          "confusion_true_rows": [
+            [
+              12,
+              8
+            ],
+            [
+              9,
+              11
+            ]
+          ],
+          "classes": [
+            "imagine_arms",
+            "imagine_legs"
+          ],
+          "n_windows": 40,
+          "folds": [
+            {
+              "test_block": 1,
+              "balanced_accuracy": 0.7,
+              "macro_f1": 0.696969696969697,
+              "confusion_true_rows": [
+                [
+                  3,
+                  2
+                ],
+                [
+                  1,
+                  4
+                ]
+              ],
+              "classes": [
+                "imagine_arms",
+                "imagine_legs"
+              ],
+              "n_windows": 10
+            },
+            {
+              "test_block": 2,
+              "balanced_accuracy": 0.5,
+              "macro_f1": 0.3333333333333333,
+              "confusion_true_rows": [
+                [
+                  0,
+                  5
+                ],
+                [
+                  0,
+                  5
+                ]
+              ],
+              "classes": [
+                "imagine_arms",
+                "imagine_legs"
+              ],
+              "n_windows": 10
+            },
+            {
+              "test_block": 3,
+              "balanced_accuracy": 0.6,
+              "macro_f1": 0.5238095238095238,
+              "confusion_true_rows": [
+                [
+                  5,
+                  0
+                ],
+                [
+                  4,
+                  1
+                ]
+              ],
+              "classes": [
+                "imagine_arms",
+                "imagine_legs"
+              ],
+              "n_windows": 10
+            },
+            {
+              "test_block": 4,
+              "balanced_accuracy": 0.5,
+              "macro_f1": 0.45054945054945056,
+              "confusion_true_rows": [
+                [
+                  4,
+                  1
+                ],
+                [
+                  4,
+                  1
+                ]
+              ],
+              "classes": [
+                "imagine_arms",
+                "imagine_legs"
+              ],
+              "n_windows": 10
+            }
+          ],
+          "selected_epochs": [
+            20,
+            13,
+            2,
+            6
+          ]
+        },
+        {
+          "seed": 22,
+          "balanced_accuracy": 0.5,
+          "macro_f1": 0.4666666666666667,
+          "confusion_true_rows": [
+            [
+              5,
+              15
+            ],
+            [
+              5,
+              15
+            ]
+          ],
+          "classes": [
+            "imagine_arms",
+            "imagine_legs"
+          ],
+          "n_windows": 40,
+          "folds": [
+            {
+              "test_block": 1,
+              "balanced_accuracy": 0.6,
+              "macro_f1": 0.6,
+              "confusion_true_rows": [
+                [
+                  3,
+                  2
+                ],
+                [
+                  2,
+                  3
+                ]
+              ],
+              "classes": [
+                "imagine_arms",
+                "imagine_legs"
+              ],
+              "n_windows": 10
+            },
+            {
+              "test_block": 2,
+              "balanced_accuracy": 0.5,
+              "macro_f1": 0.45054945054945056,
+              "confusion_true_rows": [
+                [
+                  1,
+                  4
+                ],
+                [
+                  1,
+                  4
+                ]
+              ],
+              "classes": [
+                "imagine_arms",
+                "imagine_legs"
+              ],
+              "n_windows": 10
+            },
+            {
+              "test_block": 3,
+              "balanced_accuracy": 0.5,
+              "macro_f1": 0.3333333333333333,
+              "confusion_true_rows": [
+                [
+                  0,
+                  5
+                ],
+                [
+                  0,
+                  5
+                ]
+              ],
+              "classes": [
+                "imagine_arms",
+                "imagine_legs"
+              ],
+              "n_windows": 10
+            },
+            {
+              "test_block": 4,
+              "balanced_accuracy": 0.4,
+              "macro_f1": 0.375,
+              "confusion_true_rows": [
+                [
+                  1,
+                  4
+                ],
+                [
+                  2,
+                  3
+                ]
+              ],
+              "classes": [
+                "imagine_arms",
+                "imagine_legs"
+              ],
+              "n_windows": 10
+            }
+          ],
+          "selected_epochs": [
+            16,
+            12,
+            4,
+            10
+          ]
+        },
+        {
+          "seed": 33,
+          "balanced_accuracy": 0.55,
+          "macro_f1": 0.53125,
+          "confusion_true_rows": [
+            [
+              15,
+              5
+            ],
+            [
+              13,
+              7
+            ]
+          ],
+          "classes": [
+            "imagine_arms",
+            "imagine_legs"
+          ],
+          "n_windows": 40,
+          "folds": [
+            {
+              "test_block": 1,
+              "balanced_accuracy": 0.7,
+              "macro_f1": 0.696969696969697,
+              "confusion_true_rows": [
+                [
+                  4,
+                  1
+                ],
+                [
+                  2,
+                  3
+                ]
+              ],
+              "classes": [
+                "imagine_arms",
+                "imagine_legs"
+              ],
+              "n_windows": 10
+            },
+            {
+              "test_block": 2,
+              "balanced_accuracy": 0.6,
+              "macro_f1": 0.5238095238095238,
+              "confusion_true_rows": [
+                [
+                  5,
+                  0
+                ],
+                [
+                  4,
+                  1
+                ]
+              ],
+              "classes": [
+                "imagine_arms",
+                "imagine_legs"
+              ],
+              "n_windows": 10
+            },
+            {
+              "test_block": 3,
+              "balanced_accuracy": 0.5,
+              "macro_f1": 0.3333333333333333,
+              "confusion_true_rows": [
+                [
+                  5,
+                  0
+                ],
+                [
+                  5,
+                  0
+                ]
+              ],
+              "classes": [
+                "imagine_arms",
+                "imagine_legs"
+              ],
+              "n_windows": 10
+            },
+            {
+              "test_block": 4,
+              "balanced_accuracy": 0.4,
+              "macro_f1": 0.375,
+              "confusion_true_rows": [
+                [
+                  1,
+                  4
+                ],
+                [
+                  2,
+                  3
+                ]
+              ],
+              "classes": [
+                "imagine_arms",
+                "imagine_legs"
+              ],
+              "n_windows": 10
+            }
+          ],
+          "selected_epochs": [
+            17,
+            11,
+            1,
+            7
+          ]
+        }
+      ]
+    },
+    "finetune_last_block": {
+      "mean_balanced_accuracy": 0.5166666666666666,
+      "min_balanced_accuracy": 0.475,
+      "max_balanced_accuracy": 0.575,
+      "seeds": [
+        {
+          "seed": 11,
+          "balanced_accuracy": 0.5,
+          "macro_f1": 0.45054945054945056,
+          "confusion_true_rows": [
+            [
+              4,
+              16
+            ],
+            [
+              4,
+              16
+            ]
+          ],
+          "classes": [
+            "imagine_arms",
+            "imagine_legs"
+          ],
+          "n_windows": 40,
+          "folds": [
+            {
+              "test_block": 1,
+              "balanced_accuracy": 0.6,
+              "macro_f1": 0.6,
+              "confusion_true_rows": [
+                [
+                  3,
+                  2
+                ],
+                [
+                  2,
+                  3
+                ]
+              ],
+              "classes": [
+                "imagine_arms",
+                "imagine_legs"
+              ],
+              "n_windows": 10
+            },
+            {
+              "test_block": 2,
+              "balanced_accuracy": 0.5,
+              "macro_f1": 0.3333333333333333,
+              "confusion_true_rows": [
+                [
+                  0,
+                  5
+                ],
+                [
+                  0,
+                  5
+                ]
+              ],
+              "classes": [
+                "imagine_arms",
+                "imagine_legs"
+              ],
+              "n_windows": 10
+            },
+            {
+              "test_block": 3,
+              "balanced_accuracy": 0.5,
+              "macro_f1": 0.3333333333333333,
+              "confusion_true_rows": [
+                [
+                  0,
+                  5
+                ],
+                [
+                  0,
+                  5
+                ]
+              ],
+              "classes": [
+                "imagine_arms",
+                "imagine_legs"
+              ],
+              "n_windows": 10
+            },
+            {
+              "test_block": 4,
+              "balanced_accuracy": 0.4,
+              "macro_f1": 0.375,
+              "confusion_true_rows": [
+                [
+                  1,
+                  4
+                ],
+                [
+                  2,
+                  3
+                ]
+              ],
+              "classes": [
+                "imagine_arms",
+                "imagine_legs"
+              ],
+              "n_windows": 10
+            }
+          ],
+          "selected_epochs": [
+            15,
+            11,
+            1,
+            9
+          ]
+        },
+        {
+          "seed": 22,
+          "balanced_accuracy": 0.475,
+          "macro_f1": 0.4470046082949308,
+          "confusion_true_rows": [
+            [
+              5,
+              15
+            ],
+            [
+              6,
+              14
+            ]
+          ],
+          "classes": [
+            "imagine_arms",
+            "imagine_legs"
+          ],
+          "n_windows": 40,
+          "folds": [
+            {
+              "test_block": 1,
+              "balanced_accuracy": 0.5,
+              "macro_f1": 0.4949494949494949,
+              "confusion_true_rows": [
+                [
+                  3,
+                  2
+                ],
+                [
+                  3,
+                  2
+                ]
+              ],
+              "classes": [
+                "imagine_arms",
+                "imagine_legs"
+              ],
+              "n_windows": 10
+            },
+            {
+              "test_block": 2,
+              "balanced_accuracy": 0.5,
+              "macro_f1": 0.45054945054945056,
+              "confusion_true_rows": [
+                [
+                  1,
+                  4
+                ],
+                [
+                  1,
+                  4
+                ]
+              ],
+              "classes": [
+                "imagine_arms",
+                "imagine_legs"
+              ],
+              "n_windows": 10
+            },
+            {
+              "test_block": 3,
+              "balanced_accuracy": 0.5,
+              "macro_f1": 0.3333333333333333,
+              "confusion_true_rows": [
+                [
+                  0,
+                  5
+                ],
+                [
+                  0,
+                  5
+                ]
+              ],
+              "classes": [
+                "imagine_arms",
+                "imagine_legs"
+              ],
+              "n_windows": 10
+            },
+            {
+              "test_block": 4,
+              "balanced_accuracy": 0.4,
+              "macro_f1": 0.375,
+              "confusion_true_rows": [
+                [
+                  1,
+                  4
+                ],
+                [
+                  2,
+                  3
+                ]
+              ],
+              "classes": [
+                "imagine_arms",
+                "imagine_legs"
+              ],
+              "n_windows": 10
+            }
+          ],
+          "selected_epochs": [
+            18,
+            13,
+            5,
+            9
+          ]
+        },
+        {
+          "seed": 33,
+          "balanced_accuracy": 0.575,
+          "macro_f1": 0.5402298850574713,
+          "confusion_true_rows": [
+            [
+              17,
+              3
+            ],
+            [
+              14,
+              6
+            ]
+          ],
+          "classes": [
+            "imagine_arms",
+            "imagine_legs"
+          ],
+          "n_windows": 40,
+          "folds": [
+            {
+              "test_block": 1,
+              "balanced_accuracy": 0.7,
+              "macro_f1": 0.696969696969697,
+              "confusion_true_rows": [
+                [
+                  4,
+                  1
+                ],
+                [
+                  2,
+                  3
+                ]
+              ],
+              "classes": [
+                "imagine_arms",
+                "imagine_legs"
+              ],
+              "n_windows": 10
+            },
+            {
+              "test_block": 2,
+              "balanced_accuracy": 0.6,
+              "macro_f1": 0.6,
+              "confusion_true_rows": [
+                [
+                  3,
+                  2
+                ],
+                [
+                  2,
+                  3
+                ]
+              ],
+              "classes": [
+                "imagine_arms",
+                "imagine_legs"
+              ],
+              "n_windows": 10
+            },
+            {
+              "test_block": 3,
+              "balanced_accuracy": 0.5,
+              "macro_f1": 0.3333333333333333,
+              "confusion_true_rows": [
+                [
+                  5,
+                  0
+                ],
+                [
+                  5,
+                  0
+                ]
+              ],
+              "classes": [
+                "imagine_arms",
+                "imagine_legs"
+              ],
+              "n_windows": 10
+            },
+            {
+              "test_block": 4,
+              "balanced_accuracy": 0.5,
+              "macro_f1": 0.3333333333333333,
+              "confusion_true_rows": [
+                [
+                  5,
+                  0
+                ],
+                [
+                  5,
+                  0
+                ]
+              ],
+              "classes": [
+                "imagine_arms",
+                "imagine_legs"
+              ],
+              "n_windows": 10
+            }
+          ],
+          "selected_epochs": [
+            17,
+            15,
+            1,
+            6
+          ]
+        }
+      ]
+    }
+  },
+  "Kognitiv": {
+    "bandpower_original": {
+      "balanced_accuracy": 0.5833333333333334,
+      "macro_f1": 0.5833333333333334,
+      "confusion_true_rows": [
+        [
+          7,
+          5
+        ],
+        [
+          5,
+          7
+        ]
+      ],
+      "classes": [
+        "mental_arithmetic",
+        "rest"
+      ],
+      "n_windows": 24,
+      "folds": [
+        {
+          "test_block": 1,
+          "balanced_accuracy": 0.5,
+          "macro_f1": 0.5,
+          "confusion_true_rows": [
+            [
+              2,
+              2
+            ],
+            [
+              2,
+              2
+            ]
+          ],
+          "classes": [
+            "mental_arithmetic",
+            "rest"
+          ],
+          "n_windows": 8
+        },
+        {
+          "test_block": 2,
+          "balanced_accuracy": 0.625,
+          "macro_f1": 0.6190476190476191,
+          "confusion_true_rows": [
+            [
+              2,
+              2
+            ],
+            [
+              1,
+              3
+            ]
+          ],
+          "classes": [
+            "mental_arithmetic",
+            "rest"
+          ],
+          "n_windows": 8
+        },
+        {
+          "test_block": 3,
+          "balanced_accuracy": 0.625,
+          "macro_f1": 0.6190476190476191,
+          "confusion_true_rows": [
+            [
+              3,
+              1
+            ],
+            [
+              2,
+              2
+            ]
+          ],
+          "classes": [
+            "mental_arithmetic",
+            "rest"
+          ],
+          "n_windows": 8
+        }
+      ]
+    },
+    "bandpower_matched": {
+      "balanced_accuracy": 0.625,
+      "macro_f1": 0.6243478260869566,
+      "confusion_true_rows": [
+        [
+          8,
+          4
+        ],
+        [
+          5,
+          7
+        ]
+      ],
+      "classes": [
+        "mental_arithmetic",
+        "rest"
+      ],
+      "n_windows": 24,
+      "folds": [
+        {
+          "test_block": 1,
+          "balanced_accuracy": 0.5,
+          "macro_f1": 0.4666666666666667,
+          "confusion_true_rows": [
+            [
+              3,
+              1
+            ],
+            [
+              3,
+              1
+            ]
+          ],
+          "classes": [
+            "mental_arithmetic",
+            "rest"
+          ],
+          "n_windows": 8
+        },
+        {
+          "test_block": 2,
+          "balanced_accuracy": 0.625,
+          "macro_f1": 0.6190476190476191,
+          "confusion_true_rows": [
+            [
+              3,
+              1
+            ],
+            [
+              2,
+              2
+            ]
+          ],
+          "classes": [
+            "mental_arithmetic",
+            "rest"
+          ],
+          "n_windows": 8
+        },
+        {
+          "test_block": 3,
+          "balanced_accuracy": 0.75,
+          "macro_f1": 0.7333333333333334,
+          "confusion_true_rows": [
+            [
+              2,
+              2
+            ],
+            [
+              0,
+              4
+            ]
+          ],
+          "classes": [
+            "mental_arithmetic",
+            "rest"
+          ],
+          "n_windows": 8
+        }
+      ]
+    },
+    "frozen_encoder": {
+      "mean_balanced_accuracy": 0.7638888888888888,
+      "min_balanced_accuracy": 0.75,
+      "max_balanced_accuracy": 0.7916666666666666,
+      "seeds": [
+        {
+          "seed": 11,
+          "balanced_accuracy": 0.7916666666666666,
+          "macro_f1": 0.7883597883597884,
+          "confusion_true_rows": [
+            [
+              8,
+              4
+            ],
+            [
+              1,
+              11
+            ]
+          ],
+          "classes": [
+            "mental_arithmetic",
+            "rest"
+          ],
+          "n_windows": 24,
+          "folds": [
+            {
+              "test_block": 1,
+              "balanced_accuracy": 0.75,
+              "macro_f1": 0.75,
+              "confusion_true_rows": [
+                [
+                  3,
+                  1
+                ],
+                [
+                  1,
+                  3
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            },
+            {
+              "test_block": 2,
+              "balanced_accuracy": 0.75,
+              "macro_f1": 0.7333333333333334,
+              "confusion_true_rows": [
+                [
+                  2,
+                  2
+                ],
+                [
+                  0,
+                  4
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            },
+            {
+              "test_block": 3,
+              "balanced_accuracy": 0.875,
+              "macro_f1": 0.873015873015873,
+              "confusion_true_rows": [
+                [
+                  3,
+                  1
+                ],
+                [
+                  0,
+                  4
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            }
+          ],
+          "selected_epochs": [
+            19,
+            8,
+            17
+          ]
+        },
+        {
+          "seed": 22,
+          "balanced_accuracy": 0.75,
+          "macro_f1": 0.7482517482517483,
+          "confusion_true_rows": [
+            [
+              10,
+              2
+            ],
+            [
+              4,
+              8
+            ]
+          ],
+          "classes": [
+            "mental_arithmetic",
+            "rest"
+          ],
+          "n_windows": 24,
+          "folds": [
+            {
+              "test_block": 1,
+              "balanced_accuracy": 0.75,
+              "macro_f1": 0.7333333333333334,
+              "confusion_true_rows": [
+                [
+                  4,
+                  0
+                ],
+                [
+                  2,
+                  2
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            },
+            {
+              "test_block": 2,
+              "balanced_accuracy": 0.875,
+              "macro_f1": 0.873015873015873,
+              "confusion_true_rows": [
+                [
+                  4,
+                  0
+                ],
+                [
+                  1,
+                  3
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            },
+            {
+              "test_block": 3,
+              "balanced_accuracy": 0.625,
+              "macro_f1": 0.6190476190476191,
+              "confusion_true_rows": [
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  3
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            }
+          ],
+          "selected_epochs": [
+            20,
+            12,
+            19
+          ]
+        },
+        {
+          "seed": 33,
+          "balanced_accuracy": 0.75,
+          "macro_f1": 0.7482517482517483,
+          "confusion_true_rows": [
+            [
+              8,
+              4
+            ],
+            [
+              2,
+              10
+            ]
+          ],
+          "classes": [
+            "mental_arithmetic",
+            "rest"
+          ],
+          "n_windows": 24,
+          "folds": [
+            {
+              "test_block": 1,
+              "balanced_accuracy": 0.625,
+              "macro_f1": 0.6190476190476191,
+              "confusion_true_rows": [
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  3
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            },
+            {
+              "test_block": 2,
+              "balanced_accuracy": 0.75,
+              "macro_f1": 0.75,
+              "confusion_true_rows": [
+                [
+                  3,
+                  1
+                ],
+                [
+                  1,
+                  3
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            },
+            {
+              "test_block": 3,
+              "balanced_accuracy": 0.875,
+              "macro_f1": 0.873015873015873,
+              "confusion_true_rows": [
+                [
+                  3,
+                  1
+                ],
+                [
+                  0,
+                  4
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            }
+          ],
+          "selected_epochs": [
+            18,
+            12,
+            20
+          ]
+        }
+      ]
+    },
+    "finetune_last_block": {
+      "mean_balanced_accuracy": 0.7777777777777777,
+      "min_balanced_accuracy": 0.7083333333333333,
+      "max_balanced_accuracy": 0.8333333333333334,
+      "seeds": [
+        {
+          "seed": 11,
+          "balanced_accuracy": 0.8333333333333334,
+          "macro_f1": 0.8333333333333334,
+          "confusion_true_rows": [
+            [
+              10,
+              2
+            ],
+            [
+              2,
+              10
+            ]
+          ],
+          "classes": [
+            "mental_arithmetic",
+            "rest"
+          ],
+          "n_windows": 24,
+          "folds": [
+            {
+              "test_block": 1,
+              "balanced_accuracy": 0.75,
+              "macro_f1": 0.75,
+              "confusion_true_rows": [
+                [
+                  3,
+                  1
+                ],
+                [
+                  1,
+                  3
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            },
+            {
+              "test_block": 2,
+              "balanced_accuracy": 0.875,
+              "macro_f1": 0.873015873015873,
+              "confusion_true_rows": [
+                [
+                  4,
+                  0
+                ],
+                [
+                  1,
+                  3
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            },
+            {
+              "test_block": 3,
+              "balanced_accuracy": 0.875,
+              "macro_f1": 0.873015873015873,
+              "confusion_true_rows": [
+                [
+                  3,
+                  1
+                ],
+                [
+                  0,
+                  4
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            }
+          ],
+          "selected_epochs": [
+            20,
+            11,
+            17
+          ]
+        },
+        {
+          "seed": 22,
+          "balanced_accuracy": 0.7083333333333333,
+          "macro_f1": 0.7078260869565217,
+          "confusion_true_rows": [
+            [
+              9,
+              3
+            ],
+            [
+              4,
+              8
+            ]
+          ],
+          "classes": [
+            "mental_arithmetic",
+            "rest"
+          ],
+          "n_windows": 24,
+          "folds": [
+            {
+              "test_block": 1,
+              "balanced_accuracy": 0.75,
+              "macro_f1": 0.7333333333333334,
+              "confusion_true_rows": [
+                [
+                  4,
+                  0
+                ],
+                [
+                  2,
+                  2
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            },
+            {
+              "test_block": 2,
+              "balanced_accuracy": 0.75,
+              "macro_f1": 0.7333333333333334,
+              "confusion_true_rows": [
+                [
+                  4,
+                  0
+                ],
+                [
+                  2,
+                  2
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            },
+            {
+              "test_block": 3,
+              "balanced_accuracy": 0.625,
+              "macro_f1": 0.5636363636363637,
+              "confusion_true_rows": [
+                [
+                  1,
+                  3
+                ],
+                [
+                  0,
+                  4
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            }
+          ],
+          "selected_epochs": [
+            20,
+            12,
+            18
+          ]
+        },
+        {
+          "seed": 33,
+          "balanced_accuracy": 0.7916666666666667,
+          "macro_f1": 0.7822141560798548,
+          "confusion_true_rows": [
+            [
+              12,
+              0
+            ],
+            [
+              5,
+              7
+            ]
+          ],
+          "classes": [
+            "mental_arithmetic",
+            "rest"
+          ],
+          "n_windows": 24,
+          "folds": [
+            {
+              "test_block": 1,
+              "balanced_accuracy": 0.75,
+              "macro_f1": 0.7333333333333334,
+              "confusion_true_rows": [
+                [
+                  4,
+                  0
+                ],
+                [
+                  2,
+                  2
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            },
+            {
+              "test_block": 2,
+              "balanced_accuracy": 0.875,
+              "macro_f1": 0.873015873015873,
+              "confusion_true_rows": [
+                [
+                  4,
+                  0
+                ],
+                [
+                  1,
+                  3
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            },
+            {
+              "test_block": 3,
+              "balanced_accuracy": 0.75,
+              "macro_f1": 0.7333333333333334,
+              "confusion_true_rows": [
+                [
+                  4,
+                  0
+                ],
+                [
+                  2,
+                  2
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            }
+          ],
+          "selected_epochs": [
+            17,
+            12,
+            18
+          ]
+        }
+      ]
+    }
+  }
+}

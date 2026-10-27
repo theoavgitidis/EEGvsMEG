@@ -1,0 +1,113 @@
+{
+  "data": {
+    "participant_id": "P-001",
+    "session_id": "session_20261021_194704",
+    "inputs": {
+      "/Users/theoa/Desktop/Projects/recordings/P-001/session_20261021_194704.csv": "e3848f39ae993f1ffb080b2feaccfac42861fba5ebad5e9021354990108842c3",
+      "/Users/theoa/Desktop/Projects/recordings/P-001/session_20261021_194704.csv.events.csv": "d6c13b6b9a9a331df512d5bd0884478322bad4cae5b868663dfdc30575f2c3eb",
+      "/Users/theoa/Desktop/Projects/recordings/P-001/session_20261021_194704.csv.session.json": "41d8266a9e0a6e2d665d66a660e6d740bd1b3ed8d8e437550733f82ed1178d9e"
+    },
+    "channel_order": [
+      "EEG 1",
+      "EEG 2",
+      "EEG 3",
+      "EEG 4",
+      "EEG 5",
+      "EEG 6",
+      "EEG 7",
+      "EEG 8"
+    ],
+    "assumed_positions": [
+      "Fz",
+      "C3",
+      "Cz",
+      "C4",
+      "Pz",
+      "PO7",
+      "Oz",
+      "PO8"
+    ],
+    "montage_status": "standard project mapping; physical placement not independently verified",
+    "input_shape": [
+      124,
+      8,
+      3,
+      200
+    ],
+    "exclusions": [],
+    "preprocessing": "3s; CAR over 8 channels; independent epoch 5th-order 0.3-40Hz Butterworth sosfiltfilt; polyphase 250->200Hz; uV/100; no rejection by amplitude; offline",
+    "signal_absolute_quantiles_uV": {
+      "p50": 2.766294591128826,
+      "p95": 13.001186400651926,
+      "p99": 42.13064301013947,
+      "max": 1339.9477005004883
+    }
+  },
+  "checkpoint": {
+    "repository": "weighting666/CBraMod",
+    "revision": "500543c7e30bda1b22bfd51a49301b238dee21fd",
+    "filename": "pretrained_weights.pth",
+    "path": "/Users/theoa/.cache/huggingface/hub/models--weighting666--CBraMod/snapshots/500543c7e30bda1b22bfd51a49301b238dee21fd/pretrained_weights.pth",
+    "sha256": "0792cb808c14e6b7a2bb2ce1dff379bc47bc54c49a779825bdfeb33bf8157178"
+  },
+  "upstream": {
+    "repository": "https://github.com/wjq-learning/CBraMod",
+    "commit": "b9e961003214326972c567eff390e75b0287e32a",
+    "files": [
+      "models/cbramod.py",
+      "models/criss_cross_transformer.py",
+      "LICENSE"
+    ],
+    "modifications": "Changed cbramod.py import to package-relative; otherwise upstream source.",
+    "weights_repository": "weighting666/CBraMod",
+    "weights_file": "pretrained_weights.pth"
+  },
+  "code_sha256": {
+    "/Users/theoa/Desktop/Projects/EEGvsMEG/analysis/cbramod_benchmark.py": "75a699e8b4fc8d71c999cd2b8ebc7a97abd22c759c77809369304e550ae3a242",
+    "analysis/ml_data.py": "61fb3f106fceb51fe407e8cfdfb811921f21b8640908ed7610546a94d7e32632",
+    "analysis/ml_feasibility.py": "5841a3941b9eca14e0a1274d43a37e335f26f42113e1e14e66886a25a133058f",
+    "analysis/vendor/cbramod/__init__.py": "6ecde8e2b94cc8d451be17cd86e5d205c58c5ed5b894b07c3d6c9cb4e5ba4106",
+    "analysis/vendor/cbramod/criss_cross_transformer.py": "77ba8723b26c1df4440a8d4d42c27e290bcebd05b21b067251b22c2be33727f4",
+    "analysis/vendor/cbramod/cbramod.py": "78a32415e17f30084ef5674543e05710307a0c1a7977b6cf75a529acb22bb1b0"
+  },
+  "arguments": {
+    "recording": "../recordings/P-001/session_20261021_194704.csv",
+    "checkpoint_manifest": ".ml-cache/checkpoint.json",
+    "output": "analysis/results/cbramod_P001_v1",
+    "seeds": [
+      11,
+      22,
+      33
+    ],
+    "max_epochs": 20,
+    "threads": 4,
+    "runs": [
+      "Motorik",
+      "Imagery",
+      "Kognitiv"
+    ]
+  },
+  "versions": {
+    "torch": "2.14.1",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "pandas": "3.1.0",
+    "scikit-learn": "1.9.1"
+  },
+  "device": "cpu",
+  "encoder_parameters": 4924000,
+  "head_lr": 0.001,
+  "encoder_lr": 1e-05,
+  "weight_decay": 0.01,
+  "batch_size": 16,
+  "selection": "minimum cross-entropy on cyclic inner validation block; refit fresh on all outer training blocks for selected epoch count",
+  "limitations": [
+    "one person/session",
+    "exploratory",
+    "offline noncausal filter",
+    "3 training seeds are not independent test cohorts",
+    "same held-out blocks reused across predefined candidates",
+    "no amplitude-based artifact rejection",
+    "montage assumed from project configuration"
+  ]
+}

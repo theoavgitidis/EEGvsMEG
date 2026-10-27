@@ -1,0 +1,702 @@
+{
+  "Kognitiv": {
+    "bandpower_original": {
+      "balanced_accuracy": 0.5833333333333334,
+      "macro_f1": 0.5833333333333334,
+      "confusion_true_rows": [
+        [
+          7,
+          5
+        ],
+        [
+          5,
+          7
+        ]
+      ],
+      "classes": [
+        "mental_arithmetic",
+        "rest"
+      ],
+      "n_windows": 24,
+      "folds": [
+        {
+          "test_block": 1,
+          "balanced_accuracy": 0.5,
+          "macro_f1": 0.5,
+          "confusion_true_rows": [
+            [
+              2,
+              2
+            ],
+            [
+              2,
+              2
+            ]
+          ],
+          "classes": [
+            "mental_arithmetic",
+            "rest"
+          ],
+          "n_windows": 8
+        },
+        {
+          "test_block": 2,
+          "balanced_accuracy": 0.625,
+          "macro_f1": 0.6190476190476191,
+          "confusion_true_rows": [
+            [
+              2,
+              2
+            ],
+            [
+              1,
+              3
+            ]
+          ],
+          "classes": [
+            "mental_arithmetic",
+            "rest"
+          ],
+          "n_windows": 8
+        },
+        {
+          "test_block": 3,
+          "balanced_accuracy": 0.625,
+          "macro_f1": 0.6190476190476191,
+          "confusion_true_rows": [
+            [
+              3,
+              1
+            ],
+            [
+              2,
+              2
+            ]
+          ],
+          "classes": [
+            "mental_arithmetic",
+            "rest"
+          ],
+          "n_windows": 8
+        }
+      ]
+    },
+    "bandpower_matched": {
+      "balanced_accuracy": 0.625,
+      "macro_f1": 0.6243478260869566,
+      "confusion_true_rows": [
+        [
+          8,
+          4
+        ],
+        [
+          5,
+          7
+        ]
+      ],
+      "classes": [
+        "mental_arithmetic",
+        "rest"
+      ],
+      "n_windows": 24,
+      "folds": [
+        {
+          "test_block": 1,
+          "balanced_accuracy": 0.5,
+          "macro_f1": 0.4666666666666667,
+          "confusion_true_rows": [
+            [
+              3,
+              1
+            ],
+            [
+              3,
+              1
+            ]
+          ],
+          "classes": [
+            "mental_arithmetic",
+            "rest"
+          ],
+          "n_windows": 8
+        },
+        {
+          "test_block": 2,
+          "balanced_accuracy": 0.625,
+          "macro_f1": 0.6190476190476191,
+          "confusion_true_rows": [
+            [
+              3,
+              1
+            ],
+            [
+              2,
+              2
+            ]
+          ],
+          "classes": [
+            "mental_arithmetic",
+            "rest"
+          ],
+          "n_windows": 8
+        },
+        {
+          "test_block": 3,
+          "balanced_accuracy": 0.75,
+          "macro_f1": 0.7333333333333334,
+          "confusion_true_rows": [
+            [
+              2,
+              2
+            ],
+            [
+              0,
+              4
+            ]
+          ],
+          "classes": [
+            "mental_arithmetic",
+            "rest"
+          ],
+          "n_windows": 8
+        }
+      ]
+    },
+    "frozen_encoder": {
+      "mean_balanced_accuracy": 0.5416666666666666,
+      "min_balanced_accuracy": 0.5,
+      "max_balanced_accuracy": 0.5833333333333333,
+      "seeds": [
+        {
+          "seed": 11,
+          "balanced_accuracy": 0.5416666666666666,
+          "macro_f1": 0.4197802197802198,
+          "confusion_true_rows": [
+            [
+              12,
+              0
+            ],
+            [
+              11,
+              1
+            ]
+          ],
+          "classes": [
+            "mental_arithmetic",
+            "rest"
+          ],
+          "n_windows": 24,
+          "folds": [
+            {
+              "test_block": 1,
+              "balanced_accuracy": 0.5,
+              "macro_f1": 0.3333333333333333,
+              "confusion_true_rows": [
+                [
+                  4,
+                  0
+                ],
+                [
+                  4,
+                  0
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            },
+            {
+              "test_block": 2,
+              "balanced_accuracy": 0.625,
+              "macro_f1": 0.5636363636363637,
+              "confusion_true_rows": [
+                [
+                  4,
+                  0
+                ],
+                [
+                  3,
+                  1
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            },
+            {
+              "test_block": 3,
+              "balanced_accuracy": 0.5,
+              "macro_f1": 0.3333333333333333,
+              "confusion_true_rows": [
+                [
+                  4,
+                  0
+                ],
+                [
+                  4,
+                  0
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            }
+          ],
+          "selected_epochs": [
+            15,
+            15,
+            20
+          ]
+        },
+        {
+          "seed": 22,
+          "balanced_accuracy": 0.5833333333333333,
+          "macro_f1": 0.5804195804195804,
+          "confusion_true_rows": [
+            [
+              6,
+              6
+            ],
+            [
+              4,
+              8
+            ]
+          ],
+          "classes": [
+            "mental_arithmetic",
+            "rest"
+          ],
+          "n_windows": 24,
+          "folds": [
+            {
+              "test_block": 1,
+              "balanced_accuracy": 0.625,
+              "macro_f1": 0.6190476190476191,
+              "confusion_true_rows": [
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  3
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            },
+            {
+              "test_block": 2,
+              "balanced_accuracy": 0.625,
+              "macro_f1": 0.5636363636363637,
+              "confusion_true_rows": [
+                [
+                  4,
+                  0
+                ],
+                [
+                  3,
+                  1
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            },
+            {
+              "test_block": 3,
+              "balanced_accuracy": 0.5,
+              "macro_f1": 0.3333333333333333,
+              "confusion_true_rows": [
+                [
+                  0,
+                  4
+                ],
+                [
+                  0,
+                  4
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            }
+          ],
+          "selected_epochs": [
+            15,
+            18,
+            19
+          ]
+        },
+        {
+          "seed": 33,
+          "balanced_accuracy": 0.5,
+          "macro_f1": 0.4857142857142857,
+          "confusion_true_rows": [
+            [
+              8,
+              4
+            ],
+            [
+              8,
+              4
+            ]
+          ],
+          "classes": [
+            "mental_arithmetic",
+            "rest"
+          ],
+          "n_windows": 24,
+          "folds": [
+            {
+              "test_block": 1,
+              "balanced_accuracy": 0.5,
+              "macro_f1": 0.3333333333333333,
+              "confusion_true_rows": [
+                [
+                  4,
+                  0
+                ],
+                [
+                  4,
+                  0
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            },
+            {
+              "test_block": 2,
+              "balanced_accuracy": 0.5,
+              "macro_f1": 0.3333333333333333,
+              "confusion_true_rows": [
+                [
+                  0,
+                  4
+                ],
+                [
+                  0,
+                  4
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            },
+            {
+              "test_block": 3,
+              "balanced_accuracy": 0.5,
+              "macro_f1": 0.3333333333333333,
+              "confusion_true_rows": [
+                [
+                  4,
+                  0
+                ],
+                [
+                  4,
+                  0
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            }
+          ],
+          "selected_epochs": [
+            11,
+            20,
+            19
+          ]
+        }
+      ]
+    },
+    "finetune_last_block": {
+      "mean_balanced_accuracy": 0.5416666666666666,
+      "min_balanced_accuracy": 0.5,
+      "max_balanced_accuracy": 0.5833333333333333,
+      "seeds": [
+        {
+          "seed": 11,
+          "balanced_accuracy": 0.5416666666666666,
+          "macro_f1": 0.4197802197802198,
+          "confusion_true_rows": [
+            [
+              12,
+              0
+            ],
+            [
+              11,
+              1
+            ]
+          ],
+          "classes": [
+            "mental_arithmetic",
+            "rest"
+          ],
+          "n_windows": 24,
+          "folds": [
+            {
+              "test_block": 1,
+              "balanced_accuracy": 0.5,
+              "macro_f1": 0.3333333333333333,
+              "confusion_true_rows": [
+                [
+                  4,
+                  0
+                ],
+                [
+                  4,
+                  0
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            },
+            {
+              "test_block": 2,
+              "balanced_accuracy": 0.625,
+              "macro_f1": 0.5636363636363637,
+              "confusion_true_rows": [
+                [
+                  4,
+                  0
+                ],
+                [
+                  3,
+                  1
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            },
+            {
+              "test_block": 3,
+              "balanced_accuracy": 0.5,
+              "macro_f1": 0.3333333333333333,
+              "confusion_true_rows": [
+                [
+                  4,
+                  0
+                ],
+                [
+                  4,
+                  0
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            }
+          ],
+          "selected_epochs": [
+            15,
+            15,
+            20
+          ]
+        },
+        {
+          "seed": 22,
+          "balanced_accuracy": 0.5833333333333333,
+          "macro_f1": 0.5804195804195804,
+          "confusion_true_rows": [
+            [
+              6,
+              6
+            ],
+            [
+              4,
+              8
+            ]
+          ],
+          "classes": [
+            "mental_arithmetic",
+            "rest"
+          ],
+          "n_windows": 24,
+          "folds": [
+            {
+              "test_block": 1,
+              "balanced_accuracy": 0.625,
+              "macro_f1": 0.6190476190476191,
+              "confusion_true_rows": [
+                [
+                  2,
+                  2
+                ],
+                [
+                  1,
+                  3
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            },
+            {
+              "test_block": 2,
+              "balanced_accuracy": 0.625,
+              "macro_f1": 0.5636363636363637,
+              "confusion_true_rows": [
+                [
+                  4,
+                  0
+                ],
+                [
+                  3,
+                  1
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            },
+            {
+              "test_block": 3,
+              "balanced_accuracy": 0.5,
+              "macro_f1": 0.3333333333333333,
+              "confusion_true_rows": [
+                [
+                  0,
+                  4
+                ],
+                [
+                  0,
+                  4
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            }
+          ],
+          "selected_epochs": [
+            15,
+            18,
+            19
+          ]
+        },
+        {
+          "seed": 33,
+          "balanced_accuracy": 0.5,
+          "macro_f1": 0.4857142857142857,
+          "confusion_true_rows": [
+            [
+              8,
+              4
+            ],
+            [
+              8,
+              4
+            ]
+          ],
+          "classes": [
+            "mental_arithmetic",
+            "rest"
+          ],
+          "n_windows": 24,
+          "folds": [
+            {
+              "test_block": 1,
+              "balanced_accuracy": 0.5,
+              "macro_f1": 0.3333333333333333,
+              "confusion_true_rows": [
+                [
+                  4,
+                  0
+                ],
+                [
+                  4,
+                  0
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            },
+            {
+              "test_block": 2,
+              "balanced_accuracy": 0.5,
+              "macro_f1": 0.3333333333333333,
+              "confusion_true_rows": [
+                [
+                  0,
+                  4
+                ],
+                [
+                  0,
+                  4
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            },
+            {
+              "test_block": 3,
+              "balanced_accuracy": 0.5,
+              "macro_f1": 0.3333333333333333,
+              "confusion_true_rows": [
+                [
+                  4,
+                  0
+                ],
+                [
+                  4,
+                  0
+                ]
+              ],
+              "classes": [
+                "mental_arithmetic",
+                "rest"
+              ],
+              "n_windows": 8
+            }
+          ],
+          "selected_epochs": [
+            11,
+            20,
+            19
+          ]
+        }
+      ]
+    }
+  }
+}

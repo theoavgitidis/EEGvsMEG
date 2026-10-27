@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "windows_match_cbramod": true,
+  "splits_match_cbramod": true,
+  "prediction_metrics_recomputed": true,
+  "source_hashes_verified": true,
+  "encoder_update_regimes_verified": true,
+  "outer_fits": 18
+}

@@ -1,6 +1,6 @@
 # Unicorn-Terminal: Bedienungsanleitung
 
-Stand: 19. Oktober 2026.
+Stand: 21. Oktober 2026.
 
 ## Automatische Sitzung
 
@@ -19,9 +19,9 @@ Während der automatischen Sitzung sind manuelle `cue`-Befehle gesperrt. Die fol
 
 Für die Anzeige und Auswertung gespeicherter CSV-Dateien siehe die
 [ausführliche MNE-Anleitung](MNE_ANLEITUNG.md). Das fertige Skript
-`view_eeg.py` liegt im Projektstamm und zeigt EEG-Kurven einschließlich Labels.
-Bei schrägen Linien durch starke Drift beschreibt Abschnitt 6 der MNE-Anleitung
-die erfolgreich geprüfte Ansicht mit `--highpass 1 --lowpass 40` und automatischer Skalierung.
+`view_eeg.py` liegt im Projektstamm und öffnet abgeschlossene Aufnahmen unabhängig von der CLI unter Windows oder macOS. Jeder EEG-Kanal erhält eine eigene Achse mit sichtbarem µV-Bereich; Marker stehen in einer getrennten Zeitleiste und ihre vollständigen Details rechts. Die automatische Skalierung gilt je Kanal und Ausschnitt; für Amplitudenvergleiche beispielsweise `--scale-uv 100` für einen gemeinsamen Bereich verwenden und auf `CLIPPED` achten.
+
+Die MNE-Anleitung beschreibt Dateiablage und Rechnerwechsel, Einrichtung, konkrete Startbefehle, Bedienelemente und Exporte. Abschnitt 6 zeigt die ausdrücklich gewählte Ansicht mit `--start 60 --duration 20 --highpass 1 --lowpass 40`. Filter betreffen nur die Anzeigekopie; die CSV und die ungefilterten Daten beim FIF-Export bleiben erhalten. `--snapshot` speichert den anfänglichen Ausschnitt. Während einer laufenden automatischen Sitzung würde `stop` den Versuch abbrechen; für die nachträgliche Sichtprüfung den regulären Abschluss abwarten.
 
 ## Manuelle Teilnehmeranzeige: Anweisung und Marker gemeinsam
 
@@ -445,10 +445,10 @@ Die Simulation lässt sich mit Python 3 und `clang++` ausführen:
 ```sh
 python3 gtec_Clib/terminal/test_recorder.py
 python3 gtec_Clib/terminal/test_session.py
-python3 -m unittest analysis.test_event_annotations
+python3 -m unittest analysis.test_event_annotations analysis.test_eeg_browser analysis.test_view_eeg_cli
 ```
 
-Die Annotationstests benötigen MNE, NumPy und pandas und prüfen beide Viewer einschließlich FIF-Speichern/Laden. Die Sitzungstests umfassen 250 Seeds, alle sechs Laufreihenfolgen, vollständigen beschleunigten Ablauf, Unterbrechungen und Fehler. Regressionstests prüfen verzögerte Anzeige-/Schreiboperationen und PAUSE vor einem blockierenden Aufnahme-Stopp.
+Die Viewer- und Annotationstests benötigen MNE, NumPy, pandas und Matplotlib. Dafür den Interpreter der MNE-Umgebung verwenden: unter macOS `~/.venvs/eeg-mne/bin/python`, unter Windows `& .\.venv-mne\Scripts\python.exe`. Sie prüfen beide Viewer, Markerdichte und Fenstergrößen, getrennte Spuren und Skalen, Navigation, unveränderte Daten sowie PNG-Ausgabe und FIF-Speichern/Laden. Die Sitzungstests umfassen 250 Seeds, alle sechs Laufreihenfolgen, vollständigen beschleunigten Ablauf, Unterbrechungen und Fehler. Regressionstests prüfen verzögerte Anzeige-/Schreiboperationen und PAUSE vor einem blockierenden Aufnahme-Stopp.
 
 `mock_api.cpp` ist ausschließlich für die C++-Tests; der normale CMake-Build
 verwendet immer die Herstellerbibliothek.

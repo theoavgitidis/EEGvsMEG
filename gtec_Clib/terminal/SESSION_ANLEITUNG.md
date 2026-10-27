@@ -6,10 +6,12 @@ Die CLI kann das vollständige Pilotprotokoll automatisch durchführen: Anfangsb
 
 Windows-Build wie in [README.md](README.md) neu konfigurieren und erstellen. Für die echte Teilnehmeranzeige und das Unicorn-Headset ist 64-Bit-Windows erforderlich. Die acht EEG-Kanäle `EEG 1` bis `EEG 8` müssen aktiviert sein. Signalqualität, Elektrodenkontakte und Einheiten vor der Sitzung prüfen; das Programm bewertet diese nicht automatisch.
 
+Für neue Teilnehmende wird eine dauerhafte ID wie `EVM-P001` verwendet. Dieselbe Person behält sie über weitere Termine und Laptops. Vergabe, Testordner und Bestandsdaten sind im [Teilnehmer-ID-Schema](../../docs/participant-ids.md) beschrieben.
+
 Im Unicorn-Terminal:
 
 ```text
-NewExp "VP01"
+NewExp "EVM-P001"
 scan paired
 open DEINE_SERIENNUMMER
 config

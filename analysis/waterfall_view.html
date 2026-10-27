@@ -1,0 +1,2558 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>EEG · Wasserfall</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f3f5f8;
+        --surface: #fff;
+        --text: #182a3c;
+        --muted: #526578;
+        --border: #dce3ec;
+        --soft: #edf2f7;
+        --accent: #1765ad;
+        --orange: #c36a17;
+        --error: #a63522;
+        --grid: #e1e7ef;
+        --shadow: 0 2px 10px #182a3c06;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          color-scheme: dark;
+          --bg: #141c26;
+          --surface: #1c2734;
+          --text: #e3edf6;
+          --muted: #adbdcd;
+          --border: #354556;
+          --soft: #243344;
+          --accent: #80bbef;
+          --orange: #f2ae69;
+          --error: #ffb09d;
+          --grid: #354556;
+          --shadow: none;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          14px/1.45 system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+      button,
+      select,
+      input[type="checkbox"],
+      input[type="range"] {
+        cursor: pointer;
+      }
+      input[type="number"] {
+        cursor: text;
+      }
+      button,
+      input[type="number"],
+      select {
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        background: var(--surface);
+        color: var(--text);
+        padding: 8px 10px;
+        min-height: 38px;
+        max-width: 100%;
+      }
+      button:hover {
+        background: var(--soft);
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+      }
+      button.primary {
+        background: var(--accent);
+        color: var(--surface);
+        border-color: var(--accent);
+      }
+      button[aria-pressed="true"] {
+        background: var(--soft);
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      input[type="range"] {
+        width: 100%;
+        accent-color: var(--accent);
+      }
+      input[type="checkbox"] {
+        accent-color: var(--accent);
+        width: 16px;
+        height: 16px;
+        margin: 0;
+        flex-shrink: 0;
+      }
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+      h1 {
+        font-size: 20px;
+        font-weight: 650;
+        overflow-wrap: anywhere;
+      }
+      h2 {
+        font-size: 16px;
+        font-weight: 650;
+      }
+      h3 {
+        font-size: 13px;
+        font-weight: 650;
+      }
+      small,
+      .hint {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      header {
+        padding: 20px 26px 16px;
+        border-bottom: 1px solid var(--border);
+        background: var(--surface);
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        align-items: center;
+      }
+      header p {
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .tag {
+        white-space: nowrap;
+        border-radius: 20px;
+        padding: 6px 12px;
+        background: var(--soft);
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .app {
+        display: grid;
+        grid-template-columns: 272px minmax(0, 1fr);
+        gap: 20px;
+        padding: 20px;
+        max-width: 2100px;
+        margin: auto;
+      }
+      aside {
+        min-width: 0;
+      }
+      .section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        box-shadow: var(--shadow);
+        padding: 15px;
+        margin-bottom: 14px;
+      }
+      .section h2 {
+        margin-bottom: 12px;
+        font-size: 14px;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .between {
+        justify-content: space-between;
+      }
+      .fields {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      label.field {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        font-size: 12px;
+        color: var(--muted);
+        min-width: 0;
+      }
+      label.field input,
+      label.field select {
+        width: 100%;
+        color: var(--text);
+      }
+      .check {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 10px 0;
+        font-size: 13px;
+      }
+      .mt {
+        margin-top: 12px;
+      }
+      .hint {
+        margin-top: 8px;
+      }
+      .head-and-channels {
+        display: grid;
+        grid-template-columns: 1fr 116px;
+        gap: 5px;
+        align-items: start;
+      }
+      .channels {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .channel {
+        display: flex;
+        gap: 7px;
+        align-items: center;
+        font-size: 12px;
+        min-height: 23px;
+      }
+      .channel .channel-only {
+        border: 0;
+        background: transparent;
+        padding: 0 2px;
+        min-height: 23px;
+        border-radius: 3px;
+        font-size: 12px;
+        color: var(--text);
+      }
+      .channel .channel-only:hover {
+        color: var(--accent);
+        text-decoration: underline;
+      }
+      .channel span:last-child {
+        color: var(--muted);
+        font-size: 11px;
+      }
+      #head-map {
+        width: 116px;
+        height: 145px;
+        color: var(--muted);
+      }
+      #head-map text {
+        font: 10px system-ui;
+        fill: var(--text);
+      }
+      #head-map .sensor {
+        fill: var(--soft);
+        stroke: var(--muted);
+        stroke-width: 1;
+      }
+      #head-map .active {
+        fill: var(--accent);
+        stroke: var(--accent);
+      }
+      #head-map .active-label {
+        fill: var(--surface);
+      }
+      #head-map .focused {
+        stroke: var(--orange);
+        stroke-width: 3;
+      }
+      .small-buttons button {
+        padding: 5px 9px;
+        min-height: 30px;
+        font-size: 12px;
+      }
+      .workspace {
+        min-width: 0;
+      }
+      .toolbar {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+      }
+      .toolbar .row {
+        gap: 6px;
+      }
+      .toolbar label {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .toolbar button {
+        font-size: 12px;
+        padding: 7px 10px;
+      }
+      .status {
+        color: var(--muted);
+        font-size: 12px;
+        margin: 6px 0 12px;
+        min-height: 18px;
+      }
+      .status.error {
+        color: var(--error);
+      }
+      .plots {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 16px;
+      }
+      .plot-panel {
+        min-width: 0;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+      .plot-head {
+        padding: 15px 17px 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .plot-head h2 {
+        font-size: 15px;
+      }
+      .plot-head button {
+        padding: 4px 9px;
+        min-height: 30px;
+        font-size: 12px;
+      }
+      .plot-sub {
+        font-size: 12px;
+        color: var(--muted);
+        padding: 4px 17px 0;
+        min-height: 39px;
+      }
+      .plot {
+        height: 480px;
+        width: 100%;
+        min-width: 0;
+      }
+      .plot-foot {
+        padding: 0 17px 13px;
+        color: var(--muted);
+        font-size: 12px;
+        min-height: 32px;
+        overflow-wrap: anywhere;
+      }
+      .plots[data-focus="amplitude"] #power-panel,
+      .plots[data-focus="power"] #amplitude-panel {
+        display: none;
+      }
+      .plots[data-focus="amplitude"],
+      .plots[data-focus="power"] {
+        grid-template-columns: 1fr;
+      }
+      .events {
+        margin-top: 16px;
+      }
+      .events select {
+        min-width: 0;
+        max-width: 100%;
+        flex: 1;
+      }
+      .event-detail {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 9px;
+        max-height: 180px;
+        overflow: auto;
+      }
+      .footnote {
+        font-size: 12px;
+        color: var(--muted);
+        margin: 12px 0;
+      }
+      .offsets {
+        font-size: 12px;
+        display: flex;
+        gap: 6px 14px;
+        flex-wrap: wrap;
+        color: var(--muted);
+        margin-top: 10px;
+      }
+      .warnings {
+        color: var(--error);
+        font-size: 12px;
+        white-space: pre-line;
+        margin-top: 10px;
+      }
+      .hidden {
+        display: none !important;
+      }
+      details summary {
+        cursor: pointer;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      details.section summary {
+        font-size: 14px;
+        font-weight: 650;
+        color: var(--text);
+      }
+      details.section[open] summary {
+        margin-bottom: 12px;
+      }
+      .export {
+        font-size: 12px !important;
+      }
+      @media (min-width: 1700px) {
+        .plot {
+          height: 610px;
+        }
+      }
+      @media (max-width: 1250px) {
+        .plots {
+          grid-template-columns: 1fr;
+        }
+        .plot {
+          height: 430px;
+        }
+      }
+      @media (max-width: 760px) {
+        header {
+          padding: 16px;
+          align-items: start;
+        }
+        .tag {
+          display: none;
+        }
+        .app {
+          padding: 12px;
+          gap: 12px;
+          grid-template-columns: 1fr;
+        }
+        aside {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 12px;
+        }
+        .section {
+          margin: 0;
+        }
+        .section:last-child {
+          grid-column: 1/-1;
+        }
+        .plots {
+          gap: 12px;
+        }
+        .toolbar {
+          margin-top: 4px;
+        }
+        .plot {
+          height: 410px;
+        }
+        .head-and-channels {
+          grid-template-columns: 1fr 110px;
+        }
+        .section {
+          padding: 12px;
+        }
+      }
+      @media (max-width: 480px) {
+        aside {
+          grid-template-columns: 1fr;
+        }
+        .plot {
+          height: 370px;
+        }
+        .toolbar .row {
+          width: 100%;
+        }
+        .toolbar select {
+          flex: 1;
+        }
+        .fields {
+          gap: 8px;
+        }
+        .tag {
+          display: none;
+        }
+        .plot-sub {
+          min-height: 49px;
+        }
+        .head-and-channels {
+          grid-template-columns: 1fr 116px;
+        }
+      }
+      @media (pointer: coarse) {
+        button,
+        select,
+        input[type="number"] {
+          min-height: 44px;
+        }
+        .channel {
+          min-height: 32px;
+        }
+        .channel input {
+          width: 20px;
+          height: 20px;
+        }
+        .check {
+          min-height: 32px;
+        }
+      }
+
+      .navigation-dock {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px 15px;
+        margin-bottom: 12px;
+        box-shadow: 0 3px 12px #182a3c10;
+      }
+      #position-readout {
+        font-size: 16px;
+        font-variant-numeric: tabular-nums;
+      }
+      .cursor-readout {
+        color: var(--orange);
+        font-size: 13px;
+        margin-top: 3px;
+        font-variant-numeric: tabular-nums;
+      }
+      .navigation-controls {
+        display: flex;
+        align-items: end;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin: -3px 0 12px;
+        padding: 0 4px;
+      }
+      .navigation-controls .field {
+        width: 100px;
+      }
+      .fit-actions button {
+        border-color: var(--accent);
+        font-weight: 600;
+        color: var(--accent);
+      }
+      .marker-actions button {
+        font-size: 12px;
+        padding: 6px 8px;
+      }
+      .timeline-section {
+        margin-bottom: 16px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 230px;
+        gap: 16px;
+      }
+      .timeline-graphs,
+      .marker-inspector {
+        min-width: 0;
+      }
+      .marker-inspector {
+        border-left: 1px solid var(--border);
+        padding-left: 16px;
+      }
+      .marker-inspector .event-selection {
+        margin: 0 0 12px;
+      }
+      .marker-inspector .hint {
+        margin-top: 12px;
+      }
+      .timeline-section h2 {
+        margin: 0;
+        font-size: 14px;
+      }
+      .timeline-section .hint {
+        margin: 0;
+      }
+      .timeline-section button {
+        font-size: 12px;
+      }
+      .timeline-section svg {
+        display: block;
+        width: 100%;
+        color: var(--muted);
+        touch-action: pan-y;
+        cursor: crosshair;
+      }
+      #recording-overview {
+        height: 62px;
+      }
+      #event-timeline {
+        height: 142px;
+      }
+      .marker-heading {
+        margin-top: 8px;
+      }
+      .event-track {
+        position: relative;
+        margin-top: 8px;
+      }
+      #timeline-labels {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+      #timeline-labels button {
+        position: absolute;
+        pointer-events: auto;
+        min-height: 25px;
+        padding: 3px 6px;
+        white-space: nowrap;
+        font-size: 12px;
+        background: var(--surface);
+        border-color: var(--border);
+        color: var(--text);
+      }
+      #timeline-labels button.selected {
+        border-color: var(--orange);
+        color: var(--orange);
+        font-weight: 600;
+      }
+      .timeline-section svg text {
+        fill: var(--muted);
+        font-size: 12px;
+        font-family: inherit;
+      }
+      .timeline-section svg .tick {
+        stroke: var(--muted);
+      }
+      .timeline-section svg .event-tick {
+        stroke: var(--accent);
+        opacity: 0.6;
+      }
+      .timeline-section svg .selected-tick {
+        stroke: var(--orange);
+        opacity: 1;
+        stroke-width: 2.5;
+      }
+      .event-selection {
+        margin-top: 10px;
+      }
+      .event-selection label {
+        font-size: 13px;
+      }
+      .event-selection select {
+        flex: 1;
+        min-width: 160px;
+        max-width: 100%;
+      }
+      .event-detail {
+        border-left: 3px solid var(--orange);
+        padding-left: 10px;
+        max-height: 170px;
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+      }
+      @media (max-width: 760px) {
+        .workspace {
+          grid-row: 1;
+        }
+        aside {
+          grid-row: 2;
+        }
+        .navigation-controls {
+          gap: 6px;
+        }
+        .navigation-controls button {
+          font-size: 12px;
+          padding: 6px;
+        }
+        .navigation-dock {
+          padding: 10px;
+        }
+        .navigation-dock .fit-actions {
+          gap: 5px;
+        }
+        .fit-actions button {
+          font-size: 12px;
+          padding: 6px;
+        }
+        #position-readout {
+          font-size: 14px;
+        }
+        .cursor-readout {
+          font-size: 12px;
+        }
+        .navigation-controls .field {
+          width: 82px;
+        }
+      }
+      @media (max-width: 1250px) {
+        .timeline-section {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 10px;
+        }
+        .marker-inspector {
+          border-left: none;
+          border-top: 1px solid var(--border);
+          padding: 10px 0 0;
+        }
+        .marker-inspector .event-selection {
+          margin-bottom: 6px;
+        }
+        .marker-inspector .hint {
+          margin-top: 6px;
+        }
+        .event-detail {
+          max-height: 70px;
+        }
+      }
+      @media (max-width: 480px) {
+        .navigation-controls > div.row {
+          flex: 1 1 100%;
+        }
+        .navigation-dock {
+          position: sticky;
+        }
+        .fit-actions {
+          width: 100%;
+        }
+        .fit-actions button {
+          flex: 1;
+        }
+        .event-selection select {
+          width: 100%;
+          flex-basis: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1 id="recording-title">EEG · Wasserfallansicht</h1>
+        <p id="recording-meta">Aufnahme wird geladen …</p>
+      </div>
+      <span class="tag">Lokal · Originaldaten bleiben unverändert</span>
+    </header>
+    <div class="app">
+      <aside aria-label="Anzeigeoptionen">
+        <section class="section">
+          <div class="row between" style="margin-bottom: 12px">
+            <h2 style="margin: 0">Kanäle</h2>
+            <div class="row small-buttons">
+              <button id="all-channels" type="button">Alle</button>
+            </div>
+          </div>
+          <div class="head-and-channels">
+            <div id="channels" class="channels"></div>
+            <div>
+              <svg
+                id="head-map"
+                viewBox="0 0 116 145"
+                role="img"
+                aria-label="Unicorn Hybrid Black: schematische Kopfansicht von oben, Nase oben. Aktive Kanäle farbig."
+              >
+                <path
+                  d="M49 21 L58 10 L67 21 M17 63 Q6 59 10 77 Q12 85 18 82 M99 63 Q110 59 106 77 Q104 85 98 82"
+                  fill="none"
+                  stroke="currentColor"
+                />
+                <ellipse
+                  cx="58"
+                  cy="71"
+                  rx="41"
+                  ry="51"
+                  fill="none"
+                  stroke="currentColor"
+                />
+                <g id="sensor-dots"></g>
+                <text x="1" y="130">L</text>
+                <text x="108" y="130">R</text>
+                <text x="58" y="143" text-anchor="middle">schematisch</text>
+              </svg>
+            </div>
+          </div>
+          <label class="field mt"
+            >Reihenfolge<select id="order">
+              <option value="forward">Fz → Hinterkopf</option>
+              <option value="reverse">Hinterkopf → Fz</option>
+            </select></label
+          >
+          <p id="mapping-note" class="hint">
+            Name anklicken: Kanal einzeln. Kästchen: mehrere Kanäle.
+            Standardkappe, schematisch.
+          </p>
+        </section>
+        <details class="section">
+          <summary>Amplitude &amp; Skalierung</summary>
+          <label class="check"
+            ><input id="center" type="checkbox" checked />Median je Ausschnitt
+            abziehen</label
+          >
+          <div>
+            <label class="field"
+              >Gemeinsamer Bereich ± µV<input
+                id="amplitude-range"
+                type="number"
+                min="0.000001"
+                step="any"
+                placeholder="Beim Laden anpassen" /></label
+            ><label class="field mt"
+              >Skalierung<select id="scale-mode">
+                <option value="fixed">Fest beim Blättern</option>
+                <option value="auto">Je Ausschnitt anpassen</option>
+              </select></label
+            >
+          </div>
+
+          <p class="hint">
+            Ein gemeinsamer Bereich für alle Kanäle. Abgezogene Mediane stehen
+            unter den Plots.
+          </p>
+        </details>
+        <details class="section">
+          <summary>Bandpower &amp; Frequenzband</summary>
+          <label class="field"
+            >Frequenzband<select id="band">
+              <option value=".5,4">Delta · 0,5–4 Hz</option>
+              <option value="4,8">Theta · 4–8 Hz</option>
+              <option value="8,13" selected>Alpha · 8–13 Hz</option>
+              <option value="13,30">Beta · 13–30 Hz</option>
+              <option value="30,100">Gamma · 30–100 Hz</option>
+              <option value="custom">Eigener Bereich</option>
+            </select></label
+          >
+          <div class="fields mt">
+            <label class="field"
+              >Von (Hz)<input
+                id="band-low"
+                type="number"
+                min="0"
+                step="any"
+                value="8" /></label
+            ><label class="field"
+              >Bis (Hz)<input
+                id="band-high"
+                type="number"
+                min="0"
+                step="any"
+                value="13"
+            /></label>
+          </div>
+          <div class="fields mt">
+            <label class="field"
+              >Fenster (s)<input
+                id="window"
+                type="number"
+                min="0.25"
+                max="30"
+                step="0.25"
+                value="2" /></label
+            ><label class="field"
+              >Schritt (s)<input
+                id="hop"
+                type="number"
+                min="0.05"
+                max="30"
+                step="0.05"
+                value="0.25"
+            /></label>
+          </div>
+          <label class="field mt"
+            >Leistungsskala<select id="power-unit">
+              <option value="linear">Linear · µV²</option>
+              <option value="db">dB bezogen auf 1 µV²</option>
+            </select></label
+          >
+          <div class="fields mt">
+            <label class="field"
+              >Untergrenze<input
+                id="power-min"
+                type="number"
+                step="any"
+                value="0" /></label
+            ><label class="field"
+              >Obergrenze<input
+                id="power-max"
+                type="number"
+                step="any"
+                placeholder="Beim Laden anpassen"
+            /></label>
+          </div>
+
+          <p class="hint">
+            Leistung im Frequenzband, keine Leistungsdichte. Volle
+            Analysefenster; keine erfundenen Randwerte.
+          </p>
+        </details>
+      </aside>
+      <main class="workspace">
+        <div class="navigation-dock" aria-label="Zeitnavigation und Skalierung">
+          <div class="row between">
+            <div>
+              <h2 id="position-readout">Ausschnitt wird geladen …</h2>
+              <p id="cursor-readout" class="cursor-readout">Position: –</p>
+            </div>
+            <div class="row marker-actions">
+              <button id="previous-event" type="button">
+                ← Vorheriger Marker
+              </button>
+              <button id="next-event" type="button">Nächster Marker →</button>
+            </div>
+            <div class="row fit-actions">
+              <button id="fit-amplitude" type="button">
+                Amplitude einpassen</button
+              ><button id="fit-power" type="button">Bandpower einpassen</button>
+            </div>
+          </div>
+        </div>
+        <div
+          class="navigation-controls"
+          aria-label="Ausschnitt verschieben und zoomen"
+        >
+          <div class="row">
+            <button
+              id="previous"
+              type="button"
+              aria-label="Vorheriger Ausschnitt"
+            >
+              ← Ausschnitt</button
+            ><button id="next" type="button" aria-label="Nächster Ausschnitt">
+              Ausschnitt →
+            </button>
+          </div>
+          <label class="field"
+            >Start (s)<input
+              id="start"
+              type="number"
+              min="0"
+              step="0.25"
+              value="0"
+          /></label>
+          <label class="field"
+            >Dauer (s)<input
+              id="duration"
+              type="number"
+              min="0.004"
+              step="1"
+              value="10"
+          /></label>
+          <div class="row">
+            <button id="zoom-in" type="button">＋ Zeit hinein</button
+            ><button id="zoom-out" type="button">− Zeit heraus</button>
+          </div>
+        </div>
+        <section
+          class="section timeline-section"
+          aria-label="Zeitachse mit Ereignissen"
+        >
+          <div class="timeline-graphs">
+            <div class="row between">
+              <h2>Gesamte Aufnahme</h2>
+              <span id="overview-caption" class="hint"></span>
+            </div>
+            <svg
+              id="recording-overview"
+              role="img"
+              aria-label="Gesamte Aufnahme mit Ereignissen und markiertem Ausschnitt"
+            ></svg>
+            <label for="timeline" class="sr-only"
+              >Ausschnitt in der Aufnahme verschieben</label
+            ><input
+              id="timeline"
+              aria-label="Ausschnitt in der Aufnahme verschieben"
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value="0"
+            />
+            <div class="row between marker-heading">
+              <h2>Ereignisse im Ausschnitt</h2>
+            </div>
+            <div class="event-track">
+              <svg
+                id="event-timeline"
+                role="img"
+                aria-label="Vergrößerte Zeitachse mit sichtbaren Ereignismarkern"
+              ></svg>
+              <div id="timeline-labels"></div>
+            </div>
+            <div class="row between">
+              <span id="marker-count" class="hint"></span
+              ><span id="interval" class="hint"></span>
+            </div>
+          </div>
+          <div class="marker-inspector">
+            <div class="row event-selection">
+              <label for="event">Marker auswählen</label
+              ><select id="event" aria-label="Marker auswählen">
+                <option value="">Kein Marker ausgewählt</option>
+              </select>
+            </div>
+            <p id="event-detail" class="event-detail">
+              Marker anklicken, um die vollständige Beschreibung zu sehen.
+            </p>
+            <p class="hint">
+              Übersicht anklicken: Ausschnitt verschieben · Zeitachse anklicken:
+              genaue Position · ← / →: blättern · Alt + ← / →: Marker
+            </p>
+          </div>
+        </section>
+
+        <div class="toolbar">
+          <div class="row">
+            <label for="mode">Darstellung</label
+            ><select id="mode">
+              <option value="3d">3D-Wasserfall</option>
+              <option value="2d">2D · gestapelte Spuren</option></select
+            ><label for="focus">Ansichten</label
+            ><select id="focus">
+              <option value="both">Beide</option>
+              <option value="amplitude">Nur Amplitude</option>
+              <option value="power">Nur Bandpower</option>
+            </select>
+          </div>
+          <div class="row">
+            <button id="camera-front" type="button">Von vorn</button
+            ><button id="camera-top" type="button">Von oben</button
+            ><button id="camera-reset" type="button">Perspektive</button>
+            <button id="camera-zoom-out" type="button" aria-label="3D herauszoomen" title="Beide 3D-Ansichten herauszoomen">3D −</button>
+            <button id="camera-zoom-in" type="button" aria-label="3D heranzoomen" title="Beide 3D-Ansichten heranzoomen">3D +</button>
+          </div>
+        </div>
+        <div class="toolbar">
+          <div class="row">
+            <label for="spacing">Kanalabstand</label
+            ><input
+              id="spacing"
+              type="range"
+              min="0.6"
+              max="2.4"
+              step="0.1"
+              value="1"
+              style="width: 115px"
+            /><label for="plot-height">Plothöhe</label
+            ><select id="plot-height">
+              <option value="auto">Automatisch</option>
+              <option value="460">460 px</option>
+              <option value="640">640 px</option>
+              <option value="800">800 px</option>
+            </select>
+          </div>
+          <label class="check" style="margin: 0"
+            ><input id="sync-camera" type="checkbox" checked />3D-Kameras
+            koppeln</label
+          >
+        </div>
+        <div id="status" class="status" role="status" aria-live="polite">
+          Anzeige wird vorbereitet …
+        </div>
+        <div id="plots" class="plots" data-focus="both">
+          <section
+            class="plot-panel"
+            id="amplitude-panel"
+            aria-label="Amplitudenansicht"
+          >
+            <div class="plot-head">
+              <h2>Amplitude</h2>
+              <div class="row">
+                <button type="button" class="export" data-export="amplitude">
+                  PNG</button
+                ><button type="button" data-expand="amplitude">
+                  Vergrößern
+                </button>
+              </div>
+            </div>
+            <p class="plot-sub" id="amplitude-sub">
+              Zeit × Kanal × Amplitude (µV)
+            </p>
+            <div
+              class="plot"
+              id="amplitude-plot"
+              role="img"
+              aria-label="Interaktiver Amplitudenplot"
+            ></div>
+            <p class="plot-foot" id="amplitude-foot"></p>
+          </section>
+          <section
+            class="plot-panel"
+            id="power-panel"
+            aria-label="Bandpoweransicht"
+          >
+            <div class="plot-head">
+              <h2 id="power-title">Alpha-Bandpower</h2>
+              <div class="row">
+                <button type="button" class="export" data-export="power">
+                  PNG</button
+                ><button type="button" data-expand="power">Vergrößern</button>
+              </div>
+            </div>
+            <p class="plot-sub" id="power-sub">Zeit × Kanal × Leistung (µV²)</p>
+            <div
+              class="plot"
+              id="power-plot"
+              role="img"
+              aria-label="Interaktiver Bandpowerplot"
+            ></div>
+            <p class="plot-foot" id="power-foot"></p>
+          </section>
+        </div>
+        <div
+          id="warnings"
+          class="warnings"
+          role="status"
+          aria-live="polite"
+        ></div>
+        <details class="mt" open>
+          <summary id="offset-title">Abgezogene Mediane (µV)</summary>
+          <div id="offsets" class="offsets"></div>
+        </details>
+
+        <p class="footnote">
+          Maus: drehen · Mausrad: Seite scrollen · 3D − / +: zoomen · Hover: Kanal, Zeit und Messwert. Bei
+          überlagerten Kurven auf 2D umschalten oder Kanäle reduzieren. Die
+          Kanalachse zeigt die Reihenfolge, keine räumlichen Abstände am Kopf.
+          Lange Ausschnitte werden für die Anzeige verdichtet; Extrema und
+          Datenlücken bleiben erhalten.
+        </p>
+      </main>
+    </div>
+    <script src="plotly.min.js"></script>
+    <script>
+      "use strict";
+      (() => {
+        const $ = (id) => document.getElementById(id),
+          plots = { amplitude: $("amplitude-plot"), power: $("power-plot") };
+        let meta = null,
+          data = null,
+          requestId = 0,
+          controller = null,
+          timer = null,
+          axisRevision = 0,
+          camera = { eye: { x: 2, y: 2.15, z: 1.5 }, up: { x: 0, y: 0, z: 1 } },
+          syncing = false,
+          rendering = false,
+          renderQueued = false,
+          renderTask = null,
+          resizeFrame = null,
+          focused = null,
+          allEvents = [],
+          selectedEventId = null,
+          cursorTime = null;
+        const cameraState = {
+          amplitude: JSON.parse(JSON.stringify(camera)),
+          power: JSON.parse(JSON.stringify(camera)),
+        };
+        const cameras = {
+          front: { eye: { x: 0, y: 2.5, z: 0.25 }, up: { x: 0, y: 0, z: 1 } },
+          top: { eye: { x: 0, y: 0, z: 2.6 }, up: { x: 0, y: 1, z: 0 } },
+          reset: { eye: { x: 2, y: 2.15, z: 1.5 }, up: { x: 0, y: 0, z: 1 } },
+        };
+        const locations = {
+          Fz: [58, 39],
+          C3: [32, 64],
+          Cz: [58, 64],
+          C4: [84, 64],
+          Pz: [58, 87],
+          PO7: [29, 101],
+          Oz: [58, 113],
+          PO8: [87, 101],
+        };
+        const fmt = (v, d = 2) =>
+          Number(v).toLocaleString("de-DE", { maximumFractionDigits: d });
+        const finite = (v) => typeof v === "number" && Number.isFinite(v);
+        function esc(v) {
+          return String(v).replace(
+            /[&<>"']/g,
+            (c) =>
+              ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;",
+              })[c],
+          );
+        }
+        function theme() {
+          const s = getComputedStyle(document.documentElement);
+          return Object.fromEntries(
+            [
+              "bg",
+              "surface",
+              "text",
+              "muted",
+              "border",
+              "grid",
+              "accent",
+              "orange",
+            ].map((k) => [k, s.getPropertyValue("--" + k).trim()]),
+          );
+        }
+        function selected() {
+          return [...document.querySelectorAll("#channels input:checked")].map(
+            (c) => +c.value,
+          );
+        }
+        function status(text, error = false) {
+          $("status").textContent = text;
+          $("status").classList.toggle("error", error);
+        }
+        function number(id, positive = false) {
+          const e = $(id);
+          if (!e.value.trim())
+            throw new Error(
+              "Bitte „" +
+                e.parentElement.firstChild.textContent.trim() +
+                "“ ausfüllen.",
+            );
+          const v = Number(e.value);
+          if (!Number.isFinite(v) || (positive && v <= 0))
+            throw new Error(
+              "Ungültiger Wert: " +
+                e.parentElement.firstChild.textContent.trim(),
+            );
+          return v;
+        }
+        function config() {
+          const channels = selected();
+          if (!channels.length)
+            throw new Error("Mindestens einen Kanal auswählen.");
+          const start = number("start"),
+            duration = number("duration", true),
+            low = number("band-low"),
+            high = number("band-high"),
+            window = number("window", true),
+            hop = number("hop", true);
+          if (start < 0 || start >= meta.total_duration)
+            throw new Error("Der Start muss innerhalb der Aufnahme liegen.");
+          if (low < 0 || low >= high || high > meta.sfreq / 2)
+            throw new Error(
+              "Frequenzband: 0 ≤ Von < Bis ≤ " + fmt(meta.sfreq / 2) + " Hz.",
+            );
+          if (window < 0.25 || window > 30 || hop < 0.05 || hop > window)
+            throw new Error(
+              "Fenster: 0,25–30 s; Schritt: 0,05 s bis Fensterlänge.",
+            );
+          return {
+            start,
+            duration,
+            channels,
+            low,
+            high,
+            window,
+            hop,
+            center: $("center").checked ? 1 : 0,
+          };
+        }
+        function schedule() {
+          clearTimeout(timer);
+          timer = setTimeout(loadData, 160);
+        }
+        async function loadData() {
+          let cfg;
+          try {
+            cfg = config();
+          } catch (e) {
+            status(e.message, true);
+            return;
+          }
+          const id = ++requestId;
+          controller?.abort();
+          controller = new AbortController();
+          status("Berechne Ausschnitt …");
+          const bandName = $("band").selectedOptions[0].text.split(" · ")[0];
+          const q = new URLSearchParams({
+            ...cfg,
+            channels: cfg.channels.join(","),
+          });
+          try {
+            const response = await fetch("data?" + q, {
+              signal: controller.signal,
+            });
+            const result = await response.json();
+            if (!response.ok)
+              throw new Error(
+                result.error || "Daten konnten nicht geladen werden.",
+              );
+            if (id !== requestId) return;
+            data = result;
+            allEvents = data.events.map((e, id) => ({ ...e, id }));
+            data.events = allEvents.filter(
+              (e) => e.onset >= data.start && e.onset <= data.stop,
+            );
+            data._center = !!cfg.center;
+            data._band = [cfg.low, cfg.high];
+            data._bandName = bandName;
+            $("start").value = result.start;
+            $("duration").value = fmtPlain(result.stop - result.start);
+            $("timeline").max = Math.max(
+              0,
+              meta.total_duration - (result.stop - result.start),
+            );
+            $("timeline").value = result.start;
+            $("previous").disabled = result.start <= 0;
+            $("next").disabled =
+              result.stop >= meta.total_duration - 1 / meta.sfreq;
+            $("interval").textContent =
+              fmt(result.start, 1) + "–" + fmt(result.stop, 1) + " s";
+            if ($("scale-mode").value === "auto" || !$("amplitude-range").value)
+              fitAmplitude(false);
+            if (!windowSetPower()) fitPower(false);
+            if (
+              cursorTime === null ||
+              cursorTime < data.start ||
+              cursorTime > data.stop
+            ) {
+              cursorTime = data.start;
+              selectedEventId = null;
+            }
+            updateEvents();
+            drawHead();
+            await render();
+          } catch (e) {
+            if (e.name !== "AbortError" && id === requestId)
+              status(e.message, true);
+          }
+        }
+        const fmtPlain = (v) => Number(v.toPrecision(10)).toString();
+        function allValues(key) {
+          return data
+            ? data.channels.flatMap((c) => c[key].filter(finite))
+            : [];
+        }
+        function extent(values, fallback = [0, 1]) {
+          let lo = Infinity,
+            hi = -Infinity;
+          for (const v of values) {
+            if (v < lo) lo = v;
+            if (v > hi) hi = v;
+          }
+          return finite(lo) ? [lo, hi] : fallback;
+        }
+        function powerValue(v) {
+          if (!finite(v)) return null;
+          return $("power-unit").value === "db"
+            ? 10 * Math.log10(Math.max(v, 1e-30))
+            : v;
+        }
+        function windowSetPower() {
+          return $("power-max").value !== "" && $("power-min").value !== "";
+        }
+        function fitAmplitude(redraw = true) {
+          const [lo, hi] = extent(allValues("amplitude"), [-1, 1]);
+          $("amplitude-range").value = fmtPlain(
+            Number(
+              Math.max(
+                1e-6,
+                Math.max(Math.abs(lo), Math.abs(hi)) * 1.08,
+              ).toPrecision(4),
+            ),
+          );
+          if (redraw) render();
+        }
+        function fitPower(redraw = true) {
+          const [lo, hi] = extent(
+            allValues("bandpower").map(powerValue),
+            $("power-unit").value === "db" ? [-20, 20] : [0, 1],
+          );
+          $("power-min").value =
+            $("power-unit").value === "db"
+              ? fmtPlain(
+                  Number((lo - Math.max(1, (hi - lo) * 0.08)).toPrecision(4)),
+                )
+              : "0";
+          $("power-max").value = fmtPlain(
+            Number(
+              (
+                hi +
+                Math.max(
+                  $("power-unit").value === "db" ? 1 : 1e-6,
+                  (hi - lo) * 0.08,
+                )
+              ).toPrecision(4),
+            ),
+          );
+          if (redraw) render();
+        }
+        function updateEvents() {
+          $("event").replaceChildren(new Option("Kein Marker ausgewählt", ""));
+          data.events.forEach((e, i) =>
+            $("event").add(
+              new Option(fmt(e.onset, 3) + " s · " + e.description, String(i)),
+            ),
+          );
+          const local = data.events.findIndex((e) => e.id === selectedEventId);
+          $("event").value = local < 0 ? "" : String(local);
+          updateEventDetail();
+          drawTimelines();
+        }
+        function updateEventDetail() {
+          const e = allEvents.find((e) => e.id === selectedEventId);
+          $("event-detail").textContent = e
+            ? clock(e.onset) +
+              " · " +
+              fmt(e.onset, 3) +
+              " s · Marker " +
+              (e.id + 1) +
+              " / " +
+              allEvents.length +
+              "\n" +
+              e.description
+            : "Marker anklicken oder mit den Marker-Tasten auswählen. Orange zeigt die genaue Position.";
+        }
+        function showEvent(redraw = true) {
+          const e = data?.events[$("event").value];
+          selectedEventId = e?.id ?? null;
+          if (e) cursorTime = e.onset;
+          updateEventDetail();
+          drawTimelines();
+          if (redraw) render();
+        }
+        function clock(seconds) {
+          const total = Math.max(0, Math.round(seconds * 1000)),
+            ms = String(total % 1000).padStart(3, "0");
+          const s = String(Math.floor(total / 1000) % 60).padStart(2, "0"),
+            m = String(Math.floor(total / 60000) % 60).padStart(2, "0"),
+            h = Math.floor(total / 3600000);
+          return (
+            (h ? String(h).padStart(2, "0") + ":" : "") + m + ":" + s + "." + ms
+          );
+        }
+        function eventParts(e) {
+          const [key, ...parts] = e.description.split(" | ");
+          return {
+            key,
+            fields: Object.fromEntries(
+              parts.map((p) => {
+                const i = p.indexOf("=");
+                return i < 0 ? [p, ""] : [p.slice(0, i), p.slice(i + 1)];
+              }),
+            ),
+          };
+        }
+        function shortEvent(e) {
+          const { key, fields } = eventParts(e);
+          const names = {
+            session_start: "Sitzungsstart",
+            session_end: "Sitzungsende",
+            baseline_start: "Baseline",
+            baseline_end: "Baseline Ende",
+            run_start: "Durchgang Start",
+            run_end: "Durchgang Ende",
+            block_start: "Block Start",
+            block_end: "Block Ende",
+            trial_start: "Trial Start",
+            trial_end: "Trial Ende",
+            task_onset: "Aufgabe",
+            task_offset: "Ruhe",
+            rest_end: "Ruhe Ende",
+            break_start: "Pause",
+            break_end: "Pause Ende",
+            phase_start: "Phase Start",
+            phase_end: "Phase Ende",
+            cue_onset: "Signal",
+            trial_invalidated: "Ungültiger Trial",
+          };
+          const conditions = {
+            arms: "Arme heben",
+            legs: "Beine heben",
+            blink: "Blinzeln",
+            imagine_arms: "Arme vorstellen",
+            imagine_legs: "Beine vorstellen",
+            mental_arithmetic: "Kopfrechnen",
+          };
+          const name =
+            key === "task_onset"
+              ? conditions[fields.condition] || names[key]
+              : names[key] || key;
+          return (
+            name +
+            (fields.trial && fields.trial !== "0" ? " #" + fields.trial : "")
+          );
+        }
+        function eventPriority(e) {
+          const { key, fields } = eventParts(e);
+          if (e.id === selectedEventId) return -1;
+          if (!Object.keys(fields).length) return 0;
+          return (
+            {
+              task_onset: 1,
+              baseline_start: 1,
+              run_start: 2,
+              break_start: 2,
+              task_offset: 3,
+              trial_start: 4,
+            }[key] ?? 6
+          );
+        }
+        function navigate(start, duration = Number($("duration").value) || 10) {
+          if (!meta || !finite(start) || !finite(duration) || duration <= 0)
+            return;
+          duration = Math.max(
+            1 / meta.sfreq,
+            Math.min(meta.total_duration, duration),
+          );
+          $("duration").value = fmtPlain(duration);
+          $("start").value = fmtPlain(
+            Math.max(0, Math.min(meta.total_duration - duration, start)),
+          );
+          clearTimeout(timer);
+          loadData();
+        }
+        function zoomTime(factor) {
+          if (!data) return;
+          const center =
+            finite(cursorTime) &&
+            cursorTime >= data.start &&
+            cursorTime <= data.stop
+              ? cursorTime
+              : (data.start + data.stop) / 2;
+          const duration = Math.max(
+            1 / meta.sfreq,
+            Math.min(meta.total_duration, (data.stop - data.start) * factor),
+          );
+          navigate(center - duration / 2, duration);
+        }
+        function selectEvent(id) {
+          const e = allEvents.find((e) => e.id === Number(id));
+          if (!e) return;
+          selectedEventId = e.id;
+          cursorTime = e.onset;
+          if (e.onset < data.start || e.onset > data.stop) {
+            navigate(e.onset - (data.stop - data.start) * 0.25);
+          } else {
+            updateEvents();
+            render();
+          }
+        }
+        function adjacentEvent(direction) {
+          if (selectedEventId !== null) {
+            const i = allEvents.findIndex((e) => e.id === selectedEventId);
+            return allEvents[i + direction];
+          }
+          const t = cursorTime ?? data?.start ?? 0;
+          return direction > 0
+            ? allEvents.find((e) => e.onset >= t)
+            : [...allEvents].reverse().find((e) => e.onset < t);
+        }
+        function stepEvent(direction) {
+          const e = adjacentEvent(direction);
+          if (e) selectEvent(e.id);
+        }
+        function svgNode(tag, attrs = {}, text = null) {
+          const el = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            tag,
+          );
+          Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+          if (text !== null) el.textContent = text;
+          return el;
+        }
+        // Static timeline geometry survives plot redraws and recording navigation.
+        // Event arrays are refreshed by the server, so content signatures (rather
+        // than array identity) determine whether the SVG actually needs rebuilding.
+        const timelineCache = { overview: null, detail: null };
+        let timelineEventSource = null, timelineEventSignature = "";
+        const eventSignature = (events) => JSON.stringify(
+          events.map((e) => [e.id, e.onset, e.description]),
+        );
+        function timelineAttributes(node, attributes) {
+          for (const [name, value] of Object.entries(attributes)) {
+            if (value === null) {
+              if (node.hasAttribute(name)) node.removeAttribute(name);
+            } else if (node.getAttribute(name) !== String(value)) {
+              node.setAttribute(name, value);
+            }
+          }
+        }
+        function drawTimelines() {
+          if (!data || !meta) return;
+          const span = data.stop - data.start;
+          const overview = $("recording-overview"), detail = $("event-timeline");
+          // Read geometry together before any DOM writes; cursor/selection changes
+          // below do not invalidate geometry or measure individual labels again.
+          const widths = {
+            overview: Math.max(200, overview.getBoundingClientRect().width),
+            detail: Math.max(200, detail.getBoundingClientRect().width),
+          };
+          const text = (id, value) => {
+            if ($(id).textContent !== value) $(id).textContent = value;
+          };
+          text("position-readout",
+            clock(data.start) + " – " + clock(data.stop) + " · " +
+            fmt(data.start, 3) + "–" + fmt(data.stop, 3) + " s");
+          const selectedEvent = allEvents.find((e) => e.id === selectedEventId);
+          text("cursor-readout",
+            "Position: " + clock(cursorTime ?? data.start) + " · " +
+            fmt(cursorTime ?? data.start, 3) + " s" +
+            (selectedEvent ? " · " + shortEvent(selectedEvent) : ""));
+          text("overview-caption",
+            clock(meta.total_duration) + " gesamt · " + allEvents.length + " Marker");
+          $("previous-event").disabled = !adjacentEvent(-1);
+          $("next-event").disabled = !adjacentEvent(1);
+          $("zoom-in").disabled = span <= 1 / meta.sfreq;
+          $("zoom-out").disabled = span >= meta.total_duration;
+          if (timelineEventSource !== allEvents) {
+            timelineEventSource = allEvents;
+            timelineEventSignature = eventSignature(allEvents);
+          }
+          for (const [name, svg, total, start, height, baseline, events] of [
+            ["overview", overview, meta.total_duration, 0, 62, 32, allEvents],
+            ["detail", detail, span, data.start, 142, 100, data.events],
+          ]) {
+            const width = widths[name], left = 26, right = width - 26;
+            const x = (t) => left + ((t - start) / total) * (right - left);
+            const key = JSON.stringify([width, total, start,
+              name === "overview" ? timelineEventSignature : eventSignature(events)]);
+            let cache = timelineCache[name];
+            if (!cache || cache.key !== key) {
+              cache = {key, marks: new Map(), labelGroups: new Map(), selectedId: null};
+              timelineCache[name] = cache;
+              const fragment = document.createDocumentFragment();
+              svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+              if (name === "overview") {
+                fragment.append(svgNode("rect", {
+                  x: left, y: 5, width: right - left, height: 27,
+                  rx: 3, fill: "var(--soft)",
+                }));
+                cache.viewport = svgNode("rect", {
+                  y: 4, height: 29, rx: 2, fill: "var(--accent)",
+                  opacity: 0.18, "data-viewport": "",
+                });
+                fragment.append(cache.viewport);
+              }
+              fragment.append(svgNode("line", {
+                x1: left, x2: right, y1: baseline, y2: baseline, class: "tick",
+              }));
+              for (const e of events) {
+                const mark = svgNode("line", {
+                  x1: x(e.onset), x2: x(e.onset),
+                  y1: name === "overview" ? 8 : 83, y2: baseline,
+                  class: "event-tick", "data-event-id": e.id,
+                });
+                mark.append(svgNode("title", {}, clock(e.onset) + " · " + e.description));
+                mark.addEventListener("click", (evt) => {
+                  evt.stopPropagation();
+                  selectEvent(e.id);
+                });
+                cache.marks.set(e.id, mark);
+                fragment.append(mark);
+              }
+              const ticks = width < 480 ? 3 : width < 800 ? 5 : 7;
+              for (let i = 0; i < ticks; i++) {
+                const t = start + (total * i) / (ticks - 1), px = x(t);
+                fragment.append(svgNode("line", {
+                  x1: px, x2: px, y1: baseline, y2: baseline + 5, class: "tick",
+                }));
+                fragment.append(svgNode("text", {
+                  x: px, y: baseline + 21,
+                  "text-anchor": i === 0 ? "start" : i === ticks - 1 ? "end" : "middle",
+                }, total < 5 ? fmt(t, 3) + " s" : clock(t).replace(/\.000$/, "")));
+              }
+              cache.cursor = svgNode("line", {
+                y1: name === "overview" ? 2 : 0,
+                y2: baseline + 6, class: "selected-tick", display: "none",
+              });
+              fragment.append(cache.cursor);
+              svg.replaceChildren(fragment);
+              if (name === "detail") {
+                const labels = $("timeline-labels"), groups = new Map();
+                for (const e of events) {
+                  if (!groups.has(e.onset)) groups.set(e.onset, []);
+                  groups.get(e.onset).push(e);
+                }
+                const prioritized = [...groups.values()]
+                  .map((group) => ({events: group, representative: [...group]
+                    .sort((a, b) => eventPriority(a) - eventPriority(b))[0]}))
+                  .sort((a, b) => eventPriority(a.representative) -
+                    eventPriority(b.representative) ||
+                    a.representative.onset - b.representative.onset);
+                const buttons = document.createDocumentFragment();
+                const entries = prioritized.map(({events: group, representative: e}) => {
+                  const button = document.createElement("button");
+                  button.type = "button";
+                  button.textContent = shortEvent(e) +
+                    (group.length > 1 ? " (+" + (group.length - 1) + ")" : "");
+                  button.dataset.eventId = e.id;
+                  button.setAttribute("aria-label", clock(e.onset) + " · " + e.description +
+                    (group.length > 1 ? " · " + group.length + " gleichzeitige Marker" : ""));
+                  button.title = e.description;
+                  buttons.append(button);
+                  return {button, events: group, event: e, px: x(e.onset)};
+                });
+                // One DOM insertion, one read phase, then one write phase. No
+                // forced layout per event even when a wide window has 1000+ markers.
+                labels.replaceChildren(buttons);
+                const measured = entries.map((entry) => ({...entry,
+                  width: Math.min(Math.max(70, width - 12),
+                    entry.button.getBoundingClientRect().width),
+                }));
+                const lanes = [[], [], []], connectors = document.createDocumentFragment();
+                let count = 0;
+                for (const entry of measured) {
+                  const {button, events: group, px, width: w} = entry;
+                  const labelLeft = Math.max(0, Math.min(width - w, px - w / 2));
+                  const lane = lanes.findIndex((items) => items.every(([a, b]) =>
+                    labelLeft + w + 8 <= a || labelLeft >= b + 8));
+                  if (lane < 0) {
+                    button.remove();
+                    continue;
+                  }
+                  lanes[lane].push([labelLeft, labelLeft + w]);
+                  button.style.left = labelLeft + "px";
+                  button.style.top = lane * 27 + "px";
+                  button.style.maxWidth = width - 12 + "px";
+                  button.style.overflow = "hidden";
+                  button.style.textOverflow = "ellipsis";
+                  button.addEventListener("click", () => {
+                    const current = group.findIndex((ev) => ev.id === selectedEventId);
+                    selectEvent(group[(current + 1) % group.length].id);
+                  });
+                  const connector = svgNode("line", {
+                    x1: px, x2: px, y1: lane * 27 + 25, y2: 100,
+                    class: "event-tick", "pointer-events": "none",
+                  });
+                  connectors.append(connector);
+                  for (const e of group) cache.labelGroups.set(e.id, {button, connector});
+                  count++;
+                }
+                detail.append(connectors);
+                cache.markerCount = events.length
+                  ? events.length + " Marker · " + count + " beschriftete Positionen" +
+                    (count < groups.size ? " · alle Marker unten auswählbar" : "")
+                  : "Keine Ereignisse in diesem Ausschnitt";
+              }
+            }
+            if (cache.viewport) timelineAttributes(cache.viewport, {
+              x: x(data.start), width: Math.max(3, x(data.stop) - x(data.start)),
+            });
+            const cursorVisible = finite(cursorTime) && cursorTime >= start && cursorTime <= start + total;
+            timelineAttributes(cache.cursor, {
+              display: cursorVisible ? null : "none",
+              x1: cursorVisible ? x(cursorTime) : null,
+              x2: cursorVisible ? x(cursorTime) : null,
+              "data-cursor-time": cursorVisible ? cursorTime : null,
+            });
+            if (cache.selectedId !== selectedEventId) {
+              const updateSelection = (id, selected) => {
+                cache.marks.get(id)?.classList.toggle("selected-tick", selected);
+                const group = cache.labelGroups.get(id);
+                if (group) {
+                  group.button.classList.toggle("selected", selected);
+                  group.connector.classList.toggle("selected-tick", selected);
+                }
+              };
+              updateSelection(cache.selectedId, false);
+              updateSelection(selectedEventId, true);
+              cache.selectedId = selectedEventId;
+            }
+          }
+          text("marker-count", timelineCache.detail.markerCount);
+        }
+
+        function drawHead() {
+          const channels = selected(),
+            mapped = new Set(
+              meta.channels
+                .filter((c) => channels.includes(c.index) && c.mapped)
+                .map((c) => c.label),
+            );
+          const dot = $("sensor-dots");
+          dot.innerHTML = "";
+          Object.entries(locations).forEach(([name, [x, y]]) => {
+            const ns = "http://www.w3.org/2000/svg";
+            const g = document.createElementNS(ns, "g"),
+              circle = document.createElementNS(ns, "circle"),
+              label = document.createElementNS(ns, "text");
+            circle.setAttribute("cx", x);
+            circle.setAttribute("cy", y);
+            circle.setAttribute("r", "9");
+            circle.setAttribute(
+              "class",
+              "sensor" +
+                (mapped.has(name) ? " active" : "") +
+                (focused === name ? " focused" : ""),
+            );
+            label.setAttribute("x", x);
+            label.setAttribute("y", y + 3);
+            label.setAttribute("text-anchor", "middle");
+            label.textContent = name;
+            label.setAttribute("class", mapped.has(name) ? "active-label" : "");
+            g.append(circle, label);
+            dot.append(g);
+          });
+        }
+        function orderedChannels() {
+          const channels = [...data.channels];
+          return $("order").value === "reverse" ? channels.reverse() : channels;
+        }
+        function render() {
+          $("plots").dataset.focus = $("focus").value;
+          renderQueued = true;
+          if (!renderTask) {
+            renderTask = (async () => {
+              await new Promise(requestAnimationFrame);
+              while (renderQueued) {
+                renderQueued = false;
+                await renderNow();
+                if (renderQueued) await new Promise(requestAnimationFrame);
+              }
+            })().finally(() => { renderTask = null; });
+          }
+          return renderTask;
+        }
+        async function renderNow() {
+          if (!data) return;
+          let amp, pmin, pmax;
+          try {
+            amp = number("amplitude-range", true);
+            pmin = number("power-min");
+            pmax = number("power-max");
+            if (
+              pmin >= pmax ||
+              ($("power-unit").value === "linear" && pmin < 0)
+            )
+              throw new Error(
+                "Bandpower: Untergrenze muss kleiner als Obergrenze sein und linear ≥ 0.",
+              );
+          } catch (e) {
+            status(e.message, true);
+            return;
+          }
+          const colors = theme(),
+            channels = orderedChannels(),
+            space = +$("spacing").value,
+            is3d = $("mode").value === "3d",
+            db = $("power-unit").value === "db",
+            event = data.events[$("event").value];
+          let clippedAmp = 0,
+            clippedPower = 0;
+          const cameraControls = [
+            "camera-front",
+            "camera-top",
+            "camera-reset",
+            "camera-zoom-out",
+            "camera-zoom-in",
+            "sync-camera",
+          ];
+          cameraControls.forEach((id) => ($(id).disabled = !is3d));
+          $("plots").dataset.focus = $("focus").value;
+          document
+            .querySelectorAll("[data-expand]")
+            .forEach(
+              (b) =>
+                (b.textContent =
+                  $("focus").value === b.dataset.expand
+                    ? "Beide zeigen"
+                    : "Vergrößern"),
+            );
+          const ampValues = allValues("amplitude");
+          clippedAmp = ampValues.filter((v) => Math.abs(v) > amp).length;
+          clippedPower = allValues("bandpower")
+            .map(powerValue)
+            .filter((v) => v < pmin || v > pmax).length;
+          $("amplitude-sub").textContent =
+            (data._center
+              ? "Median je Ausschnitt abgezogen"
+              : "Absolute Werte") +
+            " · gemeinsamer Bereich ±" +
+            fmt(amp) +
+            " µV";
+          const bandName = data._bandName;
+          $("power-title").textContent =
+            (bandName === "Eigener Bereich"
+              ? "Bandpower"
+              : bandName + "-Bandpower") +
+            " · " +
+            fmt(data._band[0]) +
+            "–" +
+            fmt(data._band[1]) +
+            " Hz";
+          $("power-sub").textContent =
+            fmt(data.window_seconds) +
+            "-s-Fenster · " +
+            fmt(data.hop_seconds) +
+            "-s-Schritt · Δf " +
+            fmt(data.frequency_resolution) +
+            " Hz";
+          $("amplitude-foot").textContent = clippedAmp
+            ? "⚠ " +
+              clippedAmp +
+              " gezeichnete Werte außerhalb des Bereichs. „Amplitude einpassen“ zeigt alle."
+            : "µV · identische Skala für alle Kanäle";
+          $("power-foot").textContent = clippedPower
+            ? "⚠ " +
+              clippedPower +
+              " Werte außerhalb des Bereichs. „Bandpower einpassen“ zeigt alle."
+            : (db ? "dB bezogen auf 1 µV²" : "µV²") + " · Zeit = Fenstermitte";
+          $("offset-title").textContent = data._center
+            ? "Abgezogene Mediane (µV)"
+            : "Gleichanteil bleibt erhalten";
+          $("offsets").replaceChildren();
+          if (data._center)
+            channels.forEach((c) => {
+              const span = document.createElement("span");
+              span.textContent = c.label + ": " + fmt(c.offset_uv);
+              $("offsets").append(span);
+            });
+          $("warnings").textContent = data.warnings.join("\n");
+          const jobs = [];
+          const revision = ++axisRevision;
+          rendering = true;
+          for (const [kind, el] of Object.entries(plots)) {
+            if ($("focus").value !== "both" && $("focus").value !== kind) continue;
+            const power = kind === "power",
+              zmin = power ? pmin : -amp,
+              zmax = power ? pmax : amp,
+              unit = power ? (db ? "dB re 1 µV²" : "µV²") : "µV",
+              traces = [];
+            channels.forEach((c, j) => {
+              const times = power ? c.power_times : c.times,
+                values = power ? c.bandpower.map(powerValue) : c.amplitude,
+                label = esc(c.label),
+                source = esc(c.name),
+                color = power ? colors.orange : colors.accent;
+              const trace = {
+                type: is3d ? "scatter3d" : "scatter",
+                mode: "lines",
+                name: c.label,
+                showlegend: false,
+                connectgaps: false,
+                line: { color, width: is3d ? 3 : 1.5 },
+                x: times,
+                customdata: values,
+                meta: { channel: c.label },
+                hovertemplate:
+                  label +
+                  " · " +
+                  source +
+                  "<br>Zeit: %{x:.3f} s<br>" +
+                  (power ? "Leistung" : "Amplitude") +
+                  ": %{customdata:.3f} " +
+                  unit +
+                  "<extra></extra>",
+              };
+              if (is3d) {
+                trace.y = times.map(() => j * space);
+                trace.z = values;
+              } else {
+                const mid = power ? (zmin + zmax) / 2 : 0;
+                const half = (zmax - zmin) / 2;
+                trace.y = values.map((v) =>
+                  finite(v) && v >= zmin && v <= zmax
+                    ? j * space + ((v - mid) / half) * 0.38
+                    : null,
+                );
+              }
+              traces.push(trace);
+            });
+            if (is3d && data.events.length) {
+              const x = [],
+                y = [],
+                z = [],
+                labels = [],
+                ids = [];
+              for (const e of data.events) {
+                x.push(e.onset, e.onset, null);
+                y.push(-0.45 * space, (channels.length - 0.55) * space, null);
+                z.push(zmin, zmin, null);
+                labels.push(esc(shortEvent(e)), esc(shortEvent(e)), null);
+                ids.push(e.id, e.id, null);
+              }
+              traces.push({
+                type: "scatter3d",
+                mode: "lines",
+                name: "Ereignisse",
+                meta: { role: "events" },
+                showlegend: false,
+                x,
+                y,
+                z,
+                text: labels,
+                customdata: ids,
+                connectgaps: false,
+                line: { color: colors.accent, width: 2, dash: "dot" },
+                hovertemplate: "%{text}<br>%{x:.3f} s<extra>Ereignis</extra>",
+              });
+            }
+            if (is3d && cursorTime >= data.start && cursorTime <= data.stop) {
+              traces.push({
+                type: "scatter3d",
+                mode: "lines",
+                meta: { role: "cursor" },
+                showlegend: false,
+                hoverinfo: "skip",
+                line: { color: colors.orange, width: 4 },
+                x: [cursorTime, cursorTime, null, cursorTime, cursorTime],
+                y: [
+                  -0.45 * space,
+                  (channels.length - 0.55) * space,
+                  null,
+                  -0.45 * space,
+                  -0.45 * space,
+                ],
+                z: [zmin, zmin, null, zmin, zmax],
+              });
+            }
+            const layout = {
+              paper_bgcolor: colors.surface,
+              plot_bgcolor: colors.surface,
+              font: {
+                family: "system-ui, sans-serif",
+                size: 12,
+                color: colors.text,
+              },
+              margin: {
+                l: is3d ? 55 : 64,
+                r: is3d ? 32 : 24,
+                t: is3d ? 12 : 20,
+                b: is3d ? 35 : 55,
+              },
+              showlegend: false,
+              uirevision: "waterfall-" + kind + "-" + $("mode").value,
+              hoverlabel: {
+                font: { size: 13 },
+                bgcolor: colors.surface,
+                bordercolor: colors.border,
+              },
+              dragmode: is3d ? "orbit" : "pan",
+            };
+            if (is3d) {
+              const axis = {
+                gridcolor: colors.grid,
+                linecolor: colors.border,
+                zerolinecolor: colors.grid,
+                showbackground: false,
+                tickfont: { size: 12 },
+                automargin: true,
+              };
+              layout.scene = {
+                camera: cameraState[kind],
+                aspectmode: "manual",
+                aspectratio: {
+                  x: 1.65,
+                  y: Math.max(0.25, (0.8 * space * channels.length) / 8),
+                  z: 0.8,
+                },
+                xaxis: {
+                  ...axis,
+                  title: { text: "Zeit (s)", font: { size: 13 } },
+                  range: [data.start, data.stop],
+                  nticks: 5,
+                },
+                yaxis: {
+                  ...axis,
+                  title: { text: "Kanal", font: { size: 13 } },
+                  tickvals: channels.map((_, j) => j * space),
+                  ticktext: channels.map((c) => c.label),
+                  range: [
+                    -0.5 * space,
+                    Math.max(0.5, channels.length - 0.5) * space,
+                  ],
+                },
+                zaxis: {
+                  ...axis,
+                  title: {
+                    text:
+                      (power ? "Leistung" : "Amplitude") + " (" + unit + ")",
+                    font: { size: 12 },
+                  },
+                  range: [zmin, zmax],
+                  nticks: 5,
+                },
+                uirevision: "camera",
+              };
+            } else {
+              layout.xaxis = {
+                title: { text: "Zeit (s)" },
+                range: [data.start, data.stop],
+                autorange: false,
+                uirevision: revision,
+                gridcolor: colors.grid,
+                zeroline: false,
+                automargin: true,
+                nticks: 6,
+              };
+              layout.yaxis = {
+                title: { text: "Kanal" },
+                autorange: false,
+                fixedrange: true,
+                uirevision: revision,
+                tickvals: channels.map((_, j) => j * space),
+                ticktext: channels.map((c) => c.label),
+                range: [
+                  -0.7 * space,
+                  Math.max(0.7, channels.length - 0.3) * space,
+                ],
+                gridcolor: colors.grid,
+                zeroline: false,
+                automargin: true,
+              };
+              layout.shapes = data.events.map((e) => ({
+                type: "line",
+                x0: e.onset,
+                x1: e.onset,
+                yref: "paper",
+                y0: 0,
+                y1: 1,
+                line: { color: colors.accent, width: 1, dash: "dot" },
+              }));
+              if (cursorTime >= data.start && cursorTime <= data.stop)
+                layout.shapes.push({
+                  type: "line",
+                  x0: cursorTime,
+                  x1: cursorTime,
+                  yref: "paper",
+                  y0: 0,
+                  y1: 1,
+                  line: { color: colors.orange, width: 2 },
+                });
+            }
+            const finitePower = channels.some((c) => c.bandpower.some(finite));
+            if (power && !finitePower)
+              layout.annotations = [
+                {
+                  text: "Keine vollständigen, gültigen Analysefenster<br>in diesem Ausschnitt",
+                  xref: "paper",
+                  yref: "paper",
+                  x: 0.5,
+                  y: 0.5,
+                  showarrow: false,
+                  font: { color: colors.muted, size: 14 },
+                  bgcolor: colors.surface,
+                  borderpad: 10,
+                },
+              ];
+            const cfg = {
+              responsive: true,
+              displaylogo: false,
+              scrollZoom: false,
+              plotGlPixelRatio: 1,
+              displayModeBar: "hover",
+              modeBarButtonsToRemove: [
+                "toImage",
+                "autoScale2d",
+                "resetScale2d",
+              ],
+              doubleClick: false,
+              toImageButtonOptions: {
+                format: "png",
+                filename: "EEG-" + kind,
+                scale: 2,
+              },
+            };
+            jobs.push(
+              Plotly.react(el, traces, layout, cfg).then(() => {
+                if (!el._waterfallBound) {
+                  el.on("plotly_click", (e) => {
+                    const point = e.points?.[0];
+                    if (point?.data?.meta?.role === "events")
+                      selectEvent(point.customdata);
+                    else if (finite(point?.x)) {
+                      cursorTime = point.x;
+                      selectedEventId = null;
+                      updateEvents();
+                      render();
+                    }
+                  });
+                  el.on("plotly_hover", (e) => {
+                    const next = e.points[0]?.data?.meta?.channel || null;
+                    if (focused === next) return;
+                    focused = next;
+                    drawHead();
+                  });
+                  el.on("plotly_unhover", () => {
+                    if (focused === null) return;
+                    focused = null;
+                    drawHead();
+                  });
+                  el.on("plotly_relayout", async (e) => {
+                    if (rendering || syncing) return;
+                    if ($("mode").value === "2d") {
+                      if (e["xaxis.autorange"] || e["yaxis.autorange"]) {
+                        render();
+                        return;
+                      }
+                      const range = e["xaxis.range"] ?? [
+                        e["xaxis.range[0]"],
+                        e["xaxis.range[1]"],
+                      ];
+                      if (finite(range[0]) && finite(range[1])) {
+                        if (range[1] > range[0])
+                          navigate(range[0], range[1] - range[0]);
+                        else render();
+                        return;
+                      }
+                    }
+                    if (!e["scene.camera"]) return;
+                    cameraState[kind] = e["scene.camera"];
+                    if (!$("sync-camera").checked) return;
+                    camera = e["scene.camera"];
+                    const otherKind =
+                      kind === "amplitude" ? "power" : "amplitude";
+                    cameraState[otherKind] = camera;
+                    syncing = true;
+                    try {
+                      await Plotly.relayout(plots[otherKind], {
+                        "scene.camera": camera,
+                      });
+                    } finally {
+                      syncing = false;
+                    }
+                  });
+                  el._waterfallBound = true;
+                }
+              }),
+            );
+          }
+          try {
+            await Promise.all(jobs);
+            status(
+              fmt(data.start) +
+                "–" +
+                fmt(data.stop) +
+                " s · " +
+                channels.length +
+                " Kanäle · " +
+                (is3d
+                  ? "3D-Wasserfall"
+                  : "2D-Spuren · je Kanal derselbe Wertebereich"),
+            );
+          } catch (e) {
+            status("Plot konnte nicht gezeichnet werden: " + e.message, true);
+          } finally {
+            rendering = false;
+            resizePlots();
+            drawTimelines();
+          }
+        }
+        function resizePlots() {
+          if (resizeFrame !== null) return;
+          resizeFrame = requestAnimationFrame(() => {
+            resizeFrame = null;
+            Object.values(plots).forEach((el) => {
+              const width = el.offsetWidth, height = el.offsetHeight;
+              if (!width || !el.data) return;
+              const size = width + "x" + height;
+              if (el._waterfallSize === size) return;
+              el._waterfallSize = size;
+              Plotly.Plots.resize(el);
+            });
+          });
+        }
+        function move(direction) {
+          if (!meta) return;
+          const duration = Number($("duration").value) || 10;
+          $("start").value = fmtPlain(
+            Math.max(
+              0,
+              Math.min(
+                meta.total_duration - duration,
+                Number($("start").value) + direction * duration * 0.8,
+              ),
+            ),
+          );
+          loadData();
+        }
+        function setCamera(which) {
+          camera = JSON.parse(JSON.stringify(cameras[which]));
+          cameraState.amplitude = JSON.parse(JSON.stringify(camera));
+          cameraState.power = JSON.parse(JSON.stringify(camera));
+          syncing = true;
+          Promise.all(
+            Object.values(plots)
+              .filter((p) => p.data)
+              .map((p) => Plotly.relayout(p, { "scene.camera": camera })),
+          ).finally(() => {
+            syncing = false;
+          });
+        }
+        function zoomCamera(factor) {
+          for (const kind of Object.keys(plots)) {
+            const current = cameraState[kind], eye = current.eye;
+            const distance = Math.hypot(eye.x, eye.y, eye.z);
+            const scale = Math.max(0.5, Math.min(12, distance * factor)) / distance;
+            cameraState[kind] = {
+              ...current,
+              eye: { x: eye.x * scale, y: eye.y * scale, z: eye.z * scale },
+            };
+          }
+          render();
+        }
+        async function init() {
+          if (typeof Plotly === "undefined")
+            throw new Error(
+              "Plotly konnte nicht geladen werden. Den lokalen Viewer neu starten.",
+            );
+          const response = await fetch("meta");
+          if (!response.ok)
+            throw new Error("Aufnahmeinformationen nicht verfügbar.");
+          meta = await response.json();
+          document.title = "EEG · " + meta.title;
+          $("recording-title").textContent = meta.title;
+          $("recording-meta").textContent =
+            meta.channels.length +
+            " EEG-Kanäle · " +
+            fmt(meta.sfreq) +
+            " Hz · " +
+            fmt(meta.total_duration) +
+            " s · " +
+            meta.filter_label;
+          if (window.innerWidth < 700) $("mode").value = "2d";
+          $("start").value = meta.start;
+          $("start").max = meta.total_duration - 1 / meta.sfreq;
+          $("duration").value = Math.min(meta.duration, meta.total_duration);
+          $("duration").min = 1 / meta.sfreq;
+          $("duration").max = meta.total_duration;
+          $("timeline").max = Math.max(0, meta.total_duration - meta.duration);
+          $("timeline").value = meta.start;
+          if (meta.scale_uv) $("amplitude-range").value = meta.scale_uv;
+          meta.channels.forEach((c) => {
+            const label = document.createElement("div");
+            label.className = "channel";
+            const check = document.createElement("input");
+            check.type = "checkbox";
+            check.checked = true;
+            check.value = c.index;
+            check.setAttribute("aria-label", c.label + " anzeigen");
+            const text = document.createElement("button");
+            text.type = "button";
+            text.className = "channel-only";
+            text.textContent = c.label;
+            text.setAttribute("aria-label", "Nur " + c.label + " anzeigen");
+            text.addEventListener("click", () => {
+              document
+                .querySelectorAll("#channels input")
+                .forEach((e) => (e.checked = +e.value === c.index));
+              drawHead();
+              loadData();
+            });
+            label.append(check, text);
+            if (c.name !== c.label) {
+              const original = document.createElement("span");
+              original.textContent = c.name;
+              label.append(original);
+            }
+            check.addEventListener("change", () => {
+              drawHead();
+              schedule();
+            });
+            label.addEventListener("mouseenter", () => {
+              focused = c.label;
+              drawHead();
+            });
+            label.addEventListener("mouseleave", () => {
+              focused = null;
+              drawHead();
+            });
+            $("channels").append(label);
+          });
+          if (meta.channels.some((c) => !c.mapped))
+            $("mapping-note").textContent =
+              "Nicht zugeordnete Kanäle behalten ihren Originalnamen und erscheinen nicht in der Kopfskizze.";
+          $("order").options[0].text = meta.channels.every((c) => c.mapped)
+            ? "Fz → Hinterkopf"
+            : "Aufnahmereihenfolge";
+          $("order").options[1].text = meta.channels.every((c) => c.mapped)
+            ? "Hinterkopf → Fz"
+            : "Umgekehrte Reihenfolge";
+          ["start", "duration", "window", "hop", "center"].forEach((id) =>
+            $(id).addEventListener("change", schedule),
+          );
+          ["band-low", "band-high"].forEach((id) =>
+            $(id).addEventListener("change", () => {
+              $("band").value = "custom";
+              schedule();
+            }),
+          );
+          $("band").addEventListener("change", () => {
+            if ($("band").value !== "custom") {
+              const [lo, hi] = $("band").value.split(",");
+              $("band-low").value = lo;
+              $("band-high").value = hi;
+              schedule();
+            }
+          });
+          $("timeline").addEventListener("input", () => {
+            $("start").value = $("timeline").value;
+            schedule();
+          });
+          $("previous").addEventListener("click", () => move(-1));
+          $("next").addEventListener("click", () => move(1));
+          $("all-channels").addEventListener("click", () => {
+            document
+              .querySelectorAll("#channels input")
+              .forEach((e) => (e.checked = true));
+            drawHead();
+            loadData();
+          });
+          [
+            "order",
+            "mode",
+            "focus",
+            "amplitude-range",
+            "power-min",
+            "power-max",
+          ].forEach((id) => $(id).addEventListener("change", render));
+          $("spacing").addEventListener("input", render);
+          $("scale-mode").addEventListener("change", () => {
+            if ($("scale-mode").value === "auto") fitAmplitude();
+          });
+          $("power-unit").addEventListener("change", () => fitPower());
+          $("fit-amplitude").addEventListener("click", () => fitAmplitude());
+          $("fit-power").addEventListener("click", () => fitPower());
+          $("event").addEventListener("change", () => showEvent());
+          $("previous-event").addEventListener("click", () => stepEvent(-1));
+          $("next-event").addEventListener("click", () => stepEvent(1));
+          $("zoom-in").addEventListener("click", () => zoomTime(0.5));
+          $("zoom-out").addEventListener("click", () => zoomTime(2));
+          $("recording-overview").addEventListener("click", (e) => {
+            if (!data) return;
+            const box = e.currentTarget.getBoundingClientRect();
+            const t =
+              Math.max(
+                0,
+                Math.min(1, (e.clientX - box.left - 26) / (box.width - 52)),
+              ) * meta.total_duration;
+            cursorTime = t;
+            selectedEventId = null;
+            navigate(t - (data.stop - data.start) / 2);
+          });
+          $("event-timeline").addEventListener("click", (e) => {
+            if (!data) return;
+            const box = e.currentTarget.getBoundingClientRect();
+            cursorTime =
+              data.start +
+              Math.max(
+                0,
+                Math.min(1, (e.clientX - box.left - 26) / (box.width - 52)),
+              ) *
+                (data.stop - data.start);
+            selectedEventId = null;
+            updateEvents();
+            render();
+          });
+          document.addEventListener("keydown", (e) => {
+            if (
+              e.target.closest(
+                "input,select,textarea,[contenteditable=true]",
+              ) ||
+              e.ctrlKey ||
+              e.metaKey
+            )
+              return;
+            if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+              e.preventDefault();
+              if (e.altKey) stepEvent(e.key === "ArrowLeft" ? -1 : 1);
+              else move(e.key === "ArrowLeft" ? -1 : 1);
+            }
+          });
+          ["front", "top", "reset"].forEach((k) =>
+            $("camera-" + k).addEventListener("click", () => setCamera(k)),
+          );
+          $("camera-zoom-in").addEventListener("click", () => zoomCamera(0.8));
+          $("camera-zoom-out").addEventListener("click", () => zoomCamera(1.25));
+          $("plot-height").addEventListener("change", () => {
+            Object.values(plots).forEach(
+              (el) =>
+                (el.style.height =
+                  $("plot-height").value === "auto"
+                    ? ""
+                    : $("plot-height").value + "px"),
+            );
+            resizePlots();
+            drawTimelines();
+          });
+          document.querySelectorAll("[data-expand]").forEach((b) =>
+            b.addEventListener("click", () => {
+              $("focus").value =
+                $("focus").value === b.dataset.expand
+                  ? "both"
+                  : b.dataset.expand;
+              render();
+            }),
+          );
+          document.querySelectorAll("[data-export]").forEach((b) =>
+            b.addEventListener("click", async () => {
+              try {
+                const kind = b.dataset.export,
+                  el = plots[kind],
+                  title =
+                    kind === "power"
+                      ? $("power-title").textContent
+                      : "Amplitude · " +
+                        (data._center
+                          ? "Median je Ausschnitt abgezogen"
+                          : "absolute Werte");
+                const subtitle =
+                  meta.title +
+                  " · " +
+                  meta.filter_label +
+                  " · " +
+                  (kind === "power"
+                    ? $("power-sub").textContent
+                    : $("amplitude-sub").textContent);
+                await Plotly.downloadImage(
+                  {
+                    data: el.data,
+                    layout: {
+                      ...el.layout,
+                      title: {
+                        text:
+                          esc(title) + "<br><sup>" + esc(subtitle) + "</sup>",
+                        x: 0.05,
+                        font: { size: 18 },
+                      },
+                      margin: { ...el.layout.margin, t: 90 },
+                    },
+                  },
+                  {
+                    format: "png",
+                    filename: "EEG-" + kind,
+                    width: 1400,
+                    height: 1000,
+                    scale: 1,
+                  },
+                );
+              } catch (e) {
+                status("PNG-Export fehlgeschlagen: " + e.message, true);
+              }
+            }),
+          );
+          window.addEventListener("resize", () => {
+            resizePlots();
+            drawTimelines();
+          });
+          window
+            .matchMedia("(prefers-color-scheme:dark)")
+            .addEventListener("change", render);
+          drawHead();
+          await loadData();
+        }
+        init().catch((e) => status(e.message, true));
+      })();
+    </script>
+  </body>
+</html>

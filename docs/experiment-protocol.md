@@ -33,6 +33,8 @@ Die Zeiten gelten für die unten festgelegte, ausgeglichene Verteilung der Rest-
 
 ## 3. Einheitliche Bedingungen und Einweisung
 
+Die Teilnehmerkennung folgt für neue Personen dem [ID-Schema](participant-ids.md), beispielsweise `EVM-P001`. Sie bleibt über alle Sitzungen erhalten; Sitzungs-ID und Reihenfolgegruppe werden separat zugeordnet.
+
 - Versuchsperson sitzt bequem; Kopf und Rumpf bleiben möglichst ruhig.
 - Augen bleiben bei Aufgaben und Rest offen. Ein zentraler Fixationspunkt wird verwendet.
 - Vor Beginn werden alle Aufgaben kurz geübt, besonders Imagery und Kopfrechnen. Übungsdaten werden getrennt von den experimentellen Daten markiert.

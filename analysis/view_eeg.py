@@ -1,4 +1,4 @@
-"""Open Unicorn terminal CSV recordings in MNE without modifying them."""
+"""Open Unicorn CSV recordings as traces, spectra or interactive waterfalls."""
 import argparse
 import csv
 from pathlib import Path
@@ -67,25 +67,68 @@ def main():
     parser.add_argument("csv", type=Path)
     parser.add_argument("--unit", required=True, choices=["uV", "mV", "V"],
                         help="EEG-Einheit aus dem Recorder-Befehl config; nicht raten.")
+    parser.add_argument("--view", choices=["traces", "waterfall"], default="traces",
+                        help="Zeitkurven/Spektrogramm oder interaktive Amplituden-/Bandpower-Wasserfälle")
+    parser.add_argument("--start", type=float, default=0, help="Start des Anzeigefensters in Sekunden")
+    parser.add_argument("--duration", type=float, default=10, help="Länge des Anzeigefensters in Sekunden")
+    parser.add_argument("--scale-uv", type=float,
+                        help="Gemeinsamer +/- Bereich in µV um den Median jedes Kanals")
+    parser.add_argument("--no-show", action="store_true", help="Aufnahme und Optionen ohne Anzeige prüfen")
     parser.add_argument("--filtered", action="store_true", help="Anzeigekopie: 50-Hz-Notch und 0.5–30-Hz-Bandpass")
     parser.add_argument("--psd", action="store_true", help="Frequenzspektrum statt Zeitkurven anzeigen")
+    parser.add_argument("--spectrogram-channel", help="Startkanal des Spektrogramms, z. B. 'EEG 3'")
+    parser.add_argument("--frequency-scale", choices=["log", "linear"], default="log",
+                        help="Frequenzachse des Spektrogramms (Standard: log)")
+    parser.add_argument("--spectrogram-max", type=float, default=100,
+                        help="Spektrogramm-Obergrenze in Hz, begrenzt durch Nyquist (Standard: 100)")
     args = parser.parse_args()
-    raw = load_recording(args.csv, args.unit)
-    print(f"Kanäle: {raw.ch_names}; Samples: {raw.n_times}; nominale Dauer: {raw.n_times / 250:.3f} s")
-    if args.filtered:
-        raw = raw.copy().notch_filter(50).filter(0.5, 30)
-        print("Gefilterte Anzeigekopie; die CSV bleibt unverändert. Kein OSCAR/keine Bewegungskorrektur.")
-    if args.psd:
-        import matplotlib.pyplot as plt
-        if raw.n_times < 2:
-            raise ValueError("Zu wenige Samples für ein Spektrum.")
-        raw.compute_psd(method="welch", fmin=0, fmax=100,
-                        n_fft=min(1024, raw.n_times)).plot()
-        plt.show(block=True)
-    else:
-        mne.viz.set_browser_backend("matplotlib")
-        raw.plot(duration=min(10, raw.n_times / 250), n_channels=len(raw.ch_names),
-                 scalings={"eeg": 50e-6}, block=True)
+    if args.psd and args.view == "waterfall":
+        parser.error("--psd und --view waterfall können nicht gemeinsam verwendet werden.")
+    try:
+        raw = load_recording(args.csv, args.unit)
+        print(f"Kanäle: {raw.ch_names}; Samples: {raw.n_times}; nominale Dauer: {raw.n_times / 250:.3f} s")
+        if not np.isfinite(args.duration) or args.duration <= 0 or not np.isfinite(args.start) or not 0 <= args.start <= raw.times[-1]:
+            raise ValueError("duration muss positiv sein und start innerhalb der Aufnahme liegen.")
+        if args.scale_uv is not None and (not np.isfinite(args.scale_uv) or args.scale_uv <= 0):
+            raise ValueError("scale-uv muss positiv sein.")
+        if args.spectrogram_channel is not None and args.spectrogram_channel not in raw.ch_names:
+            raise ValueError(f"Unbekannter Spektrogrammkanal: {args.spectrogram_channel}. Auswahl: {raw.ch_names}.")
+        if not np.isfinite(args.spectrogram_max) or args.spectrogram_max <= .5:
+            raise ValueError("spectrogram-max muss endlich und größer als 0.5 Hz sein.")
+        if args.filtered:
+            raw = raw.copy().notch_filter(50).filter(0.5, 30)
+            print("Gefilterte Anzeigekopie; die CSV bleibt unverändert. Kein OSCAR/keine Bewegungskorrektur.")
+        if args.no_show:
+            return
+        if args.psd:
+            import matplotlib.pyplot as plt
+            if raw.n_times < 2:
+                raise ValueError("Zu wenige Samples für ein Spektrum.")
+            raw.compute_psd(method="welch", fmin=0, fmax=100,
+                            n_fft=min(1024, raw.n_times)).plot()
+            plt.show(block=True)
+        elif args.view == "waterfall":
+            if __package__:
+                from .waterfall_browser import serve_waterfall
+            else:
+                from waterfall_browser import serve_waterfall
+            serve_waterfall(raw, start=args.start, duration=args.duration,
+                            scale_uv=args.scale_uv, title=args.csv.name,
+                            filter_label="50 Hz notch + 0.5–30 Hz band-pass" if args.filtered else "Unfiltered")
+        else:
+            from matplotlib import pyplot as plt
+            if __package__:
+                from .eeg_browser import create_browser
+            else:
+                from eeg_browser import create_browser
+            create_browser(raw, start=args.start, duration=args.duration,
+                           scale_uv=args.scale_uv, title=args.csv.name,
+                           filter_label="50 Hz notch + 0.5–30 Hz band-pass" if args.filtered else "Unfiltered",
+                           spectrogram_channel=args.spectrogram_channel,
+                           frequency_scale=args.frequency_scale, spectrogram_max=args.spectrogram_max)
+            plt.show(block=True)
+    except (ValueError, OSError) as error:
+        parser.exit(1, f"Error: {error}\n")
 
 
 if __name__ == "__main__":

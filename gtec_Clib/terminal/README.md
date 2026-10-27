@@ -8,8 +8,12 @@ Use `session pause`, `session resume`, and `stop` to intervene; `mark LABEL` log
 
 **CSV-Aufnahmen mit MNE ansehen:** [MNE_ANLEITUNG.md](MNE_ANLEITUNG.md).
 Use `view_eeg.py` in the repository root to import EEG and event labels,
-view recordings, and optionally export FIF or PNG files. The CSV unit must
+view recordings in separate EEG axes with a dedicated marker timeline and selected event details, and optionally export FIF or PNG files. Auto scaling is per channel and visible window; displayed µV ranges make the scale explicit. The CSV unit must
 be supplied explicitly (for example `--unit uV`, after checking `config`).
+
+The viewer runs separately from the Unicorn CLI on Windows or macOS and opens completed recordings. Copy the entire participant folder into `recordings/` next to the repository, then open the main EEG `.csv`; its matching `.csv.events.csv` loads automatically. The guide includes installation, exact launch commands, controls, filtering, exports, and the alternative spectrum viewer.
+
+Click marker ticks for full details; `< Event` / `Event >` also select individual events with identical timestamps. Automatic ranges differ per channel. Use `--scale-uv 100` for a common ±100 µV display range and check any `CLIPPED` indicators. `--snapshot` saves the initial view, including explicit display filters; `--save-fif` saves unfiltered EEG and complete imported annotations. The source CSV files remain unchanged.
 
 Manual participant display: `cue open` opens a Windows window. During a manual
 background recording started with `record`, `mark hands_up`, `mark legs_up`, `mark substract 7 from 100` and
@@ -202,7 +206,7 @@ access, manual stopping, overwrite protection and simulated connection failure:
 ```sh
 python gtec_Clib/terminal/test_recorder.py
 python gtec_Clib/terminal/test_session.py
-python -m unittest analysis.test_event_annotations
+python -m unittest analysis.test_event_annotations analysis.test_eeg_browser analysis.test_view_eeg_cli
 ```
 
 Run with MSVC `cl` available in an x64 Developer Command Prompt, or with `clang++` on PATH. Test recordings use a temporary folder.
@@ -213,8 +217,9 @@ automatic-session changes were tested with Clang on macOS and simulated hardware
 a current Windows build, real cue window, terminal rendering and vendor-DLL run
 remain to be validated. The session tests cover 250 seeds, six run orders, a full
 accelerated session, pause/repeat, window loss, recorder errors, delayed transitions
-and PAUSE display before a blocked stop. MNE tests require mne, numpy and pandas
-and verify annotations through a real FIF round trip.
+and PAUSE display before a blocked stop. Viewer tests require mne, numpy, pandas and matplotlib. They cover dense markers
+and resizing, separate signal axes, scales and clipping indicators, navigation,
+unchanged data, a real headless PNG export and an unfiltered FIF round trip.
 
 ## Manual background recording and task markers
 

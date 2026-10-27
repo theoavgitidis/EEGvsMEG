@@ -1,0 +1,125 @@
+{
+  "data": {
+    "participant_id": "P-001",
+    "session_id": "session_20261021_194704",
+    "inputs": {
+      "/Users/theoa/Desktop/Projects/recordings/P-001/session_20261021_194704.csv": "e3848f39ae993f1ffb080b2feaccfac42861fba5ebad5e9021354990108842c3",
+      "/Users/theoa/Desktop/Projects/recordings/P-001/session_20261021_194704.csv.events.csv": "d6c13b6b9a9a331df512d5bd0884478322bad4cae5b868663dfdc30575f2c3eb",
+      "/Users/theoa/Desktop/Projects/recordings/P-001/session_20261021_194704.csv.session.json": "41d8266a9e0a6e2d665d66a660e6d740bd1b3ed8d8e437550733f82ed1178d9e"
+    },
+    "channel_order": [
+      "EEG 1",
+      "EEG 2",
+      "EEG 3",
+      "EEG 4",
+      "EEG 5",
+      "EEG 6",
+      "EEG 7",
+      "EEG 8"
+    ],
+    "assumed_positions": [
+      "Fz",
+      "C3",
+      "Cz",
+      "C4",
+      "Pz",
+      "PO7",
+      "Oz",
+      "PO8"
+    ],
+    "montage_status": "standard project mapping; physical placement not independently verified",
+    "input_shape": [
+      124,
+      8,
+      3,
+      200
+    ],
+    "exclusions": [],
+    "preprocessing": "3s; CAR over 8 channels; independent epoch 5th-order 0.3-40Hz Butterworth sosfiltfilt; polyphase 250->200Hz; uV/100; no rejection by amplitude; offline",
+    "signal_absolute_quantiles_uV": {
+      "p50": 2.766294591128826,
+      "p95": 13.001186400651926,
+      "p99": 42.13064301013947,
+      "max": 1339.9477005004883
+    }
+  },
+  "checkpoint": {
+    "models": {
+      "brain-bzh/reve-base": {
+        "revision": "dc2a075c287bb2f6c04ee5875bd79535a0f7dba6",
+        "path": "/Users/theoa/.cache/huggingface/hub/models--brain-bzh--reve-base/snapshots/dc2a075c287bb2f6c04ee5875bd79535a0f7dba6",
+        "files": {
+          "configuration_reve.py": "8abbf691a2de914dccb692aa42b987d20815b52dc0642b0db1fd216df4ccbbfb",
+          "model.safetensors": "8ecc650619598748286c2457f81f5c6bd12e8bb59db44f7b02af1955c44de8fe",
+          "LICENSE": "cda77c38a1fcf002009678642608748f221458f83bc5ee3944f1e0c83939cd96",
+          "config.json": "5b74a19202d1aaa5d1814b26b720e4184cd0047f28a672834d390318eed05945",
+          "README.md": "45398279f723f2f1cfb4347cfb757fa30a497c8ca5826e389f7846003bed10ee",
+          "modeling_reve.py": "207a9c51218d806ab317eabf4eb6d3234eabe887f48e541ef5580c4b9b45359f"
+        }
+      },
+      "brain-bzh/reve-positions": {
+        "revision": "befa5b57a455b77cf302daf610c2e9ed8140bace",
+        "path": "/Users/theoa/.cache/huggingface/hub/models--brain-bzh--reve-positions/snapshots/befa5b57a455b77cf302daf610c2e9ed8140bace",
+        "files": {
+          "model.safetensors": "4b793820b9df0998667deb6c8ce2dbb86b38221d5165c1844bc4971941b13f13",
+          "config.json": "8e89acf4d27cf1d24815add8df771e6cf138b68846e60796db57e36f1ec8d6f8",
+          "README.md": "e08e7961aaca6d559478f70549c402c4b74278abdd4ced02ddb5cd10beb5e6d1",
+          "position_bank.py": "26ad5d55fb667da7c80bcc8e8512eb35bca33054a3b3e2bcafe4775543aa1cd0",
+          "configuration_bank.py": "148ac1c41478be7bfbcd1575d68fcf6d75076da5dfdf9f682e6742612cc88f73",
+          "positions.json": "f62ca8d7dd4b88e1422ea17348440a41ed0b73b9ff7d12c3b1229492c9b448a5"
+        }
+      }
+    },
+    "sha256": "8ecc650619598748286c2457f81f5c6bd12e8bb59db44f7b02af1955c44de8fe"
+  },
+  "upstream": "https://github.com/elouayas/reve_eeg/tree/06a7059a07c3dabd80aee60c3dbc1eca4bdbe1c7",
+  "code_sha256": {
+    "/Users/theoa/Desktop/Projects/EEGvsMEG/analysis/reve_benchmark.py": "08a91e4df46541894616b4dab40b27734a0d002c3ffd7abb10d3ed7d30100cb3",
+    "analysis/ml_data.py": "61fb3f106fceb51fe407e8cfdfb811921f21b8640908ed7610546a94d7e32632",
+    "analysis/ml_feasibility.py": "5841a3941b9eca14e0a1274d43a37e335f26f42113e1e14e66886a25a133058f"
+  },
+  "arguments": {
+    "recording": "../recordings/P-001/session_20261021_194704.csv",
+    "checkpoint_manifest": ".ml-cache/reve-checkpoint.json",
+    "output": "analysis/results/reve_P001_v1",
+    "seeds": [
+      11,
+      22,
+      33
+    ],
+    "max_epochs": 20,
+    "threads": 4,
+    "runs": [
+      "Kognitiv"
+    ]
+  },
+  "versions": {
+    "torch": "2.14.1",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "pandas": "3.1.0",
+    "scikit-learn": "1.9.1",
+    "transformers": "4.56.2",
+    "huggingface-hub": "0.36.2",
+    "safetensors": "0.8.0"
+  },
+  "device": "cpu",
+  "reve_amplitude_unit": "uV/1000",
+  "native_patches": "200 samples, stride 180; 600-sample input covers first 560 samples directly",
+  "head": "time mean, per-channel LayerNorm(512) without affine, flatten channels, linear",
+  "encoder_parameters": 69189632,
+  "head_lr": 0.001,
+  "encoder_lr": 1e-05,
+  "weight_decay": 0.01,
+  "batch_size": 16,
+  "selection": "minimum cross-entropy on cyclic inner validation block; refit fresh on all outer training blocks for selected epoch count",
+  "limitations": [
+    "one person/session",
+    "exploratory",
+    "offline noncausal filter",
+    "3 training seeds are not independent test cohorts",
+    "same held-out blocks reused across predefined candidates",
+    "no amplitude-based artifact rejection",
+    "montage assumed from project configuration"
+  ]
+}
