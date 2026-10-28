@@ -1,7 +1,9 @@
 """Timing and file integrity tests, including an optional real OSCAR model run."""
 import csv
 import importlib.util
+import io
 import json
+import os
 from pathlib import Path
 import tempfile
 import time
@@ -120,6 +122,32 @@ class DualWriterTest(unittest.TestCase):
             DualWriter(self.path)
 
 
+class WorkerStartupDiagnosticsTest(unittest.TestCase):
+    def test_preflight_error_is_logged_without_polluting_stdout_protocol(self):
+        from acquisition.oscar_worker import main
+
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "synthetic geprüft.csv"
+            output, diagnostics = io.StringIO(), io.StringIO()
+            error = "synthetic startup failure\nsecond line"
+            with patch("sys.argv", ["oscar_worker.py", "--output", str(path), "--serial", "DO-NOT-LOG"]), \
+                 patch("sys.stdout", output), patch("sys.stderr", diagnostics), \
+                 patch("acquisition.oscar_worker.importlib.metadata.version", side_effect=RuntimeError(error)):
+                self.assertEqual(main(), 1)
+            self.assertEqual(output.getvalue(), "ERROR synthetic startup failure second line\n")
+            entries = [json.loads(line.removeprefix("OSCAR_STARTUP "))
+                       for line in diagnostics.getvalue().splitlines()]
+            self.assertEqual([entry["event"] for entry in entries], ["worker_start", "failed"])
+            self.assertEqual(entries[0]["output_path"], str(path.resolve()))
+            self.assertEqual(entries[0]["ready_path"], str(path.resolve()) + ".ready")
+            self.assertEqual(entries[1]["error"], error)
+            self.assertEqual(entries[1]["error_type"], "RuntimeError")
+            self.assertTrue(all(entry["pid"] == os.getpid() for entry in entries))
+            self.assertGreaterEqual(entries[0]["elapsed_s"], 0)
+            self.assertGreaterEqual(entries[1]["elapsed_s"], entries[0]["elapsed_s"])
+            self.assertNotIn("DO-NOT-LOG", diagnostics.getvalue())
+
+
 @unittest.skipUnless(importlib.util.find_spec("gpype"), "Optional pinned vendor packages are not installed")
 class VendorOscarTest(unittest.TestCase):
     def test_actual_model_preserves_counter_alignment_on_synthetic_source(self):
@@ -170,7 +198,6 @@ class VendorOscarTest(unittest.TestCase):
             self.assertEqual(writer.delay, measured_delay)
 
     def test_worker_ready_stop_drain_and_complete_metadata(self):
-        import os
         from types import SimpleNamespace
         from collections import namedtuple
         import gpype as gp
@@ -206,18 +233,30 @@ class VendorOscarTest(unittest.TestCase):
             path = Path(temp) / "synthetic.csv"
             read_fd, write_fd = os.pipe()
             messages = []
+            diagnostics = io.StringIO()
             def emit(message):
                 messages.append(message)
                 if message.startswith("READY "):
                     os.write(write_fd, b"STOP\n")
             try:
                 with os.fdopen(read_fd, "r") as commands:
-                    with patch.object(gp, "HybridBlack", Source), patch("sys.stdin", commands):
+                    with patch.object(gp, "HybridBlack", Source), patch("sys.stdin", commands), \
+                         patch("sys.stderr", diagnostics):
                         record(SimpleNamespace(output=path, serial="SYNTHETIC-TEST-ONLY"), emit)
                 meta = json.loads(Path(str(path) + ".processing.json").read_text())
                 self.assertEqual(meta["state"], "complete")
                 self.assertGreaterEqual(meta["oscar_samples"], meta["stop_target_raw_samples"])
                 self.assertEqual(messages[-1], "DONE")
                 self.assertEqual(resolve_recording(path).signal, "oscar")
+                entries = [json.loads(line.removeprefix("OSCAR_STARTUP "))
+                           for line in diagnostics.getvalue().splitlines() if line.startswith("OSCAR_STARTUP ")]
+                self.assertEqual([entry["event"] for entry in entries], [
+                    "worker_start", "pipeline_starting", "pipeline_started", "ready_file_replaced",
+                    "protocol_emit_begin", "protocol_emit_complete", "protocol_emit_begin", "protocol_emit_complete"])
+                self.assertEqual(entries[3]["delay_samples"], meta["oscar_delay_samples"])
+                self.assertEqual([entry["message_type"] for entry in entries[4:]],
+                                 ["SAMPLES", "SAMPLES", "READY", "READY"])
+                self.assertEqual([entry["elapsed_s"] for entry in entries],
+                                 sorted(entry["elapsed_s"] for entry in entries))
             finally:
                 os.close(write_fd)

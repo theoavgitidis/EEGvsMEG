@@ -39,6 +39,21 @@ class WorkerProcess {
     int input = -1, output = -1;
 #endif
 public:
+    unsigned long id() const {
+#ifdef _WIN32
+        return process ? GetProcessId(process) : 0;
+#else
+        return process > 0 ? static_cast<unsigned long>(process) : 0;
+#endif
+    }
+    static std::string executablePath() {
+#ifdef _WIN32
+        std::wstring path(32768,L'\0');
+        auto size=GetModuleFileNameW(nullptr,path.data(),DWORD(path.size()));
+        if (size && size < path.size()) { path.resize(size); return std::filesystem::path(path).u8string(); }
+#endif
+        return "unavailable on this platform";
+    }
     bool successful() const { return exitOk; }
     bool active() const {
 #ifdef _WIN32
@@ -95,10 +110,19 @@ public:
         result.clear(); char ch;
         while (result.size() < 8192) {
 #ifdef _WIN32
-            DWORD n=0; if (!ReadFile(output,&ch,1,&n,nullptr) || n == 0) return false;
+            DWORD n=0;
+            if (!ReadFile(output,&ch,1,&n,nullptr)) {
+                auto error=GetLastError();
+                if (error != ERROR_BROKEN_PIPE) throw std::runtime_error("OSCAR stdout read failed; Windows error="+std::to_string(error));
+            }
 #else
-            ssize_t n=::read(output,&ch,1); if (n < 0 && errno == EINTR) continue; if (n <= 0) return false;
+            ssize_t n=::read(output,&ch,1); if (n < 0 && errno == EINTR) continue;
+            if (n < 0) throw std::runtime_error("OSCAR stdout read failed; errno="+std::to_string(errno));
 #endif
+            if (n == 0) {
+                if (!result.empty()) throw std::runtime_error("OSCAR stdout ended with an unterminated protocol line.");
+                return false;
+            }
             if (ch == '\n') return true;
             if (ch != '\r') result += ch;
         }

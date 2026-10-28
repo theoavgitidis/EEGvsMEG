@@ -8,6 +8,7 @@ from contextlib import redirect_stdout
 import csv
 import importlib.metadata
 import json
+import os
 from pathlib import Path
 import queue
 import sys
@@ -194,6 +195,22 @@ def build_pipeline(gp, writer, serial):
 
 
 def record(args, emit):
+    started = time.monotonic()
+    def diagnostic(event, **details):
+        # stderr is the existing session log; stdout remains protocol-only.
+        entry = dict(pid=os.getpid(), elapsed_s=round(time.monotonic() - started, 6), event=event)
+        entry.update(details)
+        print("OSCAR_STARTUP " + json.dumps(entry, ensure_ascii=True), file=sys.stderr, flush=True)
+    output = args.output.resolve()
+    diagnostic("worker_start", python_path=sys.executable, output_path=str(output), ready_path=str(output) + ".ready")
+    try:
+        _record(args, emit, diagnostic)
+    except BaseException as error:
+        diagnostic("failed", error_type=type(error).__name__, error=str(error))
+        raise
+
+
+def _record(args, emit, diagnostic):
     # Fixed protocol and package contract: refuse changed vendor internals/layout.
     versions = {name: importlib.metadata.version(name)
                 for name in ("gpype", "gtec-oscar", "gtec-unicorn", "gtec-licensing")}
@@ -230,7 +247,9 @@ def record(args, emit):
     try:
         metadata_update("preparing")
         pipeline, source = build_pipeline(gp, writer, args.serial)
+        diagnostic("pipeline_starting")
         pipeline.start()
+        diagnostic("pipeline_started")
         deadline = time.monotonic() + 30
         ready = False
         stop_target = None
@@ -259,8 +278,13 @@ def record(args, emit):
                 ready_temp = Path(str(ready_path) + ".tmp")
                 ready_temp.write_text(f"READY 1 {writer.delay}\n", encoding="ascii")
                 ready_temp.replace(ready_path)
+                diagnostic("ready_file_replaced", delay_samples=writer.delay)
+                diagnostic("protocol_emit_begin", message_type="SAMPLES")
                 emit(f"SAMPLES {writer.raw_count} {writer.clean_count}")
+                diagnostic("protocol_emit_complete", message_type="SAMPLES")
+                diagnostic("protocol_emit_begin", message_type="READY")
                 emit(f"READY 1 {writer.delay}")
+                diagnostic("protocol_emit_complete", message_type="READY")
                 ready = True
             if not ready and now > deadline:
                 raise RuntimeError("OSCAR startup timed out before the first aligned samples.")

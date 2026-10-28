@@ -4,6 +4,8 @@ Date: 2026-10-28. Audience: Astra or another engineer working without the Unicor
 
 ## Executive Summary
 
+The following incident evidence describes the pre-investigation build. See the [hardware-free investigation update](#hardware-free-investigation-update) for changes and remaining uncertainty. The Windows experiment is not yet accepted.
+
 `start session` consistently fails after its 120-second preparation timeout on the Windows measurement computer. The failure is in the handoff between the Python OSCAR worker and the C++ session scheduler, not in basic device streaming or OSCAR output:
 
 - The Python worker receives live data and writes both raw and OSCAR CSVs.
@@ -245,3 +247,40 @@ C:\EEG\recordings\EVM-P002\session_20261028_193910.csv.*   (external evidence; d
 - Do not weaken counter/alignment checks or turn queue overflow into sample dropping.
 - Do not remove failed session metadata. It is the evidence that no task trials started.
 - Do not expose or commit licenses, emails, names, or raw participant data.
+
+## Hardware-free investigation update
+
+28 October 2026, macOS host with Clang and a synthetic Python peer. **Windows/MSVC and headset verification remain outstanding.** The incident recordings were not accessed or modified. The 120-second production limit, OSCAR model, queue size, no-drop/alignment rules and 45:04 task protocol are unchanged.
+
+### What was reproduced
+
+The old implementation already passed a new **file-only READY** case under macOS: the session reached `running` without stdout `READY`. This does not reproduce the reported Windows timeout. The next case, stdout `READY` followed by a delayed `.ready`, failed deterministically: the session ran but the file remained unconsumed. The old starter stopped polling as soon as stdout won.
+
+Independent code review found that the old deletion also ran while the input stream was open, an avoidable Windows sharing issue. Other defects were acceptance of trailing file lines, ignoring empty files until timeout, stale status time after a delayed file-only startup, and accepting `DONE` before readiness. These defects have been addressed. Neither mutex inspection nor the synthetic file-only test demonstrates a deadlock or a stale `signaled` variable. A leftover `.ready` therefore does **not** prove that readiness was never observed. The exact cause of the original Windows 120-second failure remains unproven.
+
+### Implemented contract and diagnostics
+
+- One shared, mutex-protected readiness transition handles both transports. Either can start recording; matching confirmations cause only one transition. An independent file monitor continues after stdout wins, while the pipe reader may block normally.
+- A file is read completely with a small size limit and closed before deletion. Unsupported versions, nonpositive delays, partial/empty payloads and additional tokens fail closed. A malformed/conflicting file is retained as evidence. A valid file is removed; deletion errors are recorded explicitly.
+- Readiness after worker finalization cannot restore `running`. `DONE` before readiness or before requested stop is an error. Unterminated stdout messages and pipe read errors have explicit causes. A file confirmation starts a fresh six-second status window.
+- A conflict observed before startup prevents baseline and task events. A conflict arriving **after** an accepted confirmation is a runtime failure; existing events are preserved. It is impossible to reject a future delayed conflict before baseline while allowing either transport alone to start.
+- Existing `.ready`, `.ready.tmp` and `.startup.log` files at the selected stem prevent overwrite. Failed-session evidence is preserved.
+- `<output>.startup.log` records controller handshake/build identity (`oscar-startup-v2` plus compile time), actual EXE path on Windows, configured Python, absolute worker/ready paths, child PID, elapsed monotonic times, first counters, observed READY source/delay, deletion and rejection cause. `<output>.worker.log` adds `OSCAR_STARTUP` JSON entries for actual Python/PID/paths, pipeline start, successful atomic replace and before/after the first protocol emissions. No diagnostics are written to stdout.
+
+### Verification and next Windows action
+
+The expanded synthetic peer covers file-only operation, both orderings, duplicates, file readiness after more than six seconds without prior stdout status, malformed/partial/empty/version/delay/token cases, conflicting transports, early `DONE`/EOF, missing readiness, controlled stop, runtime error, bad exit and stalled status. A direct Recorder harness checks stale artifact refusal without modification. All files and binaries are synthetic and temporary.
+
+Executed with `/Users/theoa/.venvs/eeg-mne/bin/python` and Clang on macOS:
+
+| Check | Result |
+|---|---|
+| `gtec_Clib/terminal/test_oscar_session.py` | 29 synthetic peer scenarios plus 3 stale-artifact cases passed, including explicit CRLF file input and a matching file published during stop. |
+| `gtec_Clib/terminal/test_recorder.py` | Passed. |
+| `gtec_Clib/terminal/test_session.py` | Passed, including 250 plan seeds, timing/error cases and the accelerated complete 168-trial session. |
+| `-m unittest analysis.test_oscar_recording` | 11 tests: 9 passed, 2 optional vendor tests skipped because pinned vendor packages are not installed in this environment. No new real-model result is claimed. |
+| MSVC Release / Windows UI / real headset | Not run: this host has no Windows/MSVC/headset environment. |
+
+Run the tests above in an **x64 Visual Studio 2022 Developer PowerShell/Command Prompt**, with `cl` available and the intended Python interpreter. Then rebuild the production Release EXE with the command above and launch that exact path. The `.startup.log` must identify the new controller and expected EXE/worker/Python paths. Absence of this log or a different identity is evidence to check the executable selection before repeating a long wait.
+
+Perform the short `DEV-OSCAR-CHECK` sequence above before any full study session. If it still fails, preserve `.startup.log`, `.worker.log`, `.session.json` and `.processing.json` together. The last successful worker stage and controller observation distinguish initialization, file visibility/parsing, stdout transport, early exit and executable/path mismatches. Completed worker CSVs alone still do not validate a failed session. The performance warning and licensing follow-ups above remain open.

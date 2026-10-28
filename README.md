@@ -70,6 +70,8 @@ Für einen vorhandenen Versuch `GoToExp "EVM-P001"` anstelle von `NewExp` verwen
 
 Aufnahmen liegen neben dem Repository unter `recordings/<Teilnehmer-ID>/`; `Where` zeigt den beim Build festgelegten Pfad. EEG, Events, Plan und Sitzungsmetadaten zusammen aufbewahren, bei OSCAR auch die zugehörigen Verarbeitungs-/Gerätedateien. Originalaufnahmen bleiben unverändert.
 
+Für den offenen Windows-OSCAR-Startfehler gibt es nun zusätzliche `.startup.log`-Diagnosen und hardwarefreie Regressionen. Befunde und nächste Windows-Abnahme: [Fehlerbericht](docs/oscar-hardwareless-handoff-2026-10-28.md#hardware-free-investigation-update). Vor einer Studienaufnahme den aktuellen Release-Build auf dem Messrechner kurz prüfen.
+
 Beispiel für eine vorhandene Aufnahme auf macOS, nach Einrichtung der dokumentierten Umgebung und Bestätigung der Einheit:
 
 ```bash

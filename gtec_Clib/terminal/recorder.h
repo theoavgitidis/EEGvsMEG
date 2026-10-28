@@ -14,7 +14,7 @@
 // use cached status and a separate event file; they never touch the DLL.
 class Recorder {
     WorkerProcess child;
-    std::thread worker;
+    std::thread worker, readinessWorker;
     std::atomic<bool> cancel{false}, running{false};
     mutable std::mutex mutex;
     uint64_t samples = 0, discontinuities = 0;
@@ -22,8 +22,9 @@ class Recorder {
     bool hasBattery = false, hasValidation = false;
     std::string failure;
     std::ofstream events;
+    std::ofstream startupLog;
     bool extendedEvents = false;
-    bool oscar = false, ready = false, done = false;
+    bool oscar = false, ready = false, done = false, workerExited = false;
     uint64_t cleanedSamples = 0;
     int delaySamples = 0;
     std::condition_variable startup;
@@ -39,6 +40,33 @@ class Recorder {
         std::string out = "\"";
         for (char c : text) { if (c == '"') out += '"'; out += c; }
         return out + '"';
+    }
+    // Caller holds mutex once reader/monitor threads have started. No stdout diagnostics.
+    void trace(const std::string& message) {
+        if (startupLog.is_open()) { startupLog << std::fixed << std::setprecision(6) << elapsed() << ' ' << message << '\n'; startupLog.flush(); }
+    }
+    static int readyDelay(std::istream& input) {
+        std::string type, extra; int version=0, delay=0;
+        if (!(input>>type>>version>>delay) || type != "READY" || version != 1 || delay <= 0 || (input>>extra))
+            throw std::runtime_error("Invalid OSCAR readiness confirmation (expected READY 1 <positive delay>).");
+        return delay;
+    }
+    void acceptReady(int delay, const std::string& source) {
+        trace("observed_ready source="+source+" delay="+std::to_string(delay));
+        if (ready && delaySamples != delay) throw std::runtime_error("Conflicting OSCAR readiness confirmation from "+source+".");
+        if (!ready && (workerExited || done)) throw std::runtime_error("OSCAR readiness arrived after worker finalization.");
+        if (!failure.empty()) return;
+        if (!ready && !cancel) {
+            ready=true; delaySamples=delay; running=true;
+            // A file confirmation is a new status observation, even after a long initialization.
+            lastStatus=std::chrono::steady_clock::now();
+            trace("readiness_accepted source="+source);
+        }
+        startup.notify_all();
+    }
+    void failOscar(const std::string& error) {
+        if (failure.empty()) failure=error;
+        running=false; trace("failure="+failure); startup.notify_all();
     }
 public:
     ~Recorder() { stop(); }
@@ -58,6 +86,7 @@ public:
     };
     void stop() {
         cancel = true;
+        startup.notify_all();
         if (child.active()) {
             child.requestStop();
             if (!child.wait(8000)) {
@@ -67,8 +96,10 @@ public:
             if (!child.successful()) { std::lock_guard<std::mutex> lock(mutex); if (failure.empty()) failure="OSCAR worker returned a nonzero exit code."; }
         }
         if (worker.joinable()) worker.join();
+        if (readinessWorker.joinable()) readinessWorker.join();
         child.dispose();
         if (events.is_open()) { events.flush(); events.close(); }
+        if (startupLog.is_open()) { trace("stopped"); startupLog.close(); }
     }
     void status() const {
         std::lock_guard<std::mutex> lock(mutex);
@@ -183,7 +214,7 @@ public:
     }
     void startOscar(const std::string& serial, const std::filesystem::path& path) {
         stop();
-        for (const auto& suffix : {"", ".events.csv", ".oscar.csv", ".processing.json", ".device.json", ".worker.log", ".ready"}) {
+        for (const auto& suffix : {"", ".events.csv", ".oscar.csv", ".processing.json", ".device.json", ".worker.log", ".startup.log", ".ready", ".ready.tmp"}) {
             auto candidate=path; candidate+=suffix;
             if (std::filesystem::exists(candidate)) throw std::runtime_error("Recording files already exist; choose a new path.");
         }
@@ -199,6 +230,7 @@ public:
         else script=std::filesystem::path("acquisition")/"oscar_worker.py";
 #endif
         if (!std::filesystem::is_regular_file(script)) throw std::runtime_error("OSCAR worker missing; set EEG_OSCAR_WORKER to acquisition/oscar_worker.py.");
+        script=std::filesystem::absolute(script);
         std::string python="python";
 #ifdef _WIN32
         if (auto value=_wgetenv(L"EEG_OSCAR_PYTHON")) python=std::filesystem::path(value).u8string();
@@ -213,65 +245,117 @@ public:
         if (!events) throw std::runtime_error("Cannot write event log header.");
         {
             std::lock_guard<std::mutex> lock(mutex);
-            samples=discontinuities=cleanedSamples=0; failure.clear(); ready=done=false; oscar=true;
+            samples=discontinuities=cleanedSamples=0; failure.clear(); ready=done=workerExited=false; oscar=true;
             delaySamples=0; hasBattery=hasValidation=false; extendedEvents=true;
             lastStatus=std::chrono::steady_clock::now();
         }
         origin=std::chrono::steady_clock::now(); cancel=false;
-        child.start(python,script,serial,path);
-        auto readyPath=path; readyPath += ".ready";
-        worker=std::thread([this]() {
-            try {
-                std::string line;
-                while (child.line(line)) {
+        auto outputPath=std::filesystem::absolute(path);
+        auto readyPath=outputPath; readyPath += ".ready";
+        auto logPath=outputPath; logPath += ".startup.log";
+        startupLog.open(logPath);
+        if (!startupLog) throw std::runtime_error("Cannot create OSCAR startup log.");
+        trace(std::string("controller=oscar-startup-v2 build=")+__DATE__+" "+__TIME__);
+        trace("executable="+WorkerProcess::executablePath());
+        trace("python="+python); trace("worker="+script.u8string()); trace("ready_path="+readyPath.u8string());
+        try {
+            child.start(python,script,serial,outputPath);
+            trace("worker_pid="+std::to_string(child.id()));
+            worker=std::thread([this]() {
+                try {
+                    std::string line;
+                    while (child.line(line)) {
+                        std::lock_guard<std::mutex> lock(mutex);
+                        std::istringstream input(line); std::string type; input>>type;
+                        lastStatus=std::chrono::steady_clock::now();
+                        if (type == "READY") {
+                            std::istringstream confirmation(line);
+                            acceptReady(readyDelay(confirmation),"stdout");
+                        } else if (type == "SAMPLES") {
+                            uint64_t raw=0, clean=0; std::string extra;
+                            if (!(input>>raw>>clean) || raw < samples || clean < cleanedSamples || clean > raw || (input>>extra)) throw std::runtime_error("Invalid OSCAR sample counters.");
+                            if (!samples) trace("first_samples raw="+std::to_string(raw)+" clean="+std::to_string(clean));
+                            samples=raw; cleanedSamples=clean;
+                        } else if (type == "DONE") {
+                            std::string extra;
+                            if (input>>extra) throw std::runtime_error("Invalid OSCAR DONE protocol.");
+                            if (!ready) throw std::runtime_error("OSCAR worker finalized before readiness.");
+                            if (!cancel) throw std::runtime_error("OSCAR worker finalized before requested stop.");
+                            done=true; trace("observed_done");
+                        }
+                        else if (type == "ERROR") { std::string error; std::getline(input>>std::ws,error); failOscar(error.empty() ? "OSCAR worker failed." : error); }
+                        else throw std::runtime_error("Unknown OSCAR worker protocol message.");
+                    }
                     std::lock_guard<std::mutex> lock(mutex);
-                    std::istringstream input(line); std::string type; input>>type;
-                    lastStatus=std::chrono::steady_clock::now();
-                    if (type == "READY") {
-                        int version=0, delay=0; std::string extra;
-                        if (!(input>>version>>delay) || version != 1 || delay <= 0 || (input>>extra)) throw std::runtime_error("Invalid OSCAR READY protocol.");
-                        // A readiness file may arrive first when Windows delays pipe reads.
-                        if (ready && delaySamples != delay) throw std::runtime_error("Conflicting OSCAR READY protocol.");
-                        if (!ready) { ready=true; delaySamples=delay; running=true; startup.notify_all(); }
-                    } else if (type == "SAMPLES") {
-                        uint64_t raw=0, clean=0; std::string extra;
-                        if (!(input>>raw>>clean) || raw < samples || clean < cleanedSamples || clean > raw || (input>>extra)) throw std::runtime_error("Invalid OSCAR sample counters.");
-                        samples=raw; cleanedSamples=clean;
-                    } else if (type == "DONE") { done=true; }
-                    else if (type == "ERROR") { std::getline(input>>std::ws,failure); if (failure.empty()) failure="OSCAR worker failed."; running=false; startup.notify_all(); }
-                    else throw std::runtime_error("Unknown OSCAR worker protocol message.");
+                    if (!done && failure.empty()) failOscar("OSCAR worker exited without confirmed file finalization. Check .worker.log.");
+                } catch (const std::exception& e) {
+                    std::lock_guard<std::mutex> lock(mutex); failOscar(e.what());
                 }
-                std::lock_guard<std::mutex> lock(mutex);
-                if (!done && failure.empty()) failure="OSCAR worker exited without confirmed file finalization. Check .worker.log.";
-            } catch (const std::exception& e) {
-                std::lock_guard<std::mutex> lock(mutex); failure=e.what();
+                { std::lock_guard<std::mutex> lock(mutex); workerExited=true; running=false; trace("stdout_closed"); startup.notify_all(); }
+            });
+            // Keep checking after stdout READY: the file may arrive later. A separate
+            // monitor also keeps file readiness independent of a blocking pipe read.
+            readinessWorker=std::thread([this,readyPath]() {
+                try {
+                    size_t polls=0; bool finishing=false;
+                    { std::lock_guard<std::mutex> lock(mutex); trace("ready_monitor_started"); }
+                    while (true) {
+                        ++polls;
+                        std::error_code error;
+                        bool exists=std::filesystem::exists(readyPath,error);
+                        if (error) throw std::runtime_error("Cannot inspect OSCAR readiness file: "+error.message());
+                        if (exists) {
+                            std::string contents;
+                            {
+                                // Close before remove; Windows does not guarantee delete-sharing.
+                                std::ifstream confirmation(readyPath,std::ios::binary);
+                                if (!confirmation) throw std::runtime_error("Cannot open OSCAR readiness file.");
+                                char buffer[256]; confirmation.read(buffer,sizeof(buffer));
+                                contents.assign(buffer,size_t(confirmation.gcount()));
+                                if (confirmation.bad()) throw std::runtime_error("Cannot read OSCAR readiness file.");
+                                if (!confirmation.eof()) throw std::runtime_error("Invalid OSCAR readiness confirmation: content exceeds limit.");
+                            }
+                            std::unique_lock<std::mutex> lock(mutex);
+                            trace("ready_file_observed checks="+std::to_string(polls)+" bytes="+std::to_string(contents.size()));
+                            if (contents.empty() || contents.back() != '\n') throw std::runtime_error("Invalid OSCAR readiness confirmation: incomplete line.");
+                            contents.pop_back();
+                            if (!contents.empty() && contents.back() == '\r') contents.pop_back();
+                            if (contents.find_first_of("\r\n") != std::string::npos) throw std::runtime_error("Invalid OSCAR readiness confirmation: expected exactly one line.");
+                            std::istringstream confirmation(contents);
+                            acceptReady(readyDelay(confirmation),"file");
+                            bool removed=std::filesystem::remove(readyPath,error);
+                            trace("ready_file_removed="+std::to_string(removed)+" error="+error.message());
+                            // Valid confirmations are consumed once. Malformed/conflicting
+                            // files remain as evidence; a removal failure is logged explicitly.
+                            return;
+                        }
+                        std::unique_lock<std::mutex> lock(mutex);
+                        if (polls == 1) trace("ready_file_absent");
+                        if (finishing) { trace("ready_monitor_ended checks="+std::to_string(polls)); return; }
+                        startup.wait_for(lock,std::chrono::milliseconds(100),[this]() { return workerExited || !failure.empty(); });
+                        // One final file check after pipe closure/error catches a
+                        // matching confirmation published just before shutdown.
+                        finishing=workerExited || !failure.empty();
+                    }
+                } catch (const std::exception& e) {
+                    std::lock_guard<std::mutex> lock(mutex); failOscar(e.what());
+                }
+            });
+            std::unique_lock<std::mutex> lock(mutex);
+            auto timeout=std::chrono::milliseconds(120000);
+#ifdef UNICORN_SESSION_TEST
+            if (auto value=std::getenv("UNICORN_OSCAR_STARTUP_TIMEOUT_MS")) timeout=std::chrono::milliseconds(std::stoul(value));
+#endif
+            bool signaled=startup.wait_for(lock,timeout,[this]() { return ready || workerExited || !failure.empty(); });
+            if (!signaled || !ready || !failure.empty() || !running) {
+                if (failure.empty()) failOscar(!signaled ? "OSCAR startup timed out without an accepted readiness confirmation. Check .startup.log and .worker.log." : "OSCAR worker stopped during startup. Check .startup.log and .worker.log.");
+                trace("startup_rejected ready="+std::to_string(ready)+" raw="+std::to_string(samples)+" clean="+std::to_string(cleanedSamples));
+                throw std::runtime_error(failure);
             }
-            { std::lock_guard<std::mutex> lock(mutex); running=false; startup.notify_all(); }
-        });
-        std::unique_lock<std::mutex> lock(mutex);
-        auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(120);
-        bool signaled=false;
-        while (!(signaled=ready || !failure.empty()) && std::chrono::steady_clock::now() < deadline) {
-            lock.unlock();
-            std::ifstream confirmation(readyPath);
-            std::string line, type, extra; int version=0, delay=0;
-            if (std::getline(confirmation,line)) {
-                std::istringstream input(line); input>>type;
-                if (type != "READY" || !(input>>version>>delay) || version != 1 || delay <= 0 || (input>>extra)) {
-                    lock.lock(); failure="Invalid OSCAR readiness confirmation."; startup.notify_all();
-                } else {
-                    lock.lock();
-                    if (ready && delaySamples != delay) failure="Conflicting OSCAR readiness confirmation.";
-                    else { ready=true; delaySamples=delay; running=true; }
-                    startup.notify_all();
-                }
-                std::error_code ignored; std::filesystem::remove(readyPath,ignored);
-            } else lock.lock();
-            if (!ready && failure.empty()) startup.wait_for(lock,std::chrono::milliseconds(100));
-        }
-        if (!signaled || !ready || !failure.empty() || !running) {
-            std::string error=failure.empty() ? "OSCAR startup failed or timed out." : failure;
-            lock.unlock(); stop(); throw std::runtime_error(error);
+            trace("startup_return_running");
+        } catch (const std::exception& e) {
+            { std::lock_guard<std::mutex> lock(mutex); failOscar(e.what()); }
+            stop(); throw;
         }
     }
 };

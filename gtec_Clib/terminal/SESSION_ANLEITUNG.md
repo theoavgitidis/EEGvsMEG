@@ -32,6 +32,8 @@ start session
 
 Der Start prüft Gerät, Kanäle und Dateien. Bei OSCAR wird das Gerät exklusiv an den Python-Prozess übergeben und auf erste gültige bereinigte Samples gewartet. Erst danach starten Baseline und Countdown. Vor einer weiteren OSCAR-Sitzung erneut `open DEINE_SERIENNUMMER` ausführen.
 
+Bei Startproblemen `.startup.log`, `.worker.log` und `.session.json` zusammen aufbewahren. C++ protokolliert insbesondere den Windows-EXE-/Worker-/Python-Pfad und die angenommene READY-Quelle. Der am 28.10.2026 beobachtete Starttimeout ist noch nicht abschließend erklärt; vor einer Studienaufnahme den neuen Windows-Release-Build mit dem kurzen Abnahmelauf aus der [OSCAR-Anleitung](../../acquisition/README.md#prüfungen-und-hardware-abnahme) prüfen.
+
 ## Aufgaben und Zeitplan
 
 | Abschnitt | Umfang | Dauer einschließlich Blockpausen |

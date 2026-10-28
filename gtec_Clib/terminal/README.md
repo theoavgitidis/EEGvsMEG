@@ -1,6 +1,6 @@
 # Unicorn API terminal
 
-**OSCAR-Stand 27.10.2026:** `start session` nimmt standardmäßig mit OSCAR über Python auf; `start session raw` wählt ausdrücklich Rohdaten. Beide Varianten bleiben getrennt gespeichert. Einrichtung, Geräteübergabe, Signalwahl und noch erforderliche Windows-/Headset-Abnahme: [OSCAR-Anleitung](../../acquisition/README.md). Beide Viewer bevorzugen für neue OSCAR-Sitzungen die bereinigten Daten; `--signal raw` wählt Rohdaten. FIF-Exporte enthalten die gewählte Variante vor zusätzlichen Anzeigefiltern.
+**OSCAR-Stand 28.10.2026:** `start session` nimmt standardmäßig mit OSCAR über Python auf; `start session raw` wählt ausdrücklich Rohdaten. Beide Varianten bleiben getrennt gespeichert. Der beobachtete Windows-Starttimeout ist noch nicht abschließend erklärt; die Startbestätigung wurde hardwarefrei abgesichert und um `.startup.log` ergänzt. Einrichtung, Geräteübergabe, Signalwahl und erforderliche Windows-/Headset-Abnahme: [OSCAR-Anleitung](../../acquisition/README.md). Beide Viewer bevorzugen für neue OSCAR-Sitzungen die bereinigten Daten; `--signal raw` wählt Rohdaten. FIF-Exporte enthalten die gewählte Variante vor zusätzlichen Anzeigefiltern.
 
 **Implementierte Sitzung 2.0 (45:04 min, 168 Trials):** [SESSION_ANLEITUNG.md](SESSION_ANLEITUNG.md).
 `start session` runs baselines, randomized unilateral motor/imagery trials and bilateral/cognitive comparison tasks, breaks, recording and markers.
