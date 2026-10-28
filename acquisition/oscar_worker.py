@@ -201,7 +201,8 @@ def record(args, emit):
     if versions != expected:
         raise RuntimeError(f"Unsupported acquisition versions; install acquisition/requirements.txt: {versions}")
     import gpype as gp
-    for suffix in ("", ".oscar.csv", ".processing.json", ".device.json"):
+    ready_path = Path(str(args.output) + ".ready")
+    for suffix in ("", ".oscar.csv", ".processing.json", ".device.json", ".ready"):
         if Path(str(args.output) + suffix).exists():
             raise FileExistsError(f"Recording artifact already exists: {args.output}{suffix}")
     stop = threading.Event()
@@ -253,6 +254,11 @@ def record(args, emit):
                           "channels": [{"name": c.name, "unit": c.unit, "enabled": c.enabled} for c in channels]}
                 write_json(Path(str(args.output) + ".device.json"), device)
                 metadata_update("recording")
+                # The controller also polls this atomically replaced file.  It
+                # prevents a Windows pipe read from delaying session start.
+                ready_temp = Path(str(ready_path) + ".tmp")
+                ready_temp.write_text(f"READY 1 {writer.delay}\n", encoding="ascii")
+                ready_temp.replace(ready_path)
                 emit(f"SAMPLES {writer.raw_count} {writer.clean_count}")
                 emit(f"READY 1 {writer.delay}")
                 ready = True

@@ -3,6 +3,7 @@
 #include <chrono>
 #include <cmath>
 #include <filesystem>
+#include <fstream>
 #include <mutex>
 #include <thread>
 #include <condition_variable>
@@ -182,7 +183,7 @@ public:
     }
     void startOscar(const std::string& serial, const std::filesystem::path& path) {
         stop();
-        for (const auto& suffix : {"", ".events.csv", ".oscar.csv", ".processing.json", ".device.json", ".worker.log"}) {
+        for (const auto& suffix : {"", ".events.csv", ".oscar.csv", ".processing.json", ".device.json", ".worker.log", ".ready"}) {
             auto candidate=path; candidate+=suffix;
             if (std::filesystem::exists(candidate)) throw std::runtime_error("Recording files already exist; choose a new path.");
         }
@@ -218,6 +219,7 @@ public:
         }
         origin=std::chrono::steady_clock::now(); cancel=false;
         child.start(python,script,serial,path);
+        auto readyPath=path; readyPath += ".ready";
         worker=std::thread([this]() {
             try {
                 std::string line;
@@ -227,8 +229,10 @@ public:
                     lastStatus=std::chrono::steady_clock::now();
                     if (type == "READY") {
                         int version=0, delay=0; std::string extra;
-                        if (!(input>>version>>delay) || version != 1 || delay <= 0 || ready || (input>>extra)) throw std::runtime_error("Invalid OSCAR READY protocol.");
-                        ready=true; delaySamples=delay; running=true; startup.notify_all();
+                        if (!(input>>version>>delay) || version != 1 || delay <= 0 || (input>>extra)) throw std::runtime_error("Invalid OSCAR READY protocol.");
+                        // A readiness file may arrive first when Windows delays pipe reads.
+                        if (ready && delaySamples != delay) throw std::runtime_error("Conflicting OSCAR READY protocol.");
+                        if (!ready) { ready=true; delaySamples=delay; running=true; startup.notify_all(); }
                     } else if (type == "SAMPLES") {
                         uint64_t raw=0, clean=0; std::string extra;
                         if (!(input>>raw>>clean) || raw < samples || clean < cleanedSamples || clean > raw || (input>>extra)) throw std::runtime_error("Invalid OSCAR sample counters.");
@@ -245,7 +249,26 @@ public:
             { std::lock_guard<std::mutex> lock(mutex); running=false; startup.notify_all(); }
         });
         std::unique_lock<std::mutex> lock(mutex);
-        bool signaled=startup.wait_for(lock,std::chrono::seconds(120),[&]() { return ready || !failure.empty(); });
+        auto deadline=std::chrono::steady_clock::now()+std::chrono::seconds(120);
+        bool signaled=false;
+        while (!(signaled=ready || !failure.empty()) && std::chrono::steady_clock::now() < deadline) {
+            lock.unlock();
+            std::ifstream confirmation(readyPath);
+            std::string line, type, extra; int version=0, delay=0;
+            if (std::getline(confirmation,line)) {
+                std::istringstream input(line); input>>type;
+                if (type != "READY" || !(input>>version>>delay) || version != 1 || delay <= 0 || (input>>extra)) {
+                    lock.lock(); failure="Invalid OSCAR readiness confirmation."; startup.notify_all();
+                } else {
+                    lock.lock();
+                    if (ready && delaySamples != delay) failure="Conflicting OSCAR readiness confirmation.";
+                    else { ready=true; delaySamples=delay; running=true; }
+                    startup.notify_all();
+                }
+                std::error_code ignored; std::filesystem::remove(readyPath,ignored);
+            } else lock.lock();
+            if (!ready && failure.empty()) startup.wait_for(lock,std::chrono::milliseconds(100));
+        }
         if (!signaled || !ready || !failure.empty() || !running) {
             std::string error=failure.empty() ? "OSCAR startup failed or timed out." : failure;
             lock.unlock(); stop(); throw std::runtime_error(error);
