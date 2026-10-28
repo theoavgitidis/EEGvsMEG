@@ -35,7 +35,7 @@ def write_json(path, value):
 
 class DualWriter:
     """Bounded asynchronous writer; verifies the measured delay on every sample."""
-    def __init__(self, path, capacity=4096, alignment_capacity=32768):
+    def __init__(self, path, capacity=32768, alignment_capacity=32768):
         self.path = Path(path)
         self.clean_path = Path(str(path) + ".oscar.csv")
         self.queue = queue.Queue(capacity)

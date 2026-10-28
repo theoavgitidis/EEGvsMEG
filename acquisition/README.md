@@ -36,7 +36,7 @@ start session
 status
 ```
 
-Der Start prüft zunächst wie bisher die acht EEG-Kanäle. Anschließend schließt C++ seinen Gerätehandle; nur der Python-Prozess öffnet das gewählte Headset. Er aktiviert für die Aufnahme alle 17 Kanäle (EEG, Beschleunigung, Gyroskop, Batterie, Counter, Validation). Die tatsächliche Python-Gerätekonfiguration wird gespeichert. Die Anzeige bleibt bei `AUFNAHME WIRD VORBEREITET`, bis erste gültige bereinigte Samples geschrieben sind. Erst danach beginnen Anfangsbaseline und Sitzungsuhr. Der Start kann bis zu 90 Sekunden warten, weil die OSCAR-Modellinitialisierung auf dem Messrechner einen begrenzten Vorlauf benötigt.
+Der Start prüft zunächst wie bisher die acht EEG-Kanäle. Anschließend schließt C++ seinen Gerätehandle; nur der Python-Prozess öffnet das gewählte Headset. Er aktiviert für die Aufnahme alle 17 Kanäle (EEG, Beschleunigung, Gyroskop, Batterie, Counter, Validation). Die tatsächliche Python-Gerätekonfiguration wird gespeichert. Die Anzeige bleibt bei `AUFNAHME WIRD VORBEREITET`, bis erste gültige bereinigte Samples geschrieben sind. Erst danach beginnen Anfangsbaseline und Sitzungsuhr. Der Start kann bis zu 120 Sekunden warten, weil die OSCAR-Modellinitialisierung auf dem Messrechner einen begrenzten Vorlauf benötigt.
 
 `status` und die laufende Sitzungsanzeige zeigen `OSCAR` beziehungsweise `RAW`; bei OSCAR zusätzlich Rohsample-Zahl, bereinigte Sample-Zahl und gemessene Verzögerung. `session pause`, `session resume`, `mark`, `stop`, `close` und `quit` behalten ihre Sitzungsbedeutung. Pause hält ausschließlich den Aufgabenablauf an, die Verarbeitung läuft durch.
 

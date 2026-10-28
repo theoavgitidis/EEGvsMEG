@@ -245,7 +245,7 @@ public:
             { std::lock_guard<std::mutex> lock(mutex); running=false; startup.notify_all(); }
         });
         std::unique_lock<std::mutex> lock(mutex);
-        bool signaled=startup.wait_for(lock,std::chrono::seconds(90),[&]() { return ready || !failure.empty(); });
+        bool signaled=startup.wait_for(lock,std::chrono::seconds(120),[&]() { return ready || !failure.empty(); });
         if (!signaled || !ready || !failure.empty() || !running) {
             std::string error=failure.empty() ? "OSCAR startup failed or timed out." : failure;
             lock.unlock(); stop(); throw std::runtime_error(error);
