@@ -19,7 +19,10 @@ import numpy as np
 NAMES = ([f"EEG {i}" for i in range(1, 9)]
          + [f"{sensor} {axis}" for sensor in ("Accelerometer", "Gyroscope") for axis in "XYZ"]
          + ["Battery Level", "Counter", "Validation Indicator"])
+# g.Pype exposes the two count-like channels as dimensionless, while the
+# Unicorn driver reports their physical device configuration in counts.
 UNITS = ["uV"] * 8 + ["g"] * 3 + ["deg/s"] * 3 + ["%", "-", "-"]
+DEVICE_UNITS = ["uV"] * 8 + ["g"] * 3 + ["deg/s"] * 3 + ["%", "n", "n"]
 HEADER = ["sample_index", "nominal_time_s", "host_read_utc_s", *NAMES]
 COUNTER = NAMES.index("Counter")
 
@@ -32,7 +35,7 @@ def write_json(path, value):
 
 class DualWriter:
     """Bounded asynchronous writer; verifies the measured delay on every sample."""
-    def __init__(self, path, capacity=256):
+    def __init__(self, path, capacity=4096, alignment_capacity=32768):
         self.path = Path(path)
         self.clean_path = Path(str(path) + ".oscar.csv")
         self.queue = queue.Queue(capacity)
@@ -43,6 +46,7 @@ class DualWriter:
         self.last_clean_update = self.last_update
         self.ready = threading.Event()
         self.ledger = deque()
+        self.alignment_capacity = alignment_capacity
         self.previous_counter = None
         self.marked = False
         self.files = []
@@ -82,7 +86,10 @@ class DualWriter:
                 self.ledger.append((self.raw_count, row.copy(), received))
                 self.writers[0].writerow([self.raw_count, self.raw_count / 250, received, *row])
                 self.raw_count += 1
-            if len(self.ledger) > 8192:
+            # g.Pype may receive source frames while the OSCAR model is fitting.
+            # Keep a bounded pre-roll so the first delayed clean frame still has
+            # its exact raw counterpart.
+            if len(self.ledger) > self.alignment_capacity:
                 raise ValueError("OSCAR backlog exceeds the bounded alignment buffer.")
             self.last_update = time.monotonic()
         elif kind == "clean":
@@ -209,7 +216,7 @@ def record(args, emit):
     metadata = {"schema_version": 1, "mode": "oscar", "state": "preparing", "sampling_rate_hz": 250,
                 "raw_file": args.output.name, "oscar_file": writer.clean_path.name,
                 "default_signal": "oscar", "versions": versions,
-                "channel_names": NAMES, "channel_units": UNITS,
+                "channel_names": NAMES, "channel_units": DEVICE_UNITS,
                 "alignment": "sample_index is the original raw sample index; verified by all auxiliary channels",
                 "oscar_delay_samples": None, "raw_samples": 0, "oscar_samples": 0}
     meta_path = Path(str(args.output) + ".processing.json")
@@ -240,7 +247,7 @@ def record(args, emit):
                 channels = source._device.get_configuration()
                 if [c.name for c in channels] != NAMES or not all(c.enabled for c in channels):
                     raise RuntimeError("Actual device channel layout differs from the recorded layout.")
-                if [c.unit.replace("µ", "u").replace("μ", "u") for c in channels] != UNITS:
+                if [c.unit.replace("µ", "u").replace("μ", "u") for c in channels] != DEVICE_UNITS:
                     raise RuntimeError("Actual device units differ from the required units.")
                 device = {"serial": source.device_serial(), "api_version": source._device.get_api_version(),
                           "channels": [{"name": c.name, "unit": c.unit, "enabled": c.enabled} for c in channels]}
