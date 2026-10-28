@@ -17,6 +17,7 @@ Stand: 27. Oktober 2026. Sitzungsprotokoll: `eeg-session-1.0`.
 | EEG und Marker ansehen, filtern und exportieren | [MNE_ANLEITUNG.md](gtec_Clib/terminal/MNE_ANLEITUNG.md) |
 | Aufgaben, Trialzahlen und wissenschaftlicher Pilotplan | [Versuchsprotokoll](docs/experiment-protocol.md) |
 | Teilnehmer-IDs und Zuordnung mehrerer Sitzungen | [ID-Schema](docs/participant-ids.md) |
+| Minimale Teilnehmerangaben und Sitzungsnotizen | [Teilnehmerbogen – Vorlage](docs/participant-record-template.md) |
 | Technischer Sitzungsplan, Zustände und Datenzuordnung | [Sitzungsspezifikation](docs/session-automation-plan.md) |
 | Kurze manuelle Vorführung | [Demo-Anleitung](presentations/Demo_Anleitung_DE.md) |
 | Frühere Ideen und mögliche zusätzliche Aufgaben | [Experimentkatalog](docs/plannedExperiments/README.md) |
