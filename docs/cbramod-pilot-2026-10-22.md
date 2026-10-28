@@ -1,5 +1,7 @@
 # CBraMod-Pilot: ausgeführter Vergleich vom 22.10.2026
 
+Historischer Ergebnisbericht zu Protokoll 1.0. Die folgenden Resultate und Reproduktionsbefehle bleiben für diese Daten gültig; sie sind keine Validierung des neuen [Versuchsprotokolls 2.0](experiment-protocol.md).
+
 **Der erste Transfer-Learning-Vergleich ist vollständig ausgeführt.** CBraMod liefert in dieser Sitzung für Kopfrechnen gegen Erholung höhere deskriptive Werte als die Bandpower-Pipelines. Motorik und Imagery profitieren in dieser Konfiguration nicht. Ein belastbarer Vorteil des Fine-Tunings gegenüber dem eingefrorenen Encoder ist nicht nachgewiesen.
 
 ## Ergebnisse auf zurückgehaltenen Blöcken

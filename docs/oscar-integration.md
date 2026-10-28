@@ -1,6 +1,6 @@
 # OSCAR aktivieren: recherchierter Integrationsweg
 
-Stand: 27.10.2026. **Der OSCAR-Aufnahmeweg ist jetzt implementiert und Standard bei `start session`; Windows-/Headset-Abnahme steht aus.** Maßgeblich für die Bedienung sind die [Aufnahmeanleitung](../acquisition/README.md) und der [Umsetzungsplan](oscar-session-plan.md). Die folgenden Abschnitte dokumentieren die Herstellerrecherche. Lizenzaktivierung und Headset-Lauf wurden nicht ausgeführt.
+Recherche vom 27.10.2026; Dokumentation abgeglichen am 28.10.2026. **Der OSCAR-Aufnahmeweg ist implementiert und Standard bei `start session`; Windows-/Headset-Abnahme steht aus.** Bedienung, technischer Zeitvertrag und bisheriger Prüfstand stehen in der [Aufnahmeanleitung](../acquisition/README.md). Die folgenden Abschnitte dokumentieren Lizenzaktivierung und Herstellerquellen. Lizenzaktivierung und Headset-Lauf wurden nicht ausgeführt.
 
 ## Ergebnis und Korrektur der bisherigen Einschätzung
 
@@ -115,7 +115,7 @@ Quellen: [HybridBlack](https://gpype.gtec.at/content/7_sdk_reference/backend_sou
 
 Der C++-Recorder besitzt in der mitgelieferten C-API keinen OSCAR-Schalter. Der oben beschriebene Live-Weg verwendet eine separate Python-Aufnahmequelle. Die implementierte C++-Anbindung an diesen Python-Aufnahmeweg ist in der Aufnahmeanleitung beschrieben.
 
-Für die eigentliche Integration zuerst den separaten Headset-Test bestehen lassen. Danach Rohdaten und OSCAR-Ausgabe getrennt erhalten, Kanalreihenfolge und Einheiten prüfen, Verzögerung und Ereignisse abgleichen und beide Viewer-Einstiegspunkte konsistent anbinden. Die Blinzelbedingung unseres Protokolls erfasst bewusst auch das Augensignal; ihre Auswertung darf nicht unbemerkt durch Artefaktkorrektur verändert werden.
+Die Integration mit getrennter Roh-/OSCAR-Ausgabe und beiden Viewer-Einstiegspunkten ist vorhanden. Ihre Windows-/Headset-Abnahme gemäß Aufnahmeanleitung steht aus; dabei Kanalreihenfolge, Einheiten, Verzögerung und Ereignisse prüfen. Die Blinzelbedingung des bisherigen Protokolls 1.0 erfasst bewusst auch das Augensignal; ihre Auswertung darf nicht unbemerkt durch Artefaktkorrektur verändert werden. Im neuen [Zielprotokoll 2.0](experiment-protocol.md) ist Blinzeln keine Aufgabenklasse mehr.
 
 Die alternative Hersteller-App Unicorn Recorder bietet ebenfalls OSCAR sowie LSL/UDP. Die Produktseite belegt jedoch nicht eindeutig, ob deren exportierter Stream jeweils die korrigierten Daten oder Rohdaten führt. Dies vor einer LSL-Integration praktisch prüfen: [Unicorn Suite](https://www.gtec.at/product/unicorn-suite/).
 

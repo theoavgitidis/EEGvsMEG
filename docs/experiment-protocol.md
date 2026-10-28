@@ -1,287 +1,211 @@
-# EEG-Experiment: Motorik, Motor Imagery und Konzentration
+# Versuchsprotokoll: lateralisierte Motorik und MEG-Vergleich
 
-Aufnahme-Erweiterung vom 27.10.2026: `start session` verwendet standardmäßig OSCAR und speichert zusätzlich Rohdaten; `start session raw` wählt den bisherigen Recorder. Aufgaben, Zeitplan und Trialregeln bleiben gleich. Implementierung und ausstehende Windows-/Headset-Abnahme: [OSCAR-Anleitung](../acquisition/README.md).
+Stand: 28.10.2026. Zielprotokoll: `eeg-session-2.0` (geplant). **Noch nicht implementiert oder experimentell validiert.** Dieses Dokument ist die zentrale wissenschaftliche Spezifikation für die neue Sitzung mit 45:04 Minuten.
 
-Stand: 19. Oktober 2026
-Status: Wissenschaftlich begründeter Entwurf für einen Pilotversuch  
-Geplanter Standardablauf: 29:16 Minuten Baselines und Trials einschließlich Erholung, 38:16 Minuten mit geplanten Zusatzpausen pro Versuchsperson.
+Die CLI führt weiterhin `eeg-session-1.0` mit 38:16 Minuten aus; dessen tatsächlich ausführbarer Ablauf steht in der [Sitzungsanleitung](../gtec_Clib/terminal/SESSION_ANLEITUNG.md). Technischer Änderungsbedarf und Dateiverträge: [Sitzungsspezifikation](session-automation-plan.md). Einrichtung der Aufnahme: [OSCAR-Anleitung](../acquisition/README.md).
 
-Die automatische Durchführung ist in [SESSION_ANLEITUNG.md](../gtec_Clib/terminal/SESSION_ANLEITUNG.md) beschrieben. Der detaillierte technische Plan steht in [session-automation-plan.md](session-automation-plan.md).
+## 1. Studienziel und Umfang
 
-## 1. Grundprinzip
+Die acht gewünschten Bedingungen bilden den Schwerpunkt: linke/rechte Faust und linker/rechter Fuß, jeweils ausgeführt und vorgestellt. Dazu kommen vier kleine Vergleichsbedingungen aus dem MEG-Paradigma: beide Hände vorstellen, beide Füße vorstellen, Wortgenerierung und Subtraktion. Die geplante Aufnahme dauert **45:04 Minuten**, einschließlich Baselines und geplanter Pausen; Aufbau, Übung und ungeplante Wiederholungen kommen hinzu.
 
-Jede Versuchsperson absolviert drei Hauptläufe:
+Ziel der Studienarbeit:
 
-1. Tatsächliche Bewegung: Arme heben, Beine heben, bewusst blinzeln.
-2. Motor Imagery: dieselben Arm- und Beinbewegungen vorstellen.
-3. Konzentration: eine standardisierte Kopfrechenaufgabe ausführen.
+> Untersuchen, welche motorischen und kognitiven Aufgaben eines MEG-inspirierten BCI-Paradigmas mit einem praktischen Achtkanal-EEG unterscheidbar sind, wie sich ausgeführte und vorgestellte Bewegungen unterscheiden und welche Grenzen bei der Übertragung auf weitere Sitzungen auftreten.
 
-**Rest bedeutet in diesem Experiment die Erholung zwischen den Aufgaben. Es gibt keine zusätzlichen Rest-Trials.** Die EEG-Aufzeichnung läuft während Aufgabe und Erholung weiter. Falls Rest als Vergleichszustand ausgewertet wird, stammen die Ruhefenster aus diesen Erholungsphasen.
+Das Studienziel umfasst weiterhin die Untersuchung motorischer **und kognitiver** Aufgaben mit einem praktischen EEG sowie den Bezug zum MEG-Paradigma. Die Links-/Rechts-Unterscheidung erweitert sie. Würden Wortgenerierung und Rechnen vollständig entfallen, bliebe nur der sensomotorische Teil des ursprünglichen Ziels erhalten. Diese Einschränkung darf nicht durch eine unveränderte Zielbeschreibung verdeckt werden.
 
-Als vorläufiges Auswertungsziel wird die Unterscheidung der Bedingungen innerhalb jedes Hauptlaufs angenommen. Aussagen über reine Gehirnaktivität bei tatsächlicher Bewegung erfordern die Berücksichtigung von Augen-, Muskel- und Bewegungsartefakten. Die Blinzelbedingung dient ausdrücklich auch der Erfassung des Augensignals.
+Die verfügbare Zeit erlaubt keine gleich starke Untersuchung aller Fragen. Der Vorschlag priorisiert die gewünschten Bewegungsbedingungen; der MEG-Vergleich und insbesondere die kognitiven Aufgaben bleiben explorativ. Eine gleichrangige Bestätigungsstudie aller Fragestellungen erfordert zusätzliche Sitzungen oder weniger Bedingungen.
 
-## 2. Gesamtübersicht
+## 2. Was der MEG-Vergleich tatsächlich erlaubt
 
-| Abschnitt | Aufgaben | Wiederholungen | Ablauf pro Trial | Reine Messzeit |
-|---|---|---|---|---:|
-| Ruheaufnahme zu Beginn | Augen offen, Fixationspunkt | 1 × 60 s | Ruhig sitzen | 1:00 min |
-| Lauf 1: Motorik | Arme heben, Beine heben, blinzeln | 20 je Aufgabe; 60 insgesamt | 2 s Fixation → 4 s Aufgabe → 6–8 s Rest | 13:00 min |
-| Lauf 2: Imagery | Armbewegung vorstellen, Beinbewegung vorstellen | 20 je Aufgabe; 40 insgesamt | 2 s Fixation → 4 s Imagery → 6–8 s Rest | 8:40 min |
-| Lauf 3: Konzentration | Stilles serielles Subtrahieren | 12 Trials | 2 s READY → 10 s sichtbare Rechenanweisung / Rechnen → 15–17 s Rest | 5:36 min |
-| Ruheaufnahme am Ende | Augen offen, Fixationspunkt | 1 × 60 s | Ruhig sitzen | 1:00 min |
-| **Gesamt** | | **112 Aufgaben-Trials** | Einschließlich der Erholungsphasen | **29:16 min** |
+MEGBCI2020 enthält beidseitige Hand-/Fußvorstellung sowie Wortgenerierung und Subtraktion, jedoch keine entsprechenden Links-/Rechts- oder Ausführungsbedingungen. Dokumentiert sind 17 Personen, zwei Termine und 50 Trials je Klasse und Termin. Das ursprüngliche Timing ist 2 s Vorbereitung, 5 s Aufgabe mit sichtbarem Cue und 1,5–2 s Intervall. [Rathee et al. (2021)](https://pmc.ncbi.nlm.nih.gov/articles/PMC8085139/)
 
-Die Zeiten gelten für die unten festgelegte, ausgeglichene Verteilung der Rest-Dauern. Zusätzliche Abschnittspausen, Einweisung, Übung und Aufbau sind nicht enthalten.
+Deshalb werden echte beidseitige Imagery-Trials erhoben. Das Zusammenlegen von linker und rechter Vorstellung erzeugt keine beidseitige Vorstellung. Auch ein rechnerischer Mittelwert ihrer EEG-Muster ist kein Ersatz für diese Bedingung.
 
-## 3. Einheitliche Bedingungen und Einweisung
+Eine spätere MEG-Auswertung beschreibt für die Hände Greifvorstellung und für die Füße beidseitige Dorsalflexion. Das unterstützt die inhaltliche Anbindung unserer Bewegungswahl. Sie analysiert 18 Personen; ihre Kohorte und Ergebnisse dürfen nicht ungeprüft mit der veröffentlichten 17-Personen-Datenbasis gleichgesetzt werden. [Originalstudie zur MEG-Auswertung](https://onlinelibrary.wiley.com/doi/full/10.1002/hbm.26284)
 
-Die Teilnehmerkennung folgt für neue Personen dem [ID-Schema](participant-ids.md), beispielsweise `EVM-P001`. Sie bleibt über alle Sitzungen erhalten; Sitzungs-ID und Reihenfolgegruppe werden separat zugeordnet.
-
-- Versuchsperson sitzt bequem; Kopf und Rumpf bleiben möglichst ruhig.
-- Augen bleiben bei Aufgaben und Rest offen. Ein zentraler Fixationspunkt wird verwendet.
-- Vor Beginn werden alle Aufgaben kurz geübt, besonders Imagery und Kopfrechnen. Übungsdaten werden getrennt von den experimentellen Daten markiert.
-- Es werden keine zusätzlichen Links-/Rechts-Klassen eingeführt: Arme und Beine werden jeweils beidseitig ausgeführt beziehungsweise vorgestellt.
-- Vor der Hauptmessung wird geprüft, ob die Bewegungen ohne deutliche Ausweichbewegungen des Rumpfs möglich sind. Falls die Bewegungsdefinition geändert werden muss, wird die Änderung dokumentiert und danach einheitlich verwendet.
-- Keine Rückmeldung über eine EEG-Klassifikation während der Hauptmessung.
-
-### Rest-Anweisung
-
-> Bleibe ruhig sitzen und schaue auf den Fixationspunkt. Führe keine Bewegung und keine bewusste Bewegungsvorstellung aus. Beende das Kopfrechnen und beginne keine neue Aufgabe.
-
-Es wird nicht verlangt, „an nichts zu denken“. Rest ist eine angeleitete Erholungsphase, keine Garantie für vollständige mentale Inaktivität.
-
-## 4. Lauf 1: Tatsächliche Bewegung
-
-### Trial-Struktur
-
-| Zeit ab Trial-Beginn | Phase | Anweisung / Anzeige |
-|---|---|---|
-| 0–2 s | Vorbereitung | Fixationspunkt; nächste Aufgabe noch nicht bekannt |
-| 2–6 s | Aufgabe | Aufgabenhinweis erscheint bei 2 s; Aufgabe beginnt sofort und dauert 4 s |
-| Ab 6 s | Rest | Aufgabe beenden; für 6, 7 oder 8 s erholen |
-
-Der Aufgabenhinweis erscheint während der gesamten viersekündigen Aufgabe. Der anschließende Wechsel zum Fixationspunkt markiert den Beginn von Rest; es gibt kein zusätzliches Stoppsignal. Darstellung und Signalfolge werden für alle drei Aufgaben gleich gestaltet.
-
-### Aufgaben
-
-| Aufgabe | Einheitliche Ausführung | Anzahl |
-|---|---|---:|
-| Arme heben | Innerhalb von 4 s beide Unterarme mit kleiner Auslenkung einmal anheben und wieder in die Ausgangsposition zurückführen. Kein längeres Halten. | 20 |
-| Beine heben | Innerhalb von 4 s beide Füße mit kleiner Auslenkung einmal vom Boden anheben und wieder absetzen. Kein längeres Halten. | 20 |
-| Blinzeln | Innerhalb von 4 s zweimal bewusst blinzeln, ungefähr 1 s und 3 s nach Aufgabenbeginn. Zwischen den Blinzlern Augen offen halten. | 20 |
-
-Die genaue Bewegungsamplitude wird vor Beginn festgelegt und dokumentiert. Sie soll klein und bequem sein; diese Bewegungsdefinition ist eine Planungsentscheidung, keine direkt aus einer Vergleichsstudie übernommene optimale Bewegung.
-
-### Rest-Dauern und Abschnitte
-
-Für jede der drei Aufgaben:
-
-- 5 Trials mit 6 s Rest;
-- 10 Trials mit 7 s Rest;
-- 5 Trials mit 8 s Rest.
-
-Damit beträgt Rest im Mittel genau 7 s und ein Trial im Mittel 13 s.
-
-Der Lauf wird in **4 Abschnitte mit jeweils 15 Trials** aufgeteilt: je 5 Arm-, Bein- und Blinzel-Trials pro Abschnitt. Ein Abschnitt dauert im Mittel 3:15 min. Zwischen den Abschnitten liegen zusätzliche 45 s Pause.
-
-## 5. Lauf 2: Motor Imagery
-
-### Trial-Struktur
-
-**2 s Fixation → 4 s Bewegungsvorstellung → 6, 7 oder 8 s Rest.**
-
-Zeitpunkte und Wechsel von Aufgabenanzeige auf Fixationskreuz entsprechen dem motorischen Lauf. Während Imagery wird die Bewegung ausschließlich vorgestellt.
-
-### Aufgaben
-
-| Aufgabe | Einheitliche Anweisung | Anzahl |
-|---|---|---:|
-| Arme vorstellen | Stelle dir aus deiner eigenen Körperperspektive vor, beide Unterarme innerhalb von 4 s einmal anzuheben und wieder abzulegen. Konzentriere dich auf das Bewegungsgefühl. | 20 |
-| Beine vorstellen | Stelle dir aus deiner eigenen Körperperspektive vor, beide Füße innerhalb von 4 s einmal anzuheben und wieder abzusetzen. Konzentriere dich auf das Bewegungsgefühl. | 20 |
-
-Die vorgestellte Bewegung entspricht der geübten tatsächlichen Bewegung. Während der Vorstellung bleiben Arme, Beine und Rumpf ruhig.
-
-### Rest-Dauern und Abschnitte
-
-Für jede der beiden Aufgaben werden ebenfalls 5 × 6 s, 10 × 7 s und 5 × 8 s Rest vergeben.
-
-Der Lauf wird in **4 Abschnitte mit jeweils 10 Trials** aufgeteilt: je 5 Arm- und Bein-Trials pro Abschnitt. Ein Abschnitt dauert im Mittel 2:10 min. Zwischen den Abschnitten liegen zusätzliche 45 s Pause.
-
-### Beispielsequenz
-
-```text
-Fixation 2 s → Arme vorstellen 4 s → Rest 7 s
-Fixation 2 s → Beine vorstellen 4 s → Rest 6 s
-Fixation 2 s → Arme vorstellen 4 s → Rest 8 s
-Fixation 2 s → Arme vorstellen 4 s → Rest 6 s
-Fixation 2 s → Beine vorstellen 4 s → Rest 8 s
-Fixation 2 s → Beine vorstellen 4 s → Rest 7 s
-… bis insgesamt 20 Arm- und 20 Bein-Trials erreicht sind.
-```
-
-Dies ist ein Beispiel. Für jede Versuchsperson wird eine konkrete, zufällig erzeugte Sequenz gespeichert.
-
-## 6. Lauf 3: Konzentration / Kopfrechnen
-
-„Stark konzentrieren“ wird als **stilles serielles Subtrahieren** operationalisiert. Die Bedingung wird in den Daten als `mental_arithmetic` bezeichnet. Sie untersucht kognitive Beanspruchung durch Kopfrechnen; daraus folgt keine aufgabenunabhängige Messung von „Konzentration“.
-
-### Trial-Struktur
-
-| Zeit ab Trial-Beginn | Phase | Anweisung / Anzeige |
-|---|---|---|
-| 0–2 s | Vorbereitung | `READY`; Zahlen noch nicht sichtbar, noch nicht rechnen |
-| 2–12 s | Kopfrechnen | Beispielsweise `347 − 7` und `FORTLAUFEND` anzeigen; 10 s lang still seriell subtrahieren |
-| Ab 12 s | Rest | Wechsel zum Fixationskreuz: Rechnen beenden; 15, 16 oder 17 s erholen |
-
-Beispiel: Die Instruktion lautet `347 − 7`. Die Versuchsperson rechnet anschließend im Kopf `340, 333, 326, …` bis zum Wechsel zum Fixationskreuz. Während des Aufgabenfensters keine Zahl aussprechen und keine Taste drücken.
-
-### Aufgabenparameter
-
-- 12 Rechen-Trials, jeweils mit einer neuen dreistelligen Startzahl (automatischer Pilotablauf: ohne Wiederholung aus 300–899).
-- Subtraktionszahl zunächst einheitlich 7; Eignung vorab in der Übung prüfen.
-- Eine notwendige Anpassung der Schwierigkeit vor der Hauptmessung festlegen und dokumentieren. Keine unangekündigte Anpassung während der Hauptmessung.
-- 3 Trials mit 15 s Rest, 6 mit 16 s Rest und 3 mit 17 s Rest; durchschnittlich 16 s.
-- **3 Abschnitte mit jeweils 4 Trials**, im Mittel 1:52 min pro Abschnitt. Zwischen den Abschnitten liegen zusätzliche 45 s Pause.
-
-Nach jedem Abschnitt kann außerhalb der ausgewerteten Aufgaben- und Rest-Fenster kurz überprüft werden, ob die Versuchsperson kontinuierlich gerechnet hat. Sprechen und sonstige Antworten werden separat markiert. Zusätzliche Antwortzeit ist nicht in der Messzeit-Tabelle enthalten.
-
-## 7. Reihenfolge und Randomisierung
-
-### Reihenfolge der Hauptläufe
-
-Die Bezeichnungen „Lauf 1–3“ benennen die Aufgabenarten. Wenn die Durchführung keine feste Reihenfolge erfordert, werden die sechs möglichen Reihenfolgen möglichst gleichmäßig auf die Versuchspersonen verteilt:
-
-| Reihenfolgegruppe | Erster Hauptlauf | Zweiter Hauptlauf | Dritter Hauptlauf |
-|---|---|---|---|
-| A | Motorik | Imagery | Konzentration |
-| B | Motorik | Konzentration | Imagery |
-| C | Imagery | Motorik | Konzentration |
-| D | Imagery | Konzentration | Motorik |
-| E | Konzentration | Motorik | Imagery |
-| F | Konzentration | Imagery | Motorik |
-
-Alle Versuchspersonen üben die tatsächlichen Bewegungen vor der Hauptmessung, unabhängig von ihrer Reihenfolgegruppe. Die Gegenbalancierung ist eine methodische Empfehlung zur Verteilung von Reihenfolge- und Ermüdungseinflüssen.
-
-### Reihenfolge innerhalb eines Hauptlaufs
-
-- Aufgaben innerhalb jedes Abschnitts zufällig anordnen, unter Einhaltung der oben festgelegten Häufigkeiten.
-- In Motorik und Imagery höchstens zwei unmittelbar aufeinanderfolgende Trials derselben Aufgabe zulassen, auch über Blockgrenzen. Diese Regel gilt nicht für den ausschließlich aus Rechenaufgaben bestehenden kognitiven Lauf. Das ist eine vorab festgelegte praktische Einschränkung der Randomisierung.
-- Rest-Dauern aus den festgelegten Kontingenten unabhängig von der Aufgabenreihenfolge vergeben.
-- Keine unterschiedliche Pausenverteilung für Arm-, Bein- oder Blinzel-Trials.
-- Startzahlen beim Kopfrechnen vorab erzeugen und speichern.
-- Konkrete Trial-Liste und Zufallsseed je Versuchsperson speichern. Die Liste enthält Hauptlauf, Abschnitt, Trial-Nummer, Aufgabe und alle vorgesehenen Dauern.
-
-## 8. Pausen und Gesamtdauer der Sitzung
-
-Zusätzlich zu Rest innerhalb jedes Trials:
-
-| Zusätzliche Pause | Anzahl | Dauer je Pause | Gesamt |
-|---|---:|---:|---:|
-| Zwischen motorischen Abschnitten | 3 | 45 s | 2:15 min |
-| Zwischen Imagery-Abschnitten | 3 | 45 s | 2:15 min |
-| Zwischen Rechenabschnitten | 2 | 45 s | 1:30 min |
-| Zwischen Hauptläufen | 2 | 90 s | 3:00 min |
-| **Gesamt zusätzliche Pausen** | | | **9:00 min** |
-
-**Geplante Messung plus zusätzliche Pausen: 38:16 min.** Aufbau, Einweisung, Übung, eventuelle Leistungsabfragen und zusätzliche Bedarfspausen kommen hinzu. Abschnittspausen werden separat markiert und nicht als weitere Aufgaben-Trials gezählt.
-
-Bei `start session` läuft die EEG-Aufzeichnung während aller geplanten und ungeplanten Pausen weiter. Ohne Unterbrechung beträgt der Ablauf 38:16 min. Ungeplante Pausen und Wiederholungen verlängern die tatsächliche Aufnahme. Bei manueller Durchführung ist eine kontinuierliche Aufzeichnung ebenfalls möglich.
-
-## 9. Ereignismarker und Dokumentation
-
-Alle Marker müssen zeitlich zur EEG-Aufzeichnung zugeordnet werden können. Mindestens speichern:
-
-| Ereignis | Bedeutung |
+| Vergleich | Aussage und Grenze |
 |---|---|
-| `baseline_start`, `baseline_end` | Anfang und Ende der zusätzlichen Ruheaufnahme |
-| `run_start`, `run_end` | Hauptlauf und seine Aufgabenart |
-| `block_start`, `block_end` | Abschnitt innerhalb des Hauptlaufs |
-| `trial_start` | Beginn der Vorbereitung: Kreuz bei Motorik/Imagery, READY bei Kognitiv |
-| `cue_onset` | Softwareseitig protokollierter Beginn der Aufgabenanzeige; kein physikalisch gemessener Bildschirm-Onset |
-| `task_onset` | Beginn der Bewegung, Imagery oder Rechenzeit laut Ablauf |
-| `task_offset` | Ende des Aufgabenfensters; zugleich Beginn von Rest |
-| `rest_end` | Ende der Erholung |
-| `break_start`, `break_end` | Zusätzliche Pause zwischen Abschnitten oder Hauptläufen |
+| Beidseitige Hand- gegen Fußvorstellung in EEG und MEG | Inhaltlich ähnlichste gemeinsame Aufgabe; angepasster Ablauf und verschiedene Kohorten bleiben Störfaktoren. |
+| Wortgenerierung gegen Subtraktion | Erhält den kognitiven Vergleich; wenige EEG-Trials und gegebenenfalls andere Sprache begrenzen ihn. |
+| Unilaterale Aufgaben im EEG | Neue Erweiterung; in diesem MEG-Datensatz fehlt das direkte Gegenstück. |
+| Ausführung gegen Vorstellung im EEG | Eigene Vergleichsfrage; tatsächliche Bewegung kann Artefakte und sensorische Rückmeldungen enthalten. |
+| EEG- gegen MEG-Klassifikationsleistung | Vergleich zweier Messkonfigurationen und Datensätze; kein isolierter kausaler Nachweis eines Modalitätsvorteils. |
 
-Die automatische Sitzung dokumentiert zusätzlich `session_start`, `session_end`, `session_abort`, `session_error`, `trial_end`, Phasenwechsel, `pause_start`/`pause_end`, `trial_invalidated`, `trial_repeat`, Fensterverlust und Timingabweichungen. Ein unterbrochener Trial wird vollständig mit derselben Aufgabe und gegebenenfalls Rechenzahl wiederholt; die geplante Trial-ID bleibt gleich, die Attempt-ID erhöht sich. Baselines beginnen nach Unterbrechung erneut mit 60 s, geplante Pausen werden mit ihrer Restdauer fortgesetzt.
+Die längere EEG-Erholung von 6–8 s, andere Klassenmischung, kleinere Trialzahlen und gegebenenfalls deutsche Wortgenerierung sind bewusste Anpassungen. Gleiche Aufgabenbezeichnungen machen daraus keine exakte Replikation. Ein simultaner EEG–MEG-Vergleich ist nicht vorgesehen; hierfür werden keine gemeinsamen Echtzeittrigger behauptet.
 
-Mehr als 250 ms Verspätung beim Phasenwechsel, einschließlich verzögerter Anzeige oder Marker-Ausgabe, lösen eine protokollierte Unterbrechung aus. Diese technische Pilotvorgabe wird auf dem Messrechner geprüft. Beim Abbruch wechselt die Teilnehmeranzeige vor dem Beenden der Aufnahme auf PAUSE.
+## 3. Konkrete Bewegungen
 
-Zu jedem Trial gehören Versuchsperson-ID, Hauptlauf, Abschnitt, Trial-ID, Bedingung, geplante Dauer und tatsächliche Zeitstempel. Beim Kopfrechnen zusätzlich Startzahl und Subtraktionszahl speichern.
+### Hände: lockere Faust schließen und öffnen
 
-Ein Aufgabenmarker beschreibt zunächst den angewiesenen Beginn. Er garantiert nicht den tatsächlichen Bewegungsbeginn. Soweit verfügbar, können Bewegungssensoren, EMG oder andere zeitlich synchronisierte Beobachtungen die tatsächliche Ausführung dokumentieren. EOG kann helfen, Blinzeln und Augenbewegungen zu erfassen.
+Unterarme vollständig abstützen, Handgelenke möglichst neutral, Schultern und Kiefer entspannen. Nur die angewiesene Hand langsam zu einer lockeren Faust schließen und wieder öffnen. Kein kräftiges Pressen, kein Handgelenkbeugen und kein Anheben des Arms.
 
-## 10. Auswertung und Kriterien für den Pilotversuch
+Im viersekündigen Fenster ungefähr zwei gleichmäßige Schließ-/Öffnungszyklen, jeder etwa 2 s. Diese langsame Bewegung vorher üben; während der Messung kein Metronom und kein Zählen verlangen. Zwei Zyklen sind eine eigene Standardisierungsentscheidung, kein belegtes Optimum. Nicht maximal öffnen oder die Finger abrupt strecken. Bis zum Aufgabenende wieder in der Ausgangsposition sein.
 
-### Aufgaben- und Ruhefenster
+Bei Imagery dieselbe Bewegung aus der eigenen Körperperspektive **fühlen**, ohne sie auszuführen: Fingerbeugung, leichte Spannung und Lösen vorstellen. Kein Betrachten eines inneren Films aus Zuschauerperspektive als Standardstrategie.
 
-Aufgabenfenster und Rest werden getrennt markiert. Die erste Zeit nach einer Bewegung wird nicht automatisch als neutrale Ruhe behandelt: Sie kann noch Bewegungsartefakte und eine neuronale Nachreaktion enthalten.
+### Beine: Dorsalflexion im Sprunggelenk
 
-Konkrete Auswertungsfenster werden vor der Hauptauswertung festgelegt. Für eine Klassifikation von Aufgabe gegen Rest sollen die verglichenen Fenster gleich lang sein und möglichst keine unmittelbaren Reaktionen auf Aufgabenhinweise oder den Wechsel zum Fixationskreuz enthalten. Ob die späten Rest-Fenster ausreichend erholt sind, wird im Pilot geprüft. Bei Bedarf werden die Rest-Dauern verlängert und die Messzeit neu berechnet.
+Die Bedingung wird präzise als **linker/rechter Fuß: Dorsalflexion** bezeichnet. Sie untersucht keine Bewegung des ganzen Beins.
 
-Für Arm- und Beinheben ist die Übertragung der unten genannten Befunde zu kurzen Tastendrücken nicht gesichert. Sechs bis acht Sekunden Rest sind deshalb ein begründeter Ausgangspunkt und keine garantierte artefaktfreie Baseline.
+- Bequem sitzen, Rücken und Oberschenkel abstützen; Knie ungefähr rechtwinklig, beide Fersen auf einer stabilen Unterlage.
+- Den Vorfuß der angewiesenen Seite samt Zehen in Richtung Schienbein anheben und kontrolliert absenken. Die Ferse bleibt aufliegen. Die Bewegung kommt aus dem Sprunggelenk; reines Zehenstrecken genügt nicht.
+- Kleine, schmerzfreie Auslenkung; etwa 10–15° als zu prüfender Übungsrichtwert, nicht als erzwungene Zielvorgabe. Vor Studienbeginn eine reproduzierbare bequeme Ausführung festlegen und dokumentieren.
+- Ungefähr zwei Hebe-/Senkzyklen in 4 s. Keine Hüftbeugung, kein Knieheben, kein Abheben des ganzen Beins und kein kräftiges Stampfen. Die Gegenseite bleibt entspannt.
+- In Imagery dieselbe Empfindung von Vorfußheben und Absenken vorstellen; beide Füße bleiben tatsächlich ruhig.
 
-### Besonderheit Blinzeln
+Diese Wahl soll Rumpf- und Kopfmitbewegungen gegenüber dem bisherigen Beinheben verringern und eine klar instruierbare Vorstellung ermöglichen. Das ist eine zu prüfende Designannahme; eine bessere EEG-Klassifikation wird nicht vorausgesetzt.
 
-Die Blinzelbedingung wird separat beurteilt. Das Augensignal ist hier Teil der gewollten Aufgabe; in Imagery und Kopfrechnen kann es dagegen die Auswertung verfälschen. Eine Artefaktbereinigung, die Blinzeln entfernt, darf daher nicht ohne Anpassung auf die Blinzelklassifikation übertragen werden.
+Für links-/rechtsseitige Dorsalflexionsvorstellung gibt es eine EEG-Originalstudie mit neun Personen. Sie beschreibt zugleich die schwierige Trennung der nahe beieinanderliegenden kortikalen Fußrepräsentationen und verwendete 19 Elektroden. Ihre Befunde begründen die Untersuchung, garantieren aber keine erfolgreiche Unterscheidung mit acht Kanälen. [Tariq et al. (2020)](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0230184)
 
-### Datenaufteilung
+Links und rechts erhalten **dieselbe gespiegelte Bewegung**. Links den Fuß heben und rechts nach unten drücken würde Seite und Bewegungsart vermischen. Größere Bewegungen nur zur Steigerung der Trefferquote würden außerdem eine Artefakterkennung begünstigen.
 
-Ungültige und unvollständige Attempts vor der Auswertung ausdrücklich ausschließen. Wiederholungen gehören weiterhin zur selben geplanten Trial-ID und dürfen nicht als unabhängige neue Trials auf Training und Test verteilt werden. Die MNE-Viewer erhalten diese Zuordnung und den aus Ereignissen abgeleiteten Status in den Annotationen; ein automatischer Ausschluss ist damit nicht verbunden.
+### Vier zusätzliche Vergleichsbedingungen
 
-- Auswertung zunächst innerhalb jedes Hauptlaufs; eine gemeinsame Klassifikation aller Aufgaben über die drei Läufe kann durch Unterschiede zwischen den Aufzeichnungsabschnitten beeinflusst werden.
-- Alle Ausschnitte desselben Trials bleiben bei der Aufteilung auf Training und Test zusammen.
-- Zur Prüfung der Übertragbarkeit über Zeit möglichst vollständige Abschnitte zurückhalten.
-- Für Aussagen über neue Versuchspersonen müssen diese vollständig vom Training getrennt sein.
-- Überlappende EEG-Fenster erhöhen die Anzahl der Modelleingaben, ersetzen aber keine zusätzlichen Versuchspersonen oder Aufgabenwiederholungen.
+1. **Beide Hände vorstellen:** beidseitiges, gleichzeitiges lockeres Faustschließen und Öffnen, 5 s. Langsam und kontinuierlich vorstellen; keine tatsächliche Bewegung.
+2. **Beide Füße vorstellen:** beidseitiges, gleichzeitiges Vorfußheben und Absenken, 5 s; keine tatsächliche Bewegung.
+3. **Wortgenerierung:** zu einem zentral angezeigten Buchstaben still ein passendes Wort finden. Nicht sprechen oder die Lippen bewegen. Im Pilot prüfen, ob die Aufgabe zu früh endet; Strategie vor der Hauptstudie festlegen. Vorschlag für die deutschsprachige Gruppe: deutsches Wort. Das ist eine dokumentierte Sprachadaption gegenüber englischen Wörtern im MEG-Versuch. Für einen engeren Sprachvergleich wäre Englisch mit vorab geprüfter Sprachkompetenz erforderlich.
+4. **Subtraktion:** eine zweistellige Zahl von einer zwei- oder dreistelligen Zahl still subtrahieren, z. B. `83 − 27`. Fünf Sekunden Aufgabenzeit; nach Lösung das Ergebnis still prüfen. Dies ersetzt hier das bisherige zehnsekündige fortlaufende Subtrahieren von 7. Es ist keine äquivalente Fortsetzung der alten Rechenbedingung. Individuelle Lösungsdauer und anschließendes Prüfen können das Signal mitbestimmen.
 
-### Entscheidung nach dem Pilot
+Für die kognitiven Aufgaben Buchstaben/Zahlen vorab festlegen, Schwierigkeit in der Übung prüfen und nicht während der Messung adaptiv verändern. Keine Antwortbewegung während des Aufgabenfensters. Verständnis und Durchführung in den ohnehin geplanten Blockpausen kurz abfragen; zusätzliche Antwortzeit verlängert die Sitzung.
 
-Für jede Bedingung dokumentieren:
+Faustöffnen/-schließen als tatsächliche und vorgestellte Links-/Rechts-Aufgabe bietet zusätzlich einen Bezug zum [PhysioNet EEG Motor Movement/Imagery Dataset](https://physionet.org/content/eegmmidb/1.0.0/). Dieser Datensatz bietet keinen identischen links-/rechtsseitigen Fußvergleich. Sein Labelmapping hängt vom jeweiligen Lauf ab.
 
-1. Anzahl aufgezeichneter und tatsächlich verwertbarer Trials.
-2. Gründe für Ausschlüsse und Anteil durch Augen-, Muskel- oder Bewegungsartefakte beeinträchtigter Daten.
-3. Einhaltung der Aufgaben und Eignung der Rechenschwierigkeit.
-4. Verlauf der Aktivität nach Aufgabenende und Eignung der Ruhefenster.
-5. Ergebnisse auf zurückgehaltenen Abschnitten und Veränderung bei zunehmender Trainingsdatenmenge.
+## 4. Bedingungen, Wiederholungen und Blockaufbau
 
-**20 motorische beziehungsweise Imagery-Trials pro Aufgabe und 12 Rechen-Trials sind eine pragmatische Pilotplanung, kein Nachweis ausreichender statistischer Power.** Für die endgültige Datenmenge fehlen insbesondere die Teilnehmerzahl, das genaue Auswertungsziel und erwartete Effektgrößen beziehungsweise gewünschte Genauigkeitspräzision. Falls die Pilotdaten unzureichend sind, werden zusätzliche vollständige Abschnitte erhoben; die Zeitplanung wird entsprechend erweitert.
+### Lauf M: Motorische Ausführung
 
-## 11. Wissenschaftliche Begründung und Quellen
+Vier Blöcke mit jeweils 16 Trials: vier Trials je Bedingung. Über den Lauf entstehen 16 Trials je Bedingung und 64 insgesamt.
 
-### Motor Imagery: 2 s Vorbereitung und 4 s Aufgabe
+| Vorgeschlagenes Label | Bedingung | Trials pro Sitzung |
+|---|---|---:|
+| `me_hand_left` | Linke Faust schließen/öffnen | 16 |
+| `me_hand_right` | Rechte Faust schließen/öffnen | 16 |
+| `me_foot_left` | Linker Vorfuß heben/senken | 16 |
+| `me_foot_right` | Rechter Vorfuß heben/senken | 16 |
 
-Das ursprüngliche BCI-Competition-IV-2a-Protokoll verwendet 2 s Vorbereitung; beim Cue nach 2 s beginnt Imagery und endet bei 6 s. Pro Sitzung wurden 288 Trials in vier Klassen erhoben, also 72 je Klasse. Dies belegt einen etablierten Ausgangspunkt für das viersekündige Imagery-Fenster. Es belegt weder die optimale Dauer für unsere Arm-/Beinvorstellung noch die ausreichende Datenmenge unseres kürzeren Plans.
+### Lauf I: Imagery und mentale Vergleichsaufgaben
 
-Quelle: Brunner et al., **BCI Competition 2008 – Graz data set A**, Originalbeschreibung:  
-[Originalprotokoll als PDF](https://bnci-horizon-2020.eu/database/data-sets/001-2014/description.pdf)
+Vier Blöcke mit jeweils 26 Trials. Jeder Block enthält alle acht Bedingungen dieses Laufs; die Vergleichsaufgaben liegen dadurch über die Sitzung verteilt und nicht ausschließlich am Anfang oder Ende.
 
-### Motorik: Erholung nach Bewegungsende
+| Vorgeschlagenes Label | Bedingung | Pro Block | Pro Sitzung |
+|---|---|---:|---:|
+| `mi_hand_left` | Linke Faust vorstellen | 4 | 16 |
+| `mi_hand_right` | Rechte Faust vorstellen | 4 | 16 |
+| `mi_foot_left` | Linken Vorfuß vorstellen | 4 | 16 |
+| `mi_foot_right` | Rechten Vorfuß vorstellen | 4 | 16 |
+| `mi_hands_bilateral` | Beide Hände gleichzeitig vorstellen | 3 | 12 |
+| `mi_feet_bilateral` | Beide Füße gleichzeitig vorstellen | 3 | 12 |
+| `word_generation` | Stille Wortgenerierung | 2 | 8 |
+| `mental_subtraction_single` | Einzelne stille Subtraktion | 2 | 8 |
+| **Summe** | | **26** | **104** |
 
-Bailey und Bardouille untersuchten die Beta-Nachreaktion anhand von MEG-Daten von 635 Personen. Nach einem kurzen Tastendruck kehrte die Beta-Aktivität im Mittel nach ungefähr 4–5 s zur Baseline zurück. Für Untersuchungen dieser Nachreaktion empfehlen sie mindestens 6–7 s zwischen den Ereignissen. Die Studie betrifft kurze Tastendrücke und lässt sich nicht ohne Prüfung auf größere oder länger gehaltene Arm-/Beinbewegungen übertragen.
+Gesamt: **168 geplante Aufgaben-Trials in zwölf Bedingungen**. Die acht gewünschten Bedingungen erhalten jeweils 16 Trials. Die vier ergänzenden Bedingungen sichern den inhaltlichen MEG-Bezug, sind aber keine ausreichend gepowerte Vierklassenstudie.
 
-Die Wahl von 6–8 s Rest und kleinen, kurzen Bewegungen ist unsere daraus abgeleitete Planung. Dasselbe Timing in Motorik und Imagery erleichtert den zeitlich vergleichbaren Aufbau; die Studie beweist keine optimale Imagery-Pausendauer.
+## 5. Timing und überprüfbare Gesamtdauer
 
-Quelle: Bailey, L. M. & Bardouille, T. (2025). **Demonstrating the need for long inter-stimulus intervals when studying the post-movement beta rebound following a simple button press.** Frontiers in Neuroscience, 19, 1547916.  
-[Volltext](https://pmc.ncbi.nlm.nih.gov/articles/PMC12061888/) · DOI: [10.3389/fnins.2025.1547916](https://doi.org/10.3389/fnins.2025.1547916)
+| Trialfamilie | Vorbereitung | Aufgabe | Erholung | Mittelwert |
+|---|---:|---:|---:|---:|
+| Acht unilaterale Bedingungen | 2 s | 4 s | 6/7/8 s | 13 s |
+| Vier MEG-bezogene Vergleichsbedingungen | 2 s | 5 s | 6/7/8 s | 14 s |
 
-### Konzentration: konkrete Rechenaufgabe und längere Rest-Phase
+Zunächst Kreuz; dann zentraler Aufgabenhinweis während der gesamten Aufgabe; danach wieder Kreuz als Aufgabenende. Keine seitlich versetzten Pfeile und kein zusätzliches STOPP. Bei Imagery/Ausführung identische Hinweise für dasselbe Körperteil; der Modus wird vor dem Block erläutert. Damit wird die Modusklassifikation allerdings nicht von der Blockzeit entkoppelt.
 
-Shin et al. stellten einen Datensatz für Motor Imagery und mentales Rechnen gegen Ruhe bereit. Für das Rechenparadigma sind 2 s Instruktion, 10 s Aufgabenzeit und 15–17 s Rest dokumentiert. Wir übernehmen die Dauern dieser Zeitfenster und die Idee des seriellen Subtrahierens. Unser automatischer Ablauf verändert die Anzeige: zwei Sekunden READY, danach zehn Sekunden sichtbare Zahlen während des Rechnens. Er entspricht damit nicht der ursprünglichen Aufteilung aus Zahleninstruktion und anschließendem Rechnen am Fixationskreuz. Der Originalversuch enthielt zusätzlich ausdrücklich angeleitete Ruhe-Trials; diese übernehmen wir nicht, weil Rest in unserem Plan die Erholung zwischen den Aufgaben bezeichnet.
+Exakte Erholungskontingente, innerhalb der Kontingente zufällig zugeordnet:
 
-Das Originalprotokoll wurde für gleichzeitiges EEG und NIRS entwickelt. Die lange Pause ist damit ein dokumentierter Ausgangspunkt, kein Nachweis eines notwendigen EEG-Minimums. Unsere gewählten 12 Rechen-Trials und die feste Subtraktionszahl sind eigene Planungsentscheidungen.
+- Je unilateraler Bedingung und Block: einmal 6, zweimal 7, einmal 8 s; über den Lauf 4/8/4.
+- Je beidseitiger Imagery-Bedingung und Block: einmal 6, einmal 7, einmal 8 s; über den Lauf 4/4/4.
+- Je kognitiver Bedingung: zwei Blöcke mit 6 und 8 s, zwei Blöcke mit zweimal 7 s; über den Lauf 2/4/2. Welche Blöcke welches Paar erhalten, wird unabhängig vom Inhalt ausgelost.
 
-Quelle: Shin et al. (2017). **Open Access Dataset for EEG+NIRS Single-Trial Classification.** IEEE Transactions on Neural Systems and Rehabilitation Engineering, 25(10), 1735–1745.  
-[Publikation](https://pubmed.ncbi.nlm.nih.gov/27849545/) · DOI: [10.1109/TNSRE.2016.2628057](https://doi.org/10.1109/TNSRE.2016.2628057)  
-[Protokolldokumentation in MOABB](https://moabb.neurotechx.com/docs/generated/moabb.datasets.Shin2017B.html)
+Jeder Motorikblock dauert damit exakt 208 s = 3:28, jeder gemischte Imageryblock exakt 348 s = 5:48. Die Reihenfolge innerhalb des Blocks verändert diese Summen nicht.
 
-### Auswertung: korrelierte Ausschnitte zusammenhalten
+| Abschnitt | Rechnung | Dauer |
+|---|---|---:|
+| Anfangsbaseline | 60 s, Augen offen | 1:00 |
+| Motorische Trials | 64 × 13 s im Mittel | 13:52 |
+| Motorische Blockpausen | 3 × 45 s | 2:15 |
+| Laufwechsel | 90 s | 1:30 |
+| Unilaterale Imagery-Trials | 64 × 13 s im Mittel | 13:52 |
+| Beidseitige Imagery-Trials | 24 × 14 s im Mittel | 5:36 |
+| Kognitive Vergleichstrials | 16 × 14 s im Mittel | 3:44 |
+| Blockpausen im gemischten Lauf | 3 × 45 s | 2:15 |
+| Endbaseline | 60 s, Augen offen | 1:00 |
+| **Gesamt** | **2704 s** | **45:04** |
 
-Brookshire et al. zeigen, dass ungünstige Aufteilungen von EEG-Segmenten die geschätzte Modellleistung durch Data Leakage erhöhen können. Deshalb bleiben Ausschnitte desselben Trials zusammen; zur Prüfung neuer Personen werden ganze Versuchspersonen zurückgehalten.
+**Rest ist die angeleitete Erholung zwischen Aufgaben; es gibt keine zusätzlichen Rest-Trials.** Während des Kreuzes still sitzen, die vorherige Aufgabe beenden und keine neue Bewegung oder bewusste Vorstellung beginnen. Augen bleiben offen; Erholung bedeutet keine garantierte mentale Inaktivität.
 
-Quelle: Brookshire et al. (2024). **Data leakage in deep learning studies of translational EEG.** Frontiers in Neuroscience.  
-[Volltext](https://www.frontiersin.org/journals/neuroscience/articles/10.3389/fnins.2024.1373515/full) · DOI: [10.3389/fnins.2024.1373515](https://doi.org/10.3389/fnins.2024.1373515)
+Die viersekündigen unilateralen und fünfsekündigen Vergleichsaufgaben sind getrennte Trialfamilien. Für Vergleiche zwischen ihnen ausschließlich gleich lange Auswertungsfenster verwenden; die Dauer darf kein Klassifikationsmerkmal werden.
 
-## 12. Abgrenzung des Entwurfs
+Sechs bis acht Sekunden Erholung sind ein zu prüfender Ausgangspunkt, keine gesicherte vollständige Rückkehr zur Baseline. Insbesondere nach wiederholten Bewegungen und Kopfrechnen den Zeitverlauf im Pilot prüfen. Frühe Erholung nicht als neutrale Ruhe labeln. Müssen Pausen länger sein, die Gesamtdauer ehrlich neu berechnen.
 
-Wissenschaftlich gestützt sind die verwendeten Ausgangsprotokolle und die Notwendigkeit, neuronale Nachreaktionen sowie korrelierte Datenausschnitte zu berücksichtigen. Die konkrete Zusammenstellung, Trial-Zahlen, Bewegungsdefinitionen, Randomisierungsregeln, zusätzlichen Pausen und Ruheaufnahmen sind Entscheidungen für unseren Pilotversuch. Der gesamte kombinierte Ablauf ist bislang nicht als optimal validiert.
+**Zeitannahme:** 45 Minuten beziehen sich auf die Aufnahme. Ist stattdessen der gesamte Termin auf 45 Minuten begrenzt, muss nach Messung der tatsächlichen Aufbau-/Übungszeit ein kürzerer Plan entstehen; ein Headset-Aufbau passt nicht zusätzlich in diese Rechnung.
+
+## 6. Reihenfolge, Anzeige und Kontrollen
+
+- Übung und Einweisung von den Hauptdaten getrennt kennzeichnen. Jede Person übt vorab alle tatsächlichen Bewegungen und die zugehörige kinästhetische Vorstellung, unabhängig davon, welcher Lauf zuerst kommt.
+- Laufreihenfolge M→I und I→M zwischen Personen möglichst gleich verteilen. Bei zwei Terminen dieselbe Person möglichst in umgekehrter Reihenfolge messen. Reihenfolgegruppe separat von der stabilen [Teilnehmer-ID](participant-ids.md) dokumentieren.
+- Alle Bedingungen eines Blocks unter den Kontingenten zufällig mischen; höchstens zwei gleiche Bedingungen hintereinander, auch über Blockgrenzen. Seed, Liste und alle Dauern vorab speichern. Den Generator auf Machbarkeit und Häufigkeiten prüfen.
+- Schriftposition, Größe und Helligkeit möglichst vergleichbar; Aufgaben stets zentral anzeigen. Ein identischer räumlicher Cue verhindert keine inhaltsabhängigen visuellen Unterschiede.
+- Kein EEG-Klassifikationsfeedback während der Hauptmessung. Natürliche Blinzler erlauben, vorzugsweise in Erholung; kein erzwungenes langes Offenhalten der Augen.
+- In Blockpausen kurz Ausführung, unerwünschte Mitbewegungen, Imagery-Strategie und subjektive Schwierigkeit erfassen. Selbstauskunft misst keine objektiv erfolgreiche Imagery.
+- Keine spontanen Aufgabenwechsel bei schlechten Zwischenergebnissen. Ein Pilot darf zur Änderung des Protokolls führen; danach neue Version und separate Bestätigungsdaten.
+
+Für Blick-/Cue-Einflüsse zentrale Sensoren als vorab definierte Sensitivitätsanalyse verwenden. Eine erfolgreiche Klassifikation nach Ausschluss der ersten 0,5 s beweist nicht, dass visuelle Einflüsse verschwunden sind. Ein separater passiver Cue-Kontrollversuch wäre methodisch stärker, benötigt aber zusätzliche Zeit und gehört nicht zu den errechneten 45:04.
+
+## 7. EEG, Bewegungskontrolle und Verarbeitung
+
+Vor Aufnahme Kanalreihenfolge und reale Positionen verifizieren. Die im Projekt hinterlegte Unicorn-Anordnung enthält Fz, C3, Cz, C4, Pz, PO7, Oz und PO8; generische CSV-Namen allein bestätigen diese Zuordnung nicht. C3/Cz/C4 sind für die vorab geplanten sensomotorischen Analysen besonders relevant. Referenz, Kontaktqualität, Abtastrate und Einheiten ausdrücklich dokumentieren.
+
+Die schon ausgewertete lokale Pilotsitzung lieferte für Bewegungssensoren allein hohe Motorik-Unterscheidbarkeit und für die einfache Imagery-Baseline kein überzufälliges Ergebnis. Das motiviert bessere Bewegungskontrolle, belegt aber weder die Nutzlosigkeit von Imagery noch den Erfolg des neuen Plans. [Lokaler Pilotbericht](ml-feasibility-2026-10-22.md)
+
+Die vorhandene IMU am Kopf kann die Bewegungslosigkeit von Fingern oder Füßen nicht zuverlässig bestätigen. Wenn verfügbar, synchronisiertes bilaterales EMG für Unterarm und Tibialis anterior oder geeignete Fuß-/Handsensoren ergänzen. Diese sind Kontrollsignale, keine Eingaben des primären EEG-Modells. Ohne EMG sichtbare Bewegungen protokollieren und ausdrücklich festhalten, dass unterschwellige Muskelaktivität nicht ausgeschlossen ist. Neue Kontrollhardware wird hier nicht als vorhanden angenommen.
+
+Rohdaten unverändert sichern. OSCAR-Ausgabe getrennt erhalten und eine vorab festgelegte Auswertung der Rohdatenkopie mit transparenter Verarbeitung gegen die OSCAR-Variante vergleichen. Nicht die Variante mit der besseren Testleistung nachträglich zur primären erklären. Artefaktbereinigung kann auch aufgabenrelevante Aktivität verändern; hohe Motoriktrefferquoten nach Bereinigung sind kein automatischer Nachweis neuronaler Erkennung.
+
+## 8. Auswertung mit klarer Rangfolge
+
+Vor Bestätigungsdaten die primäre Fragestellung, Pipeline, Fenster und Ausschlussregeln festschreiben. Vorgeschlagene Rangfolge:
+
+1. **Primärer EEG–MEG-Anker:** beidseitige Hand- gegen beidseitige Fußvorstellung. Für beide Datensätze denselben inhaltlichen Kontrast auswerten.
+2. **Zentrale EEG-Erweiterung:** linke gegen rechte Handvorstellung; dieselbe Seitenunterscheidung bei Ausführung als Referenz. Gleiche Klassen und Trialzahlen vergleichen.
+3. **Anspruchsvolle sekundäre Frage:** linke gegen rechte Fußvorstellung sowie ausgeführte Dorsalflexion. Ein schwaches Ergebnis ist eine relevante Grenze des Setups.
+4. **Weitere explorative Fragen:** vier unilaterale Körperteil-/Seitenklassen getrennt für ME und MI, Wortgenerierung gegen Subtraktion, Transfer eines ME-Körperteilmodells auf MI und umgekehrt.
+
+Ein gemeinsamer Acht- oder Zwölfklassenwert ist kein geeigneter Hauptendpunkt. Ausführung und mentale Aufgaben liegen in getrennten Läufen; ein direkter ME/MI-Klassifikator könnte Laufzeit, Drift oder Ermüdung erkennen. Unterschiedliche Klassenanzahlen und Trainingsmengen dürfen nicht als Beweis interpretiert werden, dass eine Aufgabenfamilie leichter ist.
+
+### Pipeline und Splits
+
+- Ein gleich langes Fenster, vorgeschlagen 0,5–3,5 s nach Aufgaben-Cue, für die erste Offline-Klassifikation. Es liegt vollständig in beiden Aufgabenfenstern. Eine spätere Rebound-Analyse separat als zeitlich andere Fragestellung behandeln.
+- Zunächst feste, einfache Pipeline: logarithmische Bandpower in 8–13 und 13–30 Hz mit regularisiertem linearem Klassifikator. CSP/FBCSP als begrenzte zweite Analyse; mit wenigen Trainings-Trials keine große Modellsuche. Individualisierte Bänder nur aus Trainingsdaten wählen.
+- Innerhalb der Sitzung jeweils einen vollständigen Block zurückhalten. Alle Ausschnitte und Attempts desselben geplanten Trials zusammenhalten; invalidierte/unvollständige Attempts ausschließen. Vorverarbeitung und Parameterschätzung dürfen keine Testdaten zum Lernen verwenden.
+- Für Sitzungsübertragung denselben Personen mindestens zwei Termine anbieten: Termin 1 Training/Modellwahl, Termin 2 unangetasteter Test. Anschließend erfolgte Optimierung benötigt weitere Bestätigungsdaten. Für neue Personen ganze Personen zurückhalten.
+- Balanced Accuracy, Konfusionsmatrix, gültige Trials je Klasse, Ausschlussquoten und Unsicherheit auf Personenebene berichten. Permutationen respektieren Block-/Sitzungsstruktur; Explorationsfamilien und Mehrfachtests kennzeichnen. Eine einzelne Person liefert keine Populationsunsicherheit.
+- Nur gleiche Kontraste, Fenster und vergleichbare Trainingsmengen für motorisch/imaginiert beziehungsweise motorisch/kognitiv gegenüberstellen. Für ungleiche Mengen vorab wiederholte Trainings-Subsamples oder Lernkurven festlegen, ohne Testdaten zur Auswahl zu verwenden.
+
+### Konkreter MEG-Vergleich
+
+Die [Originaldaten und Referenzskripte](https://github.com/sagihaider/MEGBCI2020) separat auditieren und den Hand-/Fuß-Kontrast neu auswerten, statt eine publizierte Gesamtgenauigkeit neben unseren Pilotwert zu stellen. Dabei Sensorarten, Einheiten, Sampling und Artefaktregeln je Modalität berücksichtigen. Magnetometer und Gradiometer nicht ungeprüft als gleich skalierte Kanäle behandeln. Acht MEG-Sensoren simulieren kein Achtkanal-EEG.
+
+Zwei Ansichten vorsehen: eine transparente Auswertung mit der jeweils verfügbaren Sensormenge und eine Sensitivitätsanalyse mit angeglichenen Trainings-Trialzahlen. Personen und Sitzungen innerhalb jedes Datensatzes korrekt trennen. EEG- und MEG-Personen sind ungepaart; kein gepaarter Personentest. Leistungsunterschiede bleiben durch Gerät, Kohorte, Sensorlayout und Paradigma mitbedingt. Ein direkter Transfer von EEG-Rohkanälen auf MEG-Rohkanäle ist kein vorgesehener Hauptversuch.
+
+## 9. Datenumfang und wissenschaftliche Tragfähigkeit
+
+16 unilaterale, 12 beidseitige und acht kognitive Trials je Bedingung sind ein **Zeitbudget für einen Pilot**, kein Powernachweis. Mit vier Blöcken bleiben pro kognitiver Klasse nur sechs Trainings- und zwei Testtrials je Fold; einzelne Fehler verändern den Wert stark. Auch der primäre Hand-/Fuß-Anker bleibt klein. Keine robuste Vierklassen- oder Deep-Learning-Leistung versprechen.
+
+Empfehlung: zuerst einen technischen vollständigen Probelauf und danach einen Entwicklungspilot mit mehreren Personen. Daraus verwertbare Trialquoten, Ermüdung, Lernkurven und Streuung bestimmen. Anschließend Teilnehmer-/Terminzahl anhand des primären Endpunkts und gewünschter Präzision planen. Viele EEG-Fenster ersetzen keine unabhängigen Personen. Für die beabsichtigte Prüfung neuer Sitzungen sind zwei Termine pro Person methodisch wertvoller als bloßes Aufteilen einer Aufnahme; auch zwei Termine garantieren noch keine Langzeitstabilität.
+
+Wenn gleich starke Aussagen zum kognitiven Teil verlangt werden, muss dafür mehr Datenzeit eingeplant werden. Die volle ursprüngliche Fragestellung lässt sich inhaltlich in 45 Minuten erhalten, ihre belastbare Beantwortung jedoch nicht allein durch diesen Ablauf garantieren.
+
+## 10. Pilotentscheidung und spätere technische Umsetzung
+
+Vor Bestätigungsdaten prüfen:
+
+- Sind Hand- und Fußbewegung ohne sichtbare Kopf-/Rumpfmitbewegung komfortabel und wiederholbar?
+- Können Personen Seiten und Modus zuverlässig unterscheiden? Funktionieren die gemischten mentalen Blöcke ohne häufige Instruktionsfehler?
+- Wie viele Trials bleiben je Klasse nach vorab definierten Qualitätsregeln übrig? Sind späte Ruheabschnitte hinreichend erholt?
+- Sind die kognitiven Aufgaben mit 5 s sinnvoll und inhaltlich nachvollziehbar ausführbar? Wortfindung, Rechenschwierigkeit und Sprache dokumentieren.
+- Bleibt die Aufnahme einschließlich echter Wechselzeiten nahe 45 Minuten? Ungeplante Pausen und Wiederholungen separat ausweisen.
+
+Die Umsetzung erfolgt mit eigener Protokollversion gemäß [Sitzungsspezifikation](session-automation-plan.md). Vor Erhebungen nach dem neuen Protokoll Windows-Build, Anzeige und einen vollständigen Headset-Lauf prüfen sowie Einwilligung und institutionelle Studienunterlagen auf die geänderten Aufgaben abstimmen.
+
+Der Plan wurde anhand der genannten Originalquellen erarbeitet; Zeitrechnung und Trialzahlen wurden rechnerisch geprüft. Es wurden dafür keine MEG-Daten heruntergeladen, keine Modelle trainiert und keine neuen Sitzungsläufe validiert.

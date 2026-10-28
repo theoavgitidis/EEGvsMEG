@@ -153,7 +153,7 @@ Unter den EEG-Spuren zeigt ein Spektrogramm die Leistungsdichte des ausgewählte
 
 | Bereich | Bedeutung |
 |---|---|
-| Kopfzeile, z. B. `01:00.000 – 01:20.000 / 38:17.700` | Sichtbarer Ausschnitt und Gesamtdauer aus der Samplezahl der CSV. Diese Dauer kann von den geplanten 38:16 Minuten abweichen und umfasst auch aufgezeichnete Pausen. |
+| Kopfzeile, z. B. `01:00.000 – 01:20.000 / 38:17.700` | Sichtbarer Ausschnitt und Gesamtdauer aus der Samplezahl der CSV. Das Beispiel stammt aus dem bisherigen Protokoll 1.0 (Plan: 38:16); Aufnahmedauer und zusätzliche Pausen aus der konkreten Sitzung verwenden. |
 | `Unfiltered` beziehungsweise Filterfrequenzen | Aktive Filter der Anzeigekopie. Standardmäßig ist kein Filter aktiv. |
 | `Auto / channel` | Jeder Kanal erhält einen eigenen Bereich für das sichtbare Zeitfenster. |
 | `EEG 1 · ±46.4 µV`, darunter `DC -0.4 µV` | Sichtbarer Bereich und abgezogener Median dieses Kanals. Die y-Achse zeigt Abweichungen von diesem Median in µV. |

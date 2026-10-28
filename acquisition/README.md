@@ -1,6 +1,6 @@
 # OSCAR-Aufnahme für die Windows-Sitzungs-CLI
 
-`start session` startet standardmäßig den Python-Worker mit OSCAR. `start session raw` wählt ausdrücklich den bisherigen C-API-Recorder. Die Sitzungssteuerung bleibt C++; keine Aufgabenparameter wurden geändert. Die Integration ist hardwarefrei und mit dem echten OSCAR-Modell auf synthetischen Daten geprüft. Windows-Build, vorhandene Kundenlizenz und echtes Headset müssen noch auf dem Messrechner abgenommen werden.
+`start session` startet standardmäßig den Python-Worker mit OSCAR. `start session raw` wählt ausdrücklich den bisherigen C-API-Recorder. Die Sitzungssteuerung bleibt C++ und führt weiterhin Protokoll 1.0 aus (112 Trials, 38:16 Minuten). Das neue [Versuchsprotokoll 2.0](../docs/experiment-protocol.md) mit 45:04 Minuten ist noch nicht implementiert. Die Aufnahmeintegration ist hardwarefrei und mit dem echten OSCAR-Modell auf synthetischen Daten geprüft. Windows-Build, vorhandene Kundenlizenz und echtes Headset müssen noch auf dem Messrechner abgenommen werden.
 
 ## Einrichtung in PowerShell
 
@@ -82,7 +82,7 @@ python -m analysis.ml_feasibility PFAD_ZUR_SESSION.csv --signal raw --output ber
 
 `auto` ist Standard, `raw` und `oscar` sind explizit wählbar. Alte Sitzungen bleiben standardmäßig Rohdaten. Bei unvollständiger/fehlgeschlagener OSCAR-Verarbeitung oder fehlender Datei verweigert `auto` den Import, statt still auf Rohdaten zurückzufallen. `--signal raw` erlaubt die explizite Untersuchung vorhandener Rohdaten. Bei OSCAR ist `--unit uV` verpflichtend. Anzeige und FIF-Beschreibung benennen die Datenvariante; Anzeige-Filter kommen erst danach. `--save-fif` exportiert die **gewählte** Variante vor zusätzlichen Anzeigefiltern. Modell-Benchmarks und Predict-CLIs haben ebenfalls `--signal`; ihr Datenprovenienzbericht hält die Variante und Verarbeitungsmetadaten fest.
 
-Blinzeln ist eine eigene Bedingung unseres Protokolls. Bei deren Interpretation Rohdaten und bereinigte Daten vergleichen: OSCAR kann genau das beabsichtigte Augensignal unterdrücken. Vorhandene auf Rohdaten trainierte Modelle werden durch den neuen Standard nicht automatisch für OSCAR-Ausgaben validiert.
+Blinzeln ist eine eigene Bedingung des bisherigen Protokolls 1.0; im geplanten Protokoll 2.0 entfällt sie. Bei alten Blinzelaufnahmen Rohdaten und bereinigte Daten vergleichen: OSCAR kann genau das beabsichtigte Augensignal unterdrücken. Vorhandene auf Rohdaten trainierte Modelle werden durch den OSCAR-Standard nicht automatisch für bereinigte Ausgaben oder neue Aufgaben validiert.
 
 ## Prüfungen und Hardware-Abnahme
 
@@ -96,6 +96,8 @@ python -m unittest analysis.test_oscar_recording analysis.test_signal_selection 
 ```
 
 Die letzte Gruppe benötigt die Viewer-/ML-Datenabhängigkeiten (MNE, NumPy, pandas, SciPy und scikit-learn). Die optionalen `VendorOscarTest`-Tests benötigen die gepinnten Herstellerpakete, aber keine Hardware und keinen Kundenschlüssel. Sie ersetzen **ausschließlich den Treiber durch eine synthetische Quelle**; OSCAR und die g.Pype-Authentifizierung laufen unverändert. Sie prüfen außerdem READY, reales Nachlaufen und vollständige Verarbeitungsmetadaten. Die C++-Prozesstests verwenden einen separaten synthetischen Protokollpartner und behaupten keine Artefaktkorrektur.
+
+Dokumentierter Prüfstand der Integration vom 27.10.2026 unter macOS: Recorder-/Sessionregressionen einschließlich 250 Seeds und beschleunigter 112-Trial-Sitzung bestanden; synthetische OSCAR-Prozesstests für READY, Stop, Fehler, Exitcode, Geräteübergabe und Statusstillstand bestanden. Die damalige Viewer-/Datengruppe umfasste 46 Tests, davon 44 bestanden und zwei optionale Herstellerpaket-Tests übersprungen. Separat mit gepinnten Herstellerpaketen bestanden alle zehn OSCAR-Tests einschließlich echtem Modell und synthetischem Treiber. Vollständige Modelltrainingstests waren in der Viewer-Umgebung wegen fehlendem torch nicht ausführbar. Diese Angaben sind frühere Prüfergebnisse, keine erneute Prüfung und keine Validierung von Protokoll 2.0.
 
 Abnahme auf dem Windows-Messrechner:
 

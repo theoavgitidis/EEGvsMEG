@@ -2,11 +2,11 @@
 
 **OSCAR-Stand 27.10.2026:** `start session` nimmt standardmäßig mit OSCAR über Python auf; `start session raw` wählt ausdrücklich Rohdaten. Beide Varianten bleiben getrennt gespeichert. Einrichtung, Geräteübergabe, Signalwahl und noch erforderliche Windows-/Headset-Abnahme: [OSCAR-Anleitung](../../acquisition/README.md). Beide Viewer bevorzugen für neue OSCAR-Sitzungen die bereinigten Daten; `--signal raw` wählt Rohdaten. FIF-Exporte enthalten die gewählte Variante vor zusätzlichen Anzeigefiltern.
 
-Stand: 21. Oktober 2026.
+Stand: 28. Oktober 2026. Befehle beschreiben den implementierten Stand.
 
 ## Automatische Sitzung
 
-`start session` führt den aktuellen Pilotablauf mit 38:16 Minuten geplanter Dauer aus. Die vollständige Bedienung, Anzeigen, Dateien und Unterbrechungsregeln stehen in [SESSION_ANLEITUNG.md](SESSION_ANLEITUNG.md). Die [Projektübersicht](../../README.md) verlinkt Versuchsprotokoll und Tests.
+`start session` führt weiterhin Protokoll 1.0 mit 38:16 Minuten geplanter Dauer aus. Die vollständige Bedienung, Anzeigen, Dateien und Unterbrechungsregeln stehen in [SESSION_ANLEITUNG.md](SESSION_ANLEITUNG.md). Das neue [Versuchsprotokoll 2.0](../../docs/experiment-protocol.md) mit 45:04 Minuten und Links-/Rechts-Aufgaben ist noch nicht implementiert. Die [Projektübersicht](../../README.md) verlinkt Spezifikation und Tests.
 
 | Befehl | Wirkung |
 |---|---|

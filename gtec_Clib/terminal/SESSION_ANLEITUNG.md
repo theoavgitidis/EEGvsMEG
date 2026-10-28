@@ -1,4 +1,6 @@
-# Automatische Sitzung mit `start session`
+# Aktuell ausführbare Sitzung 1.0 mit `start session`
+
+Stand: 28.10.2026. Diese Anleitung beschreibt ausschließlich die implementierte Sitzung `eeg-session-1.0`. Das neue [Versuchsprotokoll 2.0](../../docs/experiment-protocol.md) mit lateralisierter Faust-/Fußbewegung und 45:04 Minuten ist noch nicht implementiert. `start session` führt weiterhin die folgenden bisherigen Aufgaben aus.
 
 **OSCAR-Stand 27.10.2026:** `start session` nimmt standardmäßig mit OSCAR über Python auf; `start session raw` wählt ausdrücklich Rohdaten. Beide Varianten bleiben getrennt gespeichert. Einrichtung, Geräteübergabe, Signalwahl und noch erforderliche Windows-/Headset-Abnahme: [OSCAR-Anleitung](../../acquisition/README.md). Beide Viewer bevorzugen für neue OSCAR-Sitzungen die bereinigten Daten; `--signal raw` wählt Rohdaten. FIF-Exporte enthalten die gewählte Variante vor zusätzlichen Anzeigefiltern.
 
@@ -63,6 +65,12 @@ Der Gesamt-Countdown ist nur für den Versuchsführer sichtbar. Für eine übers
 Beim Wechsel auf das Kreuz Aufgabe sofort beenden. Es gibt kein zusätzliches STOPP. Beim Kopfrechnen bleiben die Zahlen während der gesamten Aufgabe sichtbar. Die Startzahlen werden ohne Wiederholung aus 300–899 gezogen; der Schritt ist 7. Diese pragmatische Pilotwahl ist keine individuell angepasste Schwierigkeitskalibrierung.
 
 Motorik: vier Blöcke mit je 15 Trials, je fünf pro Aufgabe. Imagery: vier Blöcke mit je zehn Trials, je fünf pro Aufgabe. Kognitiv: drei Blöcke mit je vier Trials. Reihenfolgen und Erholung werden mit gespeichertem Zufallsseed ausgelost; ein konkreter Plan steht neben jeder Aufnahme.
+
+Bewegungsdefinitionen für Protokoll 1.0: beide Unterarme innerhalb von 4 s einmal leicht anheben und wieder ablegen; beziehungsweise beide Füße einmal leicht vom Boden heben und wieder absetzen, ohne längeres Halten. Imagery stellt jeweils dieselbe beidseitige Bewegung aus eigener Körperperspektive vor. Blinzeln: zweimal bewusst, ungefähr 1 s und 3 s nach Aufgabenbeginn. Das sind weder die neuen Faustbewegungen noch die neue Dorsalflexion.
+
+Erholung pro motorischer beziehungsweise Imagery-Bedingung: 5 × 6 s, 10 × 7 s, 5 × 8 s. Beim Rechnen: 3 × 15 s, 6 × 16 s, 3 × 17 s. Geplante Pausen: je drei 45-s-Pausen in Motorik und Imagery, zwei im Rechenlauf sowie zwei 90-s-Laufwechsel. Damit ergeben sich 2296 s = 38:16. Es gibt keine zusätzlichen Rest-Trials.
+
+Für bestehende Protokoll-1.0-Bögen bedeutet A: Motorik → Imagery → Kognitiv; B: Motorik → Kognitiv → Imagery; C: Imagery → Motorik → Kognitiv; D: Imagery → Kognitiv → Motorik; E: Kognitiv → Motorik → Imagery; F: Kognitiv → Imagery → Motorik. Die CLI speichert die konkrete Reihenfolge, keinen Gruppenbuchstaben. Diese Zuordnung gilt nicht für den neuen Zweilaufplan.
 
 ## Eingreifen und Beobachtungen protokollieren
 

@@ -1,5 +1,7 @@
 # Machbarkeit der Aufgabenerkennung mit den vorhandenen Daten
 
+Historischer Ergebnisbericht zu den bisherigen Aufgaben von Protokoll 1.0. Datenumfang und Resultate beziehen sich auf den damaligen Versuch; sie validieren nicht das neue [Versuchsprotokoll 2.0](experiment-protocol.md).
+
 Untersuchung vom 22.10.2026. **Ja: Ein personenspezifischer ML-Prototyp lässt sich trainieren. Ein zuverlässig generalisierendes Modell oder ein Vorteil durch Fine-Tuning ist mit den vorhandenen Daten noch nicht belegt.**
 
 Ergänzung: Die [erneute Prüfung verfügbarer Modelle und Trainingswege](ml-options-review-2026-10-22.md) erweitert die Kandidaten um unter anderem CBraMod, REVE und aufgabenbezogenes Vortraining. Sie empfiehlt Transfer Learning jetzt als gleichwertigen Entwicklungsweg; die unten dokumentierten Baseline-Ergebnisse bleiben unverändert.

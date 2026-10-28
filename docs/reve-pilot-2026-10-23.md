@@ -1,5 +1,7 @@
 # REVE-Vergleich: Rechnen gegen Ruhe
 
+Historischer Ergebnisbericht zur seriellen Rechenaufgabe von Protokoll 1.0. Die neue einzelne Subtraktion in [Protokoll 2.0](experiment-protocol.md) ist eine andere Bedingung und wurde hier nicht untersucht.
+
 Stand: 23.10.2026. Der lokale Vergleich ist abgeschlossen. In dieser festgelegten Konfiguration liefert REVE keinen Vorteil gegenüber CBraMod oder Bandpower. CBraMod bleibt der aussichtsreichere Kandidat für eine Prüfung an einem neuen Aufnahmetag.
 
 ## Ergebnisse

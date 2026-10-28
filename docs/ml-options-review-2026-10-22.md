@@ -1,10 +1,12 @@
 # Optionen für EEG-Aufgabenerkennung: erneute Prüfung
 
+Historische Recherche für die damaligen Protokoll-1.0-Daten. Empfehlungen und Modellstände beziehen sich auf den 22.10.2026; die Auswertungsplanung für die neuen Aufgaben steht im [Versuchsprotokoll 2.0](experiment-protocol.md).
+
 Stand: 22.10.2026. Grundlage: lokale Daten und Baseline, Original-Repositories, veröffentlichte Modellgewichte und offizielle Datensatz-/Bibliotheksdokumentation. Die Rangfolge unten ist eine Einschätzung der Eignung und des Implementierungsaufwands, kein gemessener Leistungsvergleich. In dieser Recherche wurden keine weiteren Modelle trainiert oder Modellgewichte geladen.
 
-Nachfolgende Umsetzung: Der [erste CBraMod-Vergleich](cbramod-pilot-2026-10-22.md) wurde inzwischen ausgeführt, mit eingefrorenem Encoder, Fine-Tuning des letzten Blocks und zwei Bandpower-Baselines. Der verlinkte Bericht enthält die gemessenen Ergebnisse und Reproduktionsbefehle.
+Nachfolgende Umsetzung: Der [erste CBraMod-Vergleich](cbramod-pilot-2026-10-22.md) und der [REVE-Vergleich](reve-pilot-2026-10-23.md) wurden inzwischen ausgeführt. Die verlinkten Berichte enthalten die gemessenen Ergebnisse und Reproduktionsbefehle.
 
-**Empfehlung:** Transfer Learning jetzt als gleichwertigen Entwicklungsweg aufnehmen. Zunächst CBraMod und REVE als eingefrorene Merkmalsextraktoren sowie mit begrenztem Fine-Tuning prüfen. Für Imagery zusätzlich ein kleines EEGNet auf passenden öffentlichen Hand-/Fußdaten vortrainieren und auf P-001 anpassen. Die bereits vorhandene klassische Baseline bleibt der Vergleichsmaßstab.
+**Damals vorgeschlagene Entwicklungswege:** Transfer Learning mit CBraMod und REVE als eingefrorenen Merkmalsextraktoren sowie mit begrenztem Fine-Tuning; für Imagery zusätzlich Vortraining eines kleinen EEGNet auf passenden öffentlichen Hand-/Fußdaten. Diese Ideensammlung ist keine aktuelle Umsetzungsliste für Protokoll 2.0. Die klassische Baseline bleibt der Vergleichsmaßstab.
 
 ## 1. Ausgangslage und Aussagegrenzen
 

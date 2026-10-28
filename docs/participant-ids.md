@@ -1,6 +1,6 @@
 # Kodierung von Teilnehmern und Sitzungen
 
-Stand: 21. Oktober 2026. Schema-Version: 1.
+Stand: 28. Oktober 2026. Schema-Version: 1; das ID-Schema bleibt beim Aufgabenwechsel unverändert.
 
 ## Teilnehmer-ID
 
@@ -36,6 +36,8 @@ Name, Initialen, Geburtsdatum, Alter, Geschlecht, Händigkeit, Messdatum und Auf
 Lücken in der Nummerierung sind erlaubt. Die Beispieltabelle oben reserviert noch keine echten Personen. Mehrere Versuchsführer oder Laptops müssen dieselbe Vergabeliste verwenden.
 
 ## Nutzung in der bestehenden CLI
+
+Die Beispiele starten weiterhin Protokoll 1.0. Der neue [Zweilaufplan 2.0](experiment-protocol.md) ist noch nicht in der CLI verfügbar.
 
 ### Erster Termin auf einem Messrechner
 
@@ -80,7 +82,7 @@ Auf einem anderen Laptop, auf dem der Ordner noch nicht existiert, erneut `NewEx
 |---|---|---|
 | Teilnehmer-ID | `EVM-P001` | Dauerhafte Personenkennung; gewählter Experimentordner |
 | Sitzungs-ID | `session_20261021_183000` | Automatisch erzeugte einzelne Aufnahme; lokale Startzeit im Namensstamm |
-| Hauptlauf | `Motorik`, `Imagery`, `Kognitiv` | Aufgabenart innerhalb einer Aufnahme |
+| Hauptlauf | Aktuell `Motorik`, `Imagery`, `Kognitiv`; geplant M/I | Aufgabenart innerhalb einer Aufnahme; abhängig von der Protokollversion |
 | Trial | `12` | Geplanter Trial innerhalb eines Hauptlaufs |
 | Attempt | `2` | Zweiter Durchführungsversuch desselben Trials nach Unterbrechung |
 
@@ -107,16 +109,16 @@ Eine Pause mit `session resume` bleibt Teil derselben Sitzung und erhöht bei ei
 
 ## Reihenfolgegruppen separat dokumentieren
 
-Die Gruppen A–F aus dem [Versuchsprotokoll](experiment-protocol.md) beschreiben die Reihenfolge der drei Hauptläufe. Sie gehören nicht in den Teilnehmercode. So bleibt die Personenkennung stabil, wenn sich die Reihenfolge bei einem späteren Termin ändert.
+Für das neue Protokoll die Reihenfolge **M→I** oder **I→M** und den Termin separat dokumentieren. Die Personenkennung bleibt dabei stabil. Die neue Zweilaufreihenfolge ist noch keine gültige CLI-Option.
 
-Beispiel für eine Person in Reihenfolgegruppe C:
+Die bisherigen Gruppen A–F gehören ausschließlich zu Protokoll 1.0; ihre Zuordnung steht in der [Sitzungsanleitung](../gtec_Clib/terminal/SESSION_ANLEITUNG.md). Beispiel für die weiterhin ausführbare Dreilauf-Konfiguration:
 
 ```text
 GoToExp "EVM-P001"
 session order imagery motorik kognitiv
 ```
 
-Die CLI speichert die konkrete Laufreihenfolge in den Sitzungsmetadaten. Der Buchstabe C wird nicht als eigenes Feld automatisch gespeichert; eine solche Gruppenzuordnung wird im Versuchsprotokoll festgehalten.
+Die CLI speichert die konkrete Laufreihenfolge in den Sitzungsmetadaten. Gruppenbuchstaben werden nicht als eigenes Feld automatisch gespeichert. Reihenfolgen niemals allein aus Teilnehmernummer oder Besuchsnummer ableiten.
 
 ## Techniktests und bestehende Daten
 
