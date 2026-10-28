@@ -9,11 +9,10 @@ from scipy.signal import butter, resample_poly, sosfiltfilt, welch
 
 from analysis.ml_feasibility import features
 from analysis.recording_files import resolve_recording
+from analysis.session_conditions import CURRENT, LEGACY, protocol_for_events
 
 CHANNELS = [f"EEG {i}" for i in range(1, 9)]
 POSITIONS = ["Fz", "C3", "Cz", "C4", "Pz", "PO7", "Oz", "PO8"]
-RUNS = {"Motorik": {"arms", "legs", "blink"},
-        "Imagery": {"imagine_arms", "imagine_legs"}, "Kognitiv": {"mental_arithmetic"}}
 
 
 def sha256(path):
@@ -24,12 +23,13 @@ def sha256(path):
     return h.hexdigest()
 
 
-def trial_windows(events, samples, fs):
+def trial_windows(events, samples, fs, protocol_version=None):
     """Reject invalid/incomplete attempts and retain task/rest pairs atomically."""
     if fs != 250:
         raise ValueError("This benchmark's input contract requires 250 Hz.")
     events = events.fillna("")
     events = events[(events.source == "automatic") & (events.trial.astype(int) > 0)]
+    protocol, runs = protocol_for_events(events, protocol_version)
     rows, exclusions = [], []
     for key, group in events.groupby(["run", "block", "trial", "attempt"], sort=True):
         run, block, trial, attempt = key
@@ -48,13 +48,13 @@ def trial_windows(events, samples, fs):
             exclusions.append({"key": list(key), "reason": reason})
             continue
         cue, offset, rest_end = cue.iloc[0], offset.iloc[0], rest_end.iloc[0]
-        if run not in RUNS or cue.condition not in RUNS[run]:
+        if run not in runs or cue.condition not in runs[run]:
             raise ValueError(f"Unknown condition: {run}/{cue.condition}")
         if len(set(group.condition) - {cue.condition, ""}) > 0:
             raise ValueError(f"Inconsistent condition in {key}")
         onset, off, end = map(int, [cue.samples_received, offset.samples_received, rest_end.samples_received])
         bounds = [(onset + 125, onset + 875, cue.condition, onset, off)]
-        if run == "Kognitiv":
+        if protocol == LEGACY and run == "Kognitiv":
             bounds.append((end - 875, end - 125, "rest", off, end))
         if any(not (0 <= phase_start <= left < right <= phase_end <= samples)
                for left, right, _, phase_start, phase_end in bounds):
@@ -62,7 +62,7 @@ def trial_windows(events, samples, fs):
             continue
         for left, right, label, _, _ in bounds:
             rows.append({"run": run, "block": int(block), "trial": int(trial),
-                         "attempt": int(attempt), "label": label,
+                         "attempt": int(attempt), "label": label, "protocol_version": protocol,
                          "trial_key": f"{run}/{block}/{trial}/{attempt}",
                          "start_sample": left, "stop_sample": right})
     if not rows:
@@ -97,7 +97,8 @@ def load_recording(path, signal="auto"):
     selected.validate_length(len(frame))
     if not np.array_equal(frame.sample_index.to_numpy(), np.arange(len(frame))):
         raise ValueError("Non-contiguous sample indices; event offsets cannot be trusted.")
-    rows, exclusions = trial_windows(pd.read_csv(event_path), len(frame), meta["sampling_rate_hz"])
+    events = pd.read_csv(event_path)
+    rows, exclusions = trial_windows(events, len(frame), meta["sampling_rate_hz"], meta.get("protocol_version"))
     eeg = frame[CHANNELS].to_numpy()
     x, original, matched, invalid_pairs = [], [], [], set()
     for row in rows.to_dict("records"):
@@ -107,20 +108,25 @@ def load_recording(path, signal="auto"):
     for key in sorted(invalid_pairs):
         exclusions.append({"key": key, "reason": "invalid_samples_in_trial_pair"})
     rows = rows[~rows.trial_key.isin(invalid_pairs)].reset_index(drop=True)
+    if rows.empty:
+        raise ValueError("No valid trials after sample-quality checks.")
+    bands = ((8, 13), (13, 30)) if rows.protocol_version.iloc[0] == CURRENT else ((1, 4), (4, 8), (8, 13), (13, 30), (30, 40))
     for row in rows.to_dict("records"):
         epoch = eeg[row["start_sample"]:row["stop_sample"]]
         processed = model_signal(epoch)
         x.append((processed / 100).reshape(8, 3, 200))
-        original.append(features(epoch, 250))
+        original.append(features(epoch, 250, bands))
         matched.append(bandpower_processed(processed))
     x = np.asarray(x, dtype=np.float32)
     if not np.isfinite(x).all():
         raise ValueError("Non-finite model input.")
     provenance = {"participant_id": meta["participant_id"], "session_id": meta["session_id"],
+                  "protocol_version": rows.protocol_version.iloc[0],
                   "inputs": {str(p.resolve()): sha256(p) for p in [path, event_path, meta_path]},
                   "signal": selected.signal, "signal_description": selected.label,
                   "processing": selected.metadata,
                   "processing_metadata_sha256": sha256(selected.processing) if selected.signal == "oscar" else None,
+                  "bandpower_original_bands_hz": bands,
                   "channel_order": CHANNELS, "assumed_positions": POSITIONS,
                   "montage_status": "standard project mapping; physical placement not independently verified",
                   "input_shape": list(x.shape), "exclusions": exclusions,

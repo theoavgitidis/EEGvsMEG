@@ -18,6 +18,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from torch import nn
 
+from analysis.session_conditions import EVALUATIONS, select_evaluations
 from analysis.ml_data import load_recording, sha256, splits, POSITIONS
 from transformers import AutoModel
 
@@ -151,7 +152,8 @@ def main():
     parser.add_argument("--seeds", type=int, nargs="+", default=[11, 22, 33])
     parser.add_argument("--max-epochs", type=int, default=20)
     parser.add_argument("--threads", type=int, default=4)
-    parser.add_argument("--runs", nargs="+", choices=["Kognitiv"], default=["Kognitiv"])
+    parser.add_argument("--runs", nargs="+", choices=EVALUATIONS, default=None,
+                        help="Predefined contrasts; legacy default: Kognitiv, protocol 2.0: available contrasts.")
     args = parser.parse_args()
     if args.output.exists():
         raise FileExistsError("Choose a new output directory; prior experiments are never overwritten.")
@@ -163,12 +165,13 @@ def main():
     torch.use_deterministic_algorithms(True)
     started = time.monotonic()
     rows, x, old_features, matched_features, data_info = load_recording(args.recording, signal=args.signal)
+    evaluations = select_evaluations(rows, data_info["protocol_version"], args.runs if args.runs is not None or data_info["protocol_version"] != "eeg-session-1.0" else ["Kognitiv"])
     rows.to_csv(args.output / "epochs.csv", index_label="epoch_index")
     model, checkpoint_info = load_pretrained(args.checkpoint_manifest)
     config = {"data": data_info, "checkpoint": checkpoint_info,
               "upstream": "https://github.com/elouayas/reve_eeg/tree/06a7059a07c3dabd80aee60c3dbc1eca4bdbe1c7",
               "code_sha256": {str(p): sha256(p) for p in [Path(__file__), Path("analysis/ml_data.py"),
-                  Path("analysis/ml_feasibility.py")]},
+                  Path("analysis/ml_feasibility.py"), Path("analysis/session_conditions.py")]},
               "arguments": {k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()},
               "versions": {name: importlib.metadata.version(name) for name in ["torch", "numpy", "scipy", "pandas", "scikit-learn", "transformers", "huggingface-hub", "safetensors"]},
               "device": "cpu", "reve_amplitude_unit": "uV/1000",
@@ -178,7 +181,8 @@ def main():
               "selection": "minimum cross-entropy on cyclic inner validation block; refit fresh on all outer training blocks for selected epoch count",
               "limitations": ["one person/session", "exploratory", "offline noncausal filter",
                   "3 training seeds are not independent test cohorts", "same held-out blocks reused across predefined candidates",
-                  "no amplitude-based artifact rejection", "montage assumed from project configuration"]}
+                  "no amplitude-based artifact rejection", "montage assumed from project configuration"],
+              "evaluations": [name for name, _ in evaluations]}
     write_json(args.output / "config.json", config)  # Written before model evaluation.
     print(f"Loaded strict checkpoint; {len(rows)} windows, shape {x.shape}.", flush=True)
     trunk = cached_trunk(model, x)
@@ -188,8 +192,7 @@ def main():
         torch.testing.assert_close(full, cached, rtol=1e-4, atol=1e-4)
     print(f"Frozen trunk cached and checked against full encoder ({time.monotonic()-started:.1f}s).", flush=True)
     report, predictions, folds_log = {}, [], []
-    for run in args.runs:
-        indices = np.flatnonzero((rows.run == run).to_numpy())
+    for run, indices in evaluations:
         sub = rows.iloc[indices].reset_index(drop=True)
         classes = sorted(sub.label.unique())
         y_np = np.array([classes.index(v) for v in sub.label])
@@ -251,6 +254,7 @@ def main():
                     tune=tune, seed=seed, epochs=final_epochs)
                 torch.save({"state_dict": final.state_dict(), "classes": classes, "tune": tune,
                     "run": run, "seed": seed, "epochs": final_epochs,
+                    "protocol_version": data_info["protocol_version"],
                     "upstream_checkpoint_sha256": checkpoint_info["sha256"],
                     "warning": "trained on complete session; evaluate on a genuinely new session"},
                     args.output / "checkpoints" / f"{run}_{variant}_seed{seed}.pt")

@@ -1,16 +1,12 @@
-# Aktuell ausführbare Sitzung 1.0 mit `start session`
+# Automatische Sitzung 2.0 mit `start session`
 
-Stand: 28.10.2026. Diese Anleitung beschreibt ausschließlich die implementierte Sitzung `eeg-session-1.0`. Das neue [Versuchsprotokoll 2.0](../../docs/experiment-protocol.md) mit lateralisierter Faust-/Fußbewegung und 45:04 Minuten ist noch nicht implementiert. `start session` führt weiterhin die folgenden bisherigen Aufgaben aus.
+Stand: 28.10.2026. `start session` führt **`eeg-session-2.0` mit 168 Trials in 45:04 Minuten** aus. Softwareseitig hardwarefrei geprüft; Windows-Release-Build, Anzeige und vollständiger Echtzeitlauf mit Headset sind noch abzunehmen. Wissenschaftliche Bewegungsdefinitionen und Grenzen stehen im [Versuchsprotokoll](../../docs/experiment-protocol.md), Dateischemata in der [Sitzungsspezifikation](../../docs/session-automation-plan.md).
 
-**OSCAR-Stand 27.10.2026:** `start session` nimmt standardmäßig mit OSCAR über Python auf; `start session raw` wählt ausdrücklich Rohdaten. Beide Varianten bleiben getrennt gespeichert. Einrichtung, Geräteübergabe, Signalwahl und noch erforderliche Windows-/Headset-Abnahme: [OSCAR-Anleitung](../../acquisition/README.md). Beide Viewer bevorzugen für neue OSCAR-Sitzungen die bereinigten Daten; `--signal raw` wählt Rohdaten. FIF-Exporte enthalten die gewählte Variante vor zusätzlichen Anzeigefiltern.
-
-Die CLI kann das vollständige Pilotprotokoll automatisch durchführen: Anfangsbaseline, Motorik, Imagery, Kopfrechnen, Endbaseline. Ohne Unterbrechungen beträgt der Zeitplan **38:16 Minuten** einschließlich Erholung, acht Blockpausen und zwei Experimentpausen.
+`start session` verwendet standardmäßig OSCAR über Python und erhält Rohdaten separat; `start session raw` wählt den C-API-Rohdatenrecorder. Einrichtung und Geräteübergabe: [OSCAR-Anleitung](../../acquisition/README.md). Beide Viewer bevorzugen bei bestätigten OSCAR-Sitzungen die bereinigte Variante; `--signal raw` wählt ausdrücklich Rohdaten.
 
 ## Vorbereitung und Start
 
-Windows-Build wie in [README.md](README.md) neu konfigurieren und erstellen. Für die echte Teilnehmeranzeige und das Unicorn-Headset ist 64-Bit-Windows erforderlich. Die acht EEG-Kanäle `EEG 1` bis `EEG 8` müssen aktiviert sein. Signalqualität, Elektrodenkontakte und Einheiten vor der Sitzung prüfen; das Programm bewertet diese nicht automatisch.
-
-Für neue Teilnehmende wird eine dauerhafte ID wie `EVM-P001` verwendet. Dieselbe Person behält sie über weitere Termine und Laptops. Vergabe, Testordner und Bestandsdaten sind im [Teilnehmer-ID-Schema](../../docs/participant-ids.md) beschrieben.
+Auf dem Windows-Messrechner den Release-Build gemäß [Terminal-README](README.md) **neu erstellen**; eine alte EXE führt weiterhin das alte Protokoll aus. Alle acht EEG-Kanäle aktivieren, Kontakte, Signalqualität und Einheiten prüfen. Teilnehmer-ID nach dem [ID-Schema](../../docs/participant-ids.md) vergeben, alle Aufgaben erklären und üben. Insbesondere Faustschließen/-öffnen, Vorfußheben bei aufliegender Ferse und kinästhetische Vorstellung unterscheiden.
 
 Im Unicorn-Terminal:
 
@@ -22,55 +18,61 @@ config
 cue open
 ```
 
-Bei zwei Monitoren das Teilnehmerfenster auf den gewünschten Bildschirm verschieben. Die Versuchsperson vorher einweisen und alle Aufgaben üben. Dann:
+Für vorhandene Personen `GoToExp "EVM-P001"` verwenden. Teilnehmerfenster auf den vorgesehenen Monitor verschieben. Standardreihenfolge ist **Motorik → Imagery und mentale Vergleichsaufgaben**. Für die umgekehrte Reihenfolge vor dem Start:
+
+```text
+session order imagery motorik
+```
+
+Jeder der beiden Namen muss genau einmal vorkommen. Die Einstellung gilt bis zur nächsten Änderung oder bis Programmende. `kognitiv` ist kein eigener Lauf mehr; alte Dreilaufbefehle werden zurückgewiesen. Die konkrete Reihenfolge wird gespeichert. Der Versuchsperson **vor Start den ersten Modus nennen**, da die Anfangsbaseline nur ein Kreuz zeigt. Dann:
 
 ```text
 start session
 ```
 
-Der Befehl verwendet das verbundene Gerät und den ausgewählten Experimentordner. Er erstellt den vollständigen Plan, öffnet das Teilnehmerfenster, schaltet es auf dem aktuellen Monitor in den Vollbildmodus und beginnt die echte Aufnahme. Bei OSCAR wird das Headset exklusiv an Python übergeben und auf die ersten gültigen bereinigten Samples gewartet. Erst danach startet der Countdown zusammen mit der Anfangsbaseline. Nach der Sitzung vor weiteren Gerätebefehlen erneut `open SERIENNUMMER` ausführen. Keine zusätzliche Eingabe von `record` oder Aufgabenmarkern ist erforderlich.
+Der Start prüft Gerät, Kanäle und Dateien. Bei OSCAR wird das Gerät exklusiv an den Python-Prozess übergeben und auf erste gültige bereinigte Samples gewartet. Erst danach starten Baseline und Countdown. Vor einer weiteren OSCAR-Sitzung erneut `open DEINE_SERIENNUMMER` ausführen.
 
-Optional vor Sitzungsbeginn die Reihenfolge ändern:
+## Aufgaben und Zeitplan
 
-```text
-session order imagery motorik kognitiv
-```
+| Abschnitt | Umfang | Dauer einschließlich Blockpausen |
+|---|---|---:|
+| Anfangsbaseline | Augen offen, Kreuz | 1:00 |
+| Motorik | 4 Blöcke à 16 Trials: je 4 × linke/rechte Hand und linker/rechter Fuß | 16:07 |
+| Laufwechsel | Pause mit Hinweis auf nächsten Modus | 1:30 |
+| Imagery und mentale Aufgaben | 4 Blöcke à 26 Trials gemäß folgender Tabelle | 25:27 |
+| Endbaseline | Augen offen, Kreuz | 1:00 |
+| **Gesamt** | **168 Trials, sechs 45-s-Blockpausen und ein 90-s-Laufwechsel** | **45:04** |
 
-Jeder der drei Namen muss genau einmal vorkommen. Die Einstellung gilt bis zur nächsten Änderung oder bis zum Programmende; Standard beim Programmstart ist Motorik → Imagery → Kognitiv. Die konkrete Reihenfolge wird mit der Sitzung gespeichert. Die beiden Baselines bleiben an den Enden.
+Jeder mentale Block enthält:
 
-## Anzeigen
+| Aufgabe | Pro Block | Aufgabezeit |
+|---|---:|---:|
+| Linke/rechte Faust vorstellen | je 4 | 4 s |
+| Linken/rechten Vorfuß vorstellen | je 4 | 4 s |
+| Beide Hände / beide Füße gleichzeitig vorstellen | je 3 | 5 s |
+| Wortgenerierung / einzelne Subtraktion | je 2 | 5 s |
 
-Im interaktiven Windows-Terminal werden Statuszeilen alle 100 ms aktualisiert. Die Eingabezeile bleibt für Befehle und Beobachtungen verfügbar. Das Terminal zeigt:
+Alle Trials: **2 s Kreuz → 4 oder 5 s Aufgabe → 6/7/8 s Erholung mit Kreuz**. Mit dem Wechsel zurück zum Kreuz endet die Aufgabe. Keine zusätzliche STOPP-Anzeige und keine separaten Rest-Trials. Trialreihenfolge und Erholung werden mit gespeichertem Seed und exakten Blockkontingenten erzeugt; motorische Blöcke dauern 3:28, mentale Blöcke 5:48 ohne Blockpause.
 
-- Sitzungs-ID, Zustand, geplante Restzeit und tatsächlich verstrichene Zeit.
-- Experiment, konkrete Anweisung und Trialnummer innerhalb des Experiments.
-- Block, aktuelle Phase und deren Restzeit.
-- Datei, abgeschlossene Trials, Wiederholungen und gegebenenfalls Fehlergrund.
+## Anzeigen und Anweisungen
 
-Der Gesamt-Countdown ist nur für den Versuchsführer sichtbar. Für eine übersichtliche Anzeige ein ausreichend breites Terminal verwenden. Bei umgeleiteter Ein-/Ausgabe erfolgt keine fortlaufende Darstellung; `status` liefert einen Textstatus.
+Der globale Countdown und Trial-/Attempt-Zähler sind nur im Terminal sichtbar. Die Versuchsperson sieht:
 
-| Phase | Teilnehmeranzeige |
+| Phase / Aufgabe | Anzeige |
 |---|---|
-| Anfangs- und Endbaseline, je 60 s | `+` |
-| Motorik-/Imagery-Vorbereitung, 2 s | `+` |
-| Motorik-Aufgabe, 4 s | `ARME HEBEN`, `BEINE HEBEN`, `BLINZELN` |
-| Imagery-Aufgabe, 4 s | `ARME VORSTELLEN`, `BEINE VORSTELLEN` |
-| Motorik-/Imagery-Erholung, 6–8 s | `+` |
-| Kognitive Vorbereitung, 2 s | `READY` |
-| Kognitive Aufgabe, 10 s | beispielsweise `347 − 7` mit `FORTLAUFEND` |
-| Kognitive Erholung, 15–17 s | `+` |
-| Blockpause | `PAUSE` und Countdown ab `0:45` |
-| Experimentwechsel | `PAUSE` und Countdown ab `1:30` |
+| Baseline, Vorbereitung und Erholung | `+` |
+| Unilaterale Handaufgabe, ausgeführt oder vorgestellt | `HAND LINKS` / `HAND RECHTS` |
+| Unilaterale Fußaufgabe, ausgeführt oder vorgestellt | `FUSS LINKS` / `FUSS RECHTS` |
+| Beidseitige Imagery | `BEIDE HAENDE` / `BEIDE FUESSE` |
+| Wortgenerierung | z. B. `WORT MIT B` |
+| Einzelne Subtraktion | z. B. `83 − 27`, darunter `EINMAL RECHNEN` |
+| Geplante Pause | `PAUSE`, Countdown und `DANACH: BEWEGEN` bzw. `VORSTELLEN / DENKAUFGABEN` |
+| Ungeplante Unterbrechung | `PAUSE` ohne Countdown |
+| Erfolgreicher Abschluss | `SITZUNG BEENDET` |
 
-Beim Wechsel auf das Kreuz Aufgabe sofort beenden. Es gibt kein zusätzliches STOPP. Beim Kopfrechnen bleiben die Zahlen während der gesamten Aufgabe sichtbar. Die Startzahlen werden ohne Wiederholung aus 300–899 gezogen; der Schritt ist 7. Diese pragmatische Pilotwahl ist keine individuell angepasste Schwierigkeitskalibrierung.
+Gleiche unilaterale Hinweise gelten in Motorik und Imagery; der bekannte Laufmodus bestimmt, ob bewegt oder vorgestellt wird. Faust locker schließen/öffnen beziehungsweise Vorfuß anheben/absenken, ungefähr zwei Zyklen in 4 s. In Imagery dieselbe Bewegung aus eigener Körperperspektive vorstellen und körperlich ruhig bleiben. Kein kräftiges Pressen oder Anheben des ganzen Arms/Beins.
 
-Motorik: vier Blöcke mit je 15 Trials, je fünf pro Aufgabe. Imagery: vier Blöcke mit je zehn Trials, je fünf pro Aufgabe. Kognitiv: drei Blöcke mit je vier Trials. Reihenfolgen und Erholung werden mit gespeichertem Zufallsseed ausgelost; ein konkreter Plan steht neben jeder Aufnahme.
-
-Bewegungsdefinitionen für Protokoll 1.0: beide Unterarme innerhalb von 4 s einmal leicht anheben und wieder ablegen; beziehungsweise beide Füße einmal leicht vom Boden heben und wieder absetzen, ohne längeres Halten. Imagery stellt jeweils dieselbe beidseitige Bewegung aus eigener Körperperspektive vor. Blinzeln: zweimal bewusst, ungefähr 1 s und 3 s nach Aufgabenbeginn. Das sind weder die neuen Faustbewegungen noch die neue Dorsalflexion.
-
-Erholung pro motorischer beziehungsweise Imagery-Bedingung: 5 × 6 s, 10 × 7 s, 5 × 8 s. Beim Rechnen: 3 × 15 s, 6 × 16 s, 3 × 17 s. Geplante Pausen: je drei 45-s-Pausen in Motorik und Imagery, zwei im Rechenlauf sowie zwei 90-s-Laufwechsel. Damit ergeben sich 2296 s = 38:16. Es gibt keine zusätzlichen Rest-Trials.
-
-Für bestehende Protokoll-1.0-Bögen bedeutet A: Motorik → Imagery → Kognitiv; B: Motorik → Kognitiv → Imagery; C: Imagery → Motorik → Kognitiv; D: Imagery → Kognitiv → Motorik; E: Kognitiv → Motorik → Imagery; F: Kognitiv → Imagery → Motorik. Die CLI speichert die konkrete Reihenfolge, keinen Gruppenbuchstaben. Diese Zuordnung gilt nicht für den neuen Zweilaufplan.
+Wortgenerierung: still ein deutsches Wort zum angezeigten Buchstaben finden, ohne Lippenbewegung. Pro Sitzung acht verschiedene Buchstaben aus `BDFGHKLMNRST`. Subtraktion: einmal rechnen und danach das Ergebnis still prüfen; kein fortlaufendes Abziehen von 7. Acht unterschiedliche Zahlenpaare, Minuend 60–199 und Subtrahend 12–59, stets positives Ergebnis. Das sind feste Pilotparameter, keine individuelle Schwierigkeitskalibrierung. Antworten oder Rückfragen nur außerhalb der Aufgaben-/Erholungsfenster.
 
 ## Eingreifen und Beobachtungen protokollieren
 
@@ -87,11 +89,11 @@ Während einer automatischen Sitzung sind `mark`-Einträge reine Beobachtungen. 
 
 `session pause` hält den Ablauf an. Die EEG-Aufnahme läuft weiter, der globale Countdown friert ein und die Versuchsperson sieht `PAUSE` ohne Zeitangabe. Nach `session resume`:
 
-- Wird ein unterbrochener Trial vollständig wiederholt, einschließlich Vorbereitung und Erholung. Aufgabe und Rechenzahl bleiben gleich.
+- Wird ein unterbrochener Trial vollständig wiederholt, einschließlich Vorbereitung und Erholung. Aufgabe, Zahlenpaar, Wortbuchstabe und alle Phasendauern bleiben gleich.
 - Beginnt eine unterbrochene Baseline erneut mit 60 s.
 - Läuft eine unterbrochene geplante Pause mit ihrer Restdauer weiter.
 
-Die bereits aufgezeichneten Abschnitte bleiben erhalten. Ungültige Trials und Wiederholungen erhalten Ereignisse und eigene Attempt-IDs. Die notwendige Wiederholungszeit wird zum verbleibenden Zeitplan hinzugefügt. Die Sitzung kann dadurch länger als 38:16 dauern.
+Die bereits aufgezeichneten Abschnitte bleiben erhalten. Ungültige Trials und Wiederholungen erhalten Ereignisse und eigene Attempt-IDs. Die notwendige Wiederholungszeit wird zum verbleibenden Zeitplan hinzugefügt. Die Sitzung kann dadurch länger als 45:04 dauern.
 
 `stop` zeigt zunächst `PAUSE` und beendet anschließend Sitzung und Aufnahme als abgebrochen. Damit bleibt bei einem blockierenden Geräteaufruf keine Aufgabenanweisung stehen. `close` trennt zusätzlich das Headset, `quit`/`exit` beenden das Programm. Eingabe-EOF führt ebenfalls zum kontrollierten Abbruch. Erzwungenes Prozessbeenden oder ein blockierender Vendor-Aufruf können sauberes Aufräumen verhindern.
 
@@ -131,7 +133,7 @@ Bei gleichen Zeitstempeln wird ein nummerierter Zusatz verwendet. Bestehende Dat
 
 Das JSON wird bei Start, Pause, Fortsetzung und Abschluss aktualisiert. Bei einem Speicherfehler kann auch die Aktualisierung des Abschlussstatus scheitern; der Fehler wird im Terminal gemeldet. Zwischen diesen Zeitpunkten ist es kein Live-Status; dafür `status` verwenden. Bei einem Prozessabsturz kann der letzte Status `running` oder `paused` bleiben und darf nicht als erfolgreicher Abschluss gewertet werden.
 
-Beide mitgelieferten MNE-Viewer übernehmen bei automatischen Ereignissen zusätzlich Lauf, Bedingung, Block, Trial, Attempt, Phase und gegebenenfalls Rechenparameter in die Annotationsbeschreibung. Diese Informationen bleiben beim FIF-Export erhalten. `status=invalid` kennzeichnet einen invalidierten Versuch; `status=completed` bedeutet, dass ein `trial_end` ohne Invalidierung vorhanden ist, und `status=incomplete` kennzeichnet fehlenden Abschluss. Eine spätere Invalidierung gilt auch für die früheren Marker desselben Versuchs. Manuelle Labels und ältere vier-spaltige Eventdateien bleiben unverändert.
+Beide mitgelieferten MNE-Viewer übernehmen bei automatischen Ereignissen zusätzlich Lauf, Bedingung, Block, Trial, Attempt, Phase, Protokollversion, Modus, Körperteil, Seite, Bewegungsversion und gegebenenfalls Rechenparameter, Sprache und Wortbuchstabe in die Annotationsbeschreibung. Diese Informationen bleiben beim FIF-Export erhalten. `status=invalid` kennzeichnet einen invalidierten Versuch; `status=completed` bedeutet, dass ein `trial_end` ohne Invalidierung vorhanden ist, und `status=incomplete` kennzeichnet fehlenden Abschluss. Eine spätere Invalidierung gilt auch für die früheren Marker desselben Versuchs. Manuelle Labels und ältere vier-spaltige Eventdateien bleiben unverändert.
 
 Die Annotationen sind weiterhin einzelne Zeitpunkte. Die Statusangabe bewertet weder Signalqualität noch schließt sie automatisch Daten aus der MNE-Auswertung aus; dazu müssen die betreffenden Trials ausdrücklich ausgewählt beziehungsweise ausgeschlossen werden.
 
@@ -140,11 +142,17 @@ Die Annotationen sind weiterhin einzelne Zeitpunkte. Die Statusangabe bewertet w
 ```sh
 python gtec_Clib/terminal/test_recorder.py
 python gtec_Clib/terminal/test_session.py
-python -m unittest analysis.test_event_annotations
+python -m unittest analysis.test_session_protocol analysis.test_event_annotations
 ```
 
 Benötigt werden Python sowie Clang++ oder MSVC `cl`. Die Annotationstests benötigen zusätzlich MNE, NumPy und pandas und prüfen beide Viewer einschließlich eines echten FIF-Speicher-/Ladevorgangs. Die Tests erzeugen temporäre Dateien und verwenden ausschließlich die Mock-API. Der Sitzungstest kompiliert explizit mit `UNICORN_SESSION_TEST`; nur dieser Build enthält eine simulierte Teilnehmeranzeige und eine beschleunigbare Uhr. Der normale CMake-Build enthält diese Funktionen nicht.
 
-Geprüft werden Planregeln über 250 Seeds, alle sechs Laufreihenfolgen, Phasengrenzen, Pausen, Wiederholungen, vollständiger beschleunigter Durchlauf, automatische/manuelle Marker, Dateizuordnung, Fensterverlust, Aufnahmefehler, fehlende Kanäle, erneuter Start, zu große Timingabweichungen, Metadaten-Schreibfehler und EOF. Zusätzliche Regressionstests verzögern gezielt Anzeige und Marker-Schreiben während eines Phasenwechsels und prüfen die PAUSE-Anzeige, während der Aufnahme-Stopp noch blockiert.
+Geprüft werden Planregeln über 250 Seeds, beide Laufreihenfolgen, Phasengrenzen, Pausen, Wiederholungen, vollständiger beschleunigter Durchlauf, automatische/manuelle Marker, Dateizuordnung, Fensterverlust, Aufnahmefehler, fehlende Kanäle, erneuter Start, zu große Timingabweichungen, Metadaten-Schreibfehler und EOF. Zusätzliche Regressionstests verzögern gezielt Anzeige und Marker-Schreiben während eines Phasenwechsels und prüfen die PAUSE-Anzeige, während der Aufnahme-Stopp noch blockiert.
 
 **Windows-Fenster, interaktive Terminaldarstellung, Vendor-DLL und ein vollständiger Echtzeitlauf mit Headset müssen auf dem Messrechner geprüft werden.** Die hardwarefreien Tests bestätigen diese Punkte nicht. Vor Durchführung mit Versuchspersonen diese Prüfung und einen Pilotlauf abschließen.
+
+## Bestehende Aufnahmen aus Protokoll 1.0
+
+Alte Aufnahmen bleiben unverändert: 112 Trials in 38:16 Minuten, je 20 beidseitige Arm-/Beinbewegungen und Blinzeln, je 20 Arm-/Beinvorstellungen sowie zwölf zehnsekündige Trials mit fortlaufendem Abziehen von 7. Die alte Version wird nicht mehr durch `start session` erzeugt und nicht auf neue Labels umgedeutet.
+
+Für ältere Teilnehmerbögen bedeuten die Reihenfolgegruppen: A = Motorik/Imagery/Kognitiv, B = Motorik/Kognitiv/Imagery, C = Imagery/Motorik/Kognitiv, D = Imagery/Kognitiv/Motorik, E = Kognitiv/Motorik/Imagery, F = Kognitiv/Imagery/Motorik. Neue Sitzungen dokumentieren stattdessen die konkrete Zweilaufreihenfolge. Alte Bewegungen und Ergebnisse sind kein direkter Nachweis für die neuen Bedingungen.

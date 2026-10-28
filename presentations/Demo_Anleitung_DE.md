@@ -1,6 +1,6 @@
 # Eigenständige Demo: Build, Start und EEG-Aufnahme
 
-Stand der Demo: 19. Oktober 2026. Diese kurze Vorführung verwendet die bisherigen Aufgaben und bleibt manuell. Der ausführbare automatische Ablauf 1.0 mit 38:16 Minuten steht in der [Sitzungsanleitung](../gtec_Clib/terminal/SESSION_ANLEITUNG.md). Das neue [Studienprotokoll 2.0](../docs/experiment-protocol.md) mit 45:04 Minuten ist noch nicht implementiert; diese Demo bildet es nicht ab.
+Stand der Demo: 19. Oktober 2026. Diese kurze Vorführung verwendet die bisherigen Aufgaben und bleibt manuell. Der ausführbare automatische Ablauf 2.0 mit 45:04 Minuten steht in der [Sitzungsanleitung](../gtec_Clib/terminal/SESSION_ANLEITUNG.md). Das neue [Studienprotokoll 2.0](../docs/experiment-protocol.md) mit 45:04 Minuten ist implementiert; diese manuelle Demo bildet es nicht ab.
 
 ## 1. Voraussetzungen unter Windows
 

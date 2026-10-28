@@ -1,8 +1,8 @@
 # Versuchsprotokoll: lateralisierte Motorik und MEG-Vergleich
 
-Stand: 28.10.2026. Zielprotokoll: `eeg-session-2.0` (geplant). **Noch nicht implementiert oder experimentell validiert.** Dieses Dokument ist die zentrale wissenschaftliche Spezifikation für die neue Sitzung mit 45:04 Minuten.
+Stand: 28.10.2026. Protokoll: `eeg-session-2.0`. **Softwareseitig implementiert und hardwarefrei geprüft; Windows-/Headset-Abnahme und wissenschaftliche Pilotvalidierung stehen aus.** Dieses Dokument ist die zentrale wissenschaftliche Spezifikation für die neue Sitzung mit 45:04 Minuten.
 
-Die CLI führt weiterhin `eeg-session-1.0` mit 38:16 Minuten aus; dessen tatsächlich ausführbarer Ablauf steht in der [Sitzungsanleitung](../gtec_Clib/terminal/SESSION_ANLEITUNG.md). Technischer Änderungsbedarf und Dateiverträge: [Sitzungsspezifikation](session-automation-plan.md). Einrichtung der Aufnahme: [OSCAR-Anleitung](../acquisition/README.md).
+Die CLI startet nach aktuellem Release-Build mit `start session` den neuen Ablauf; Bedienung und Hinweise zu Bestandsaufnahmen stehen in der [Sitzungsanleitung](../gtec_Clib/terminal/SESSION_ANLEITUNG.md). Technischer Stand und Dateiverträge: [Sitzungsspezifikation](session-automation-plan.md). Einrichtung der Aufnahme: [OSCAR-Anleitung](../acquisition/README.md).
 
 ## 1. Studienziel und Umfang
 
@@ -64,8 +64,10 @@ Links und rechts erhalten **dieselbe gespiegelte Bewegung**. Links den Fuß hebe
 
 1. **Beide Hände vorstellen:** beidseitiges, gleichzeitiges lockeres Faustschließen und Öffnen, 5 s. Langsam und kontinuierlich vorstellen; keine tatsächliche Bewegung.
 2. **Beide Füße vorstellen:** beidseitiges, gleichzeitiges Vorfußheben und Absenken, 5 s; keine tatsächliche Bewegung.
-3. **Wortgenerierung:** zu einem zentral angezeigten Buchstaben still ein passendes Wort finden. Nicht sprechen oder die Lippen bewegen. Im Pilot prüfen, ob die Aufgabe zu früh endet; Strategie vor der Hauptstudie festlegen. Vorschlag für die deutschsprachige Gruppe: deutsches Wort. Das ist eine dokumentierte Sprachadaption gegenüber englischen Wörtern im MEG-Versuch. Für einen engeren Sprachvergleich wäre Englisch mit vorab geprüfter Sprachkompetenz erforderlich.
+3. **Wortgenerierung:** zu einem zentral angezeigten Buchstaben still ein passendes Wort finden. Nicht sprechen oder die Lippen bewegen. Im Pilot prüfen, ob die Aufgabe zu früh endet; Strategie vor der Hauptstudie festlegen. Implementierter Standard: deutsches Wort. Das ist eine dokumentierte Sprachadaption gegenüber englischen Wörtern im MEG-Versuch. Für einen engeren Sprachvergleich wäre Englisch mit vorab geprüfter Sprachkompetenz erforderlich.
 4. **Subtraktion:** eine zweistellige Zahl von einer zwei- oder dreistelligen Zahl still subtrahieren, z. B. `83 − 27`. Fünf Sekunden Aufgabenzeit; nach Lösung das Ergebnis still prüfen. Dies ersetzt hier das bisherige zehnsekündige fortlaufende Subtrahieren von 7. Es ist keine äquivalente Fortsetzung der alten Rechenbedingung. Individuelle Lösungsdauer und anschließendes Prüfen können das Signal mitbestimmen.
+
+Implementierte Parameter: acht unterschiedliche Buchstaben aus `BDFGHKLMNRST`; acht unterschiedliche Subtraktionspaare mit Minuend 60–199 und Subtrahend 12–59. Auswahl vorab mit dem gespeicherten Sitzungsseed, durchgehend positives Ergebnis. Diese Bereiche sind feste Pilotentscheidungen und keine validierte Schwierigkeitskalibrierung.
 
 Für die kognitiven Aufgaben Buchstaben/Zahlen vorab festlegen, Schwierigkeit in der Übung prüfen und nicht während der Messung adaptiv verändern. Keine Antwortbewegung während des Aufgabenfensters. Verständnis und Durchführung in den ohnehin geplanten Blockpausen kurz abfragen; zusätzliche Antwortzeit verlängert die Sitzung.
 
@@ -196,7 +198,7 @@ Empfehlung: zuerst einen technischen vollständigen Probelauf und danach einen E
 
 Wenn gleich starke Aussagen zum kognitiven Teil verlangt werden, muss dafür mehr Datenzeit eingeplant werden. Die volle ursprüngliche Fragestellung lässt sich inhaltlich in 45 Minuten erhalten, ihre belastbare Beantwortung jedoch nicht allein durch diesen Ablauf garantieren.
 
-## 10. Pilotentscheidung und spätere technische Umsetzung
+## 10. Pilotentscheidung und ausstehende Abnahme
 
 Vor Bestätigungsdaten prüfen:
 
@@ -206,6 +208,6 @@ Vor Bestätigungsdaten prüfen:
 - Sind die kognitiven Aufgaben mit 5 s sinnvoll und inhaltlich nachvollziehbar ausführbar? Wortfindung, Rechenschwierigkeit und Sprache dokumentieren.
 - Bleibt die Aufnahme einschließlich echter Wechselzeiten nahe 45 Minuten? Ungeplante Pausen und Wiederholungen separat ausweisen.
 
-Die Umsetzung erfolgt mit eigener Protokollversion gemäß [Sitzungsspezifikation](session-automation-plan.md). Vor Erhebungen nach dem neuen Protokoll Windows-Build, Anzeige und einen vollständigen Headset-Lauf prüfen sowie Einwilligung und institutionelle Studienunterlagen auf die geänderten Aufgaben abstimmen.
+Die Umsetzung verwendet eine eigene Protokollversion gemäß [Sitzungsspezifikation](session-automation-plan.md). Vor Erhebungen nach dem neuen Protokoll Windows-Build, Anzeige und einen vollständigen Headset-Lauf prüfen sowie Einwilligung und institutionelle Studienunterlagen auf die geänderten Aufgaben abstimmen.
 
-Der Plan wurde anhand der genannten Originalquellen erarbeitet; Zeitrechnung und Trialzahlen wurden rechnerisch geprüft. Es wurden dafür keine MEG-Daten heruntergeladen, keine Modelle trainiert und keine neuen Sitzungsläufe validiert.
+Der Plan wurde anhand der genannten Originalquellen erarbeitet. Plan- und Laufzeitregressionen prüfen die softwareseitige Umsetzung einschließlich einer vollständigen beschleunigten Sitzung. Das belegt keine Hardware- oder wissenschaftliche Validierung. Für diese Implementierung wurden keine MEG-Daten heruntergeladen und keine neuen Studienmodelle auf Teilnehmerdaten trainiert.

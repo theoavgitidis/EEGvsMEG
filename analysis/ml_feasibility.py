@@ -12,24 +12,28 @@ import pandas as pd
 from scipy.signal import butter, sosfiltfilt, welch
 
 
-def features(epoch, fs):
+def features(epoch, fs, bands=((1, 4), (4, 8), (8, 13), (13, 30), (30, 40))):
     # Filter each epoch independently: no filtering across held-out boundaries.
     filtered = sosfiltfilt(butter(4, [1, 40], fs=fs, btype="bandpass", output="sos"), epoch, axis=0)
     freq, psd = welch(filtered, fs=fs, nperseg=min(500, len(epoch)), axis=0)
     return np.concatenate([
         np.log(np.maximum(np.trapezoid(psd[(freq >= lo) & (freq <= hi)],
                                       freq[(freq >= lo) & (freq <= hi)], axis=0), 1e-20))
-        for lo, hi in [(1, 4), (4, 8), (8, 13), (13, 30), (30, 40)]
+        for lo, hi in bands
     ])
 
 
 def predict_cv(x, y, groups):
     classes = np.unique(y)
+    if len(classes) < 2 or len(np.unique(groups)) < 2:
+        raise ValueError("At least two classes and two independent blocks are required.")
     pred = np.empty(len(y), dtype=y.dtype)
     folds = []
     for group in np.unique(groups):
         test = groups == group
         train = ~test
+        if set(y[train]) != set(classes) or set(y[test]) != set(classes):
+            raise ValueError("Each held-out block and training partition must contain every class.")
         mu, sd = x[train].mean(0), x[train].std(0)
         sd[sd < 1e-12] = 1
         a = np.column_stack([np.ones(train.sum()), (x[train] - mu) / sd])
@@ -73,49 +77,50 @@ def main():
     parser.add_argument("recording", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
+    if args.output.exists():
+        raise FileExistsError("Choose a new report path; recordings and prior results are never overwritten.")
     from analysis.recording_files import resolve_recording
+    from analysis.ml_data import trial_windows
+    from analysis.session_conditions import CURRENT, select_evaluations
     selected = resolve_recording(args.recording, args.signal)
     meta = json.loads(Path(str(selected.raw) + ".session.json").read_text(errors="replace"))
     fs = meta["sampling_rate_hz"]
     data = pd.read_csv(selected.data)
     selected.validate_length(len(data))
     events = pd.read_csv(selected.events).fillna("")
-    key = ["run", "block", "trial", "attempt"]
-    invalid = {tuple(r[k] for k in key) for r in events.to_dict("records") if r["label"] == "trial_invalidated"}
     eeg_cols = [f"EEG {i}" for i in range(1, 9)]
     imu_cols = [f"{sensor} {axis}" for sensor in ["Accelerometer", "Gyroscope"] for axis in "XYZ"]
-    eeg = data[eeg_cols].to_numpy()
-    imu = data[imu_cols].to_numpy()
+    channels = {c["name"]: c for c in meta["device"]["channels"]}
+    if any(not channels[c]["enabled"] or channels[c]["unit"] not in ("µV", "μV", "uV") for c in eeg_cols):
+        raise ValueError("All eight EEG channels must be confirmed in microvolts.")
+    if not np.array_equal(data.sample_index.to_numpy(), np.arange(len(data))):
+        raise ValueError("Non-contiguous sample indices; event offsets cannot be trusted.")
+    windows, exclusions = trial_windows(events, len(data), fs, meta.get("protocol_version"))
+    protocol = windows.protocol_version.iloc[0]
+    eeg, imu = data[eeg_cols].to_numpy(), data[imu_cols].to_numpy()
+    invalid = set()
+    for window in windows.to_dict("records"):
+        a, b = window["start_sample"], window["stop_sample"]
+        if (not np.isfinite(eeg[a:b]).all() or not np.isfinite(imu[a:b]).all()
+                or not (data["Validation Indicator"].iloc[a:b] == 1).all()):
+            invalid.add(window["trial_key"])
+    for trial in sorted(invalid):
+        exclusions.append({"key": trial, "reason": "invalid_samples_in_trial_pair"})
+    windows = windows[~windows.trial_key.isin(invalid)].reset_index(drop=True)
+    evaluations = select_evaluations(windows, protocol)
+    bands = ((8, 13), (13, 30)) if protocol == CURRENT else ((1, 4), (4, 8), (8, 13), (13, 30), (30, 40))
     rows = []
+    for window in windows.to_dict("records"):
+        left, right = window["start_sample"], window["stop_sample"]
+        movement = imu[left:right]
+        rows.append({**window, "eeg": features(eeg[left:right], fs, bands),
+                     "imu": np.concatenate([movement.std(0), np.ptp(movement, axis=0)]),
+                     "time": np.array([left / fs])})
     durations = []
-    skipped = 0
-    for group_key, group in events[events.trial.astype(int) > 0].groupby(key):
-        if group_key in invalid or "trial_end" not in set(group.label):
-            continue
-        cue = group[group.label == "cue_onset"]
-        offset = group[group.label == "task_offset"]
-        end = group[(group.label == "phase_end") & (group.phase == "rest")]
-        if len(cue) != 1 or len(offset) != 1 or len(end) != 1:
-            skipped += 1
-            continue
-        cue, offset, end = cue.iloc[0], offset.iloc[0], end.iloc[0]
-        start, stop = int(cue.samples_received), int(offset.samples_received)
-        durations.append((stop - start) / fs)
-        # Same 3-second window for every task. Exclude first 0.5 s of cue.
-        windows = [(start + int(.5 * fs), start + int(3.5 * fs), cue.condition)]
-        if cue.run == "Kognitiv":
-            # Late recovery, paired by trial; same held-out block as task.
-            windows.append((int(end.samples_received) - int(3.5 * fs),
-                            int(end.samples_received) - int(.5 * fs), "rest"))
-        for left, right, label in windows:
-            if left < 0 or right > len(data) or not np.isfinite(eeg[left:right]).all():
-                skipped += 1
-                continue
-            movement = imu[left:right]
-            rows.append({"run": cue.run, "block": int(cue.block), "label": label,
-                         "eeg": features(eeg[left:right], fs),
-                         "imu": np.concatenate([movement.std(0), np.ptp(movement, axis=0)]),
-                         "time": np.array([left / fs])})
+    for _, group in events[events.source == "automatic"].groupby(["run", "block", "trial", "attempt"]):
+        cue, offset = group[group.label == "cue_onset"], group[group.label == "task_offset"]
+        if len(cue) == len(offset) == 1:
+            durations.append((int(offset.iloc[0].samples_received)-int(cue.iloc[0].samples_received))/fs)
     result = {"recording": str(args.recording.resolve()), "participant": meta["participant_id"],
               "signal": selected.signal, "signal_description": selected.label,
               "selected_recording": str(selected.data.resolve()), "processing": selected.metadata,
@@ -124,11 +129,12 @@ def main():
               "nonfinite_eeg_values": int((~np.isfinite(eeg)).sum()),
               "validation_counts": data["Validation Indicator"].value_counts().to_dict(),
               "zero_fraction_by_eeg_channel": dict(zip(eeg_cols, (eeg == 0).mean(0).tolist())),
-              "task_duration_range_s": [min(durations), max(durations)], "skipped": skipped,
-              "method": "Fixed ridge penalty=10, training-fold standardization; leave-one-block-out; 3s epochs; 199 label permutations within blocks (cognitive: within trial pairs). Exploratory, no multiplicity correction.",
+              "task_duration_range_s": [min(durations), max(durations)] if durations else None,
+              "protocol_version": protocol, "eeg_bands_hz": bands, "exclusions": exclusions, "skipped": len(exclusions),
+              "method": "Fixed ridge penalty=10, training-fold standardization; leave-one-block-out; 3s epochs; 199 label permutations within blocks (legacy task/rest: within trial pairs). Exploratory, no multiplicity correction.",
               "results": {}}
-    for run in ["Motorik", "Imagery", "Kognitiv"]:
-        subset = [r for r in rows if r["run"] == run]
+    for run, indices in evaluations:
+        subset = [rows[i] for i in indices]
         result["results"][run] = {f: evaluate(subset, f) for f in ["eeg", "imu", "time"]}
     args.output.write_text(json.dumps(result, indent=2) + "\n")
     print(json.dumps(result, indent=2))

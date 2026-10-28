@@ -115,7 +115,7 @@ Quellen: [HybridBlack](https://gpype.gtec.at/content/7_sdk_reference/backend_sou
 
 Der C++-Recorder besitzt in der mitgelieferten C-API keinen OSCAR-Schalter. Der oben beschriebene Live-Weg verwendet eine separate Python-Aufnahmequelle. Die implementierte C++-Anbindung an diesen Python-Aufnahmeweg ist in der Aufnahmeanleitung beschrieben.
 
-Die Integration mit getrennter Roh-/OSCAR-Ausgabe und beiden Viewer-Einstiegspunkten ist vorhanden. Ihre Windows-/Headset-Abnahme gemäß Aufnahmeanleitung steht aus; dabei Kanalreihenfolge, Einheiten, Verzögerung und Ereignisse prüfen. Die Blinzelbedingung des bisherigen Protokolls 1.0 erfasst bewusst auch das Augensignal; ihre Auswertung darf nicht unbemerkt durch Artefaktkorrektur verändert werden. Im neuen [Zielprotokoll 2.0](experiment-protocol.md) ist Blinzeln keine Aufgabenklasse mehr.
+Die Integration mit getrennter Roh-/OSCAR-Ausgabe und beiden Viewer-Einstiegspunkten ist vorhanden. Ihre Windows-/Headset-Abnahme gemäß Aufnahmeanleitung steht aus; dabei Kanalreihenfolge, Einheiten, Verzögerung und Ereignisse prüfen. Die Blinzelbedingung des bisherigen Protokolls 1.0 erfasst bewusst auch das Augensignal; ihre Auswertung darf nicht unbemerkt durch Artefaktkorrektur verändert werden. Im implementierten [Protokoll 2.0](experiment-protocol.md) ist Blinzeln keine Aufgabenklasse mehr.
 
 Die alternative Hersteller-App Unicorn Recorder bietet ebenfalls OSCAR sowie LSL/UDP. Die Produktseite belegt jedoch nicht eindeutig, ob deren exportierter Stream jeweils die korrigierten Daten oder Rohdaten führt. Dies vor einer LSL-Integration praktisch prüfen: [Unicorn Suite](https://www.gtec.at/product/unicorn-suite/).
 

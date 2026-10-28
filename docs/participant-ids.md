@@ -37,7 +37,7 @@ Lücken in der Nummerierung sind erlaubt. Die Beispieltabelle oben reserviert no
 
 ## Nutzung in der bestehenden CLI
 
-Die Beispiele starten weiterhin Protokoll 1.0. Der neue [Zweilaufplan 2.0](experiment-protocol.md) ist noch nicht in der CLI verfügbar.
+Die Beispiele starten nach aktuellem Release-Build den [Zweilaufplan 2.0](experiment-protocol.md). Bestehende Protokoll-1.0-Aufnahmen behalten ihre ursprüngliche Version und Zuordnung.
 
 ### Erster Termin auf einem Messrechner
 
@@ -82,7 +82,7 @@ Auf einem anderen Laptop, auf dem der Ordner noch nicht existiert, erneut `NewEx
 |---|---|---|
 | Teilnehmer-ID | `EVM-P001` | Dauerhafte Personenkennung; gewählter Experimentordner |
 | Sitzungs-ID | `session_20261021_183000` | Automatisch erzeugte einzelne Aufnahme; lokale Startzeit im Namensstamm |
-| Hauptlauf | Aktuell `Motorik`, `Imagery`, `Kognitiv`; geplant M/I | Aufgabenart innerhalb einer Aufnahme; abhängig von der Protokollversion |
+| Hauptlauf | Aktuell `Motorik`, `Imagery` (M/I); früher zusätzlich `Kognitiv` | Aufgabenart innerhalb einer Aufnahme; abhängig von der Protokollversion |
 | Trial | `12` | Geplanter Trial innerhalb eines Hauptlaufs |
 | Attempt | `2` | Zweiter Durchführungsversuch desselben Trials nach Unterbrechung |
 
@@ -109,13 +109,13 @@ Eine Pause mit `session resume` bleibt Teil derselben Sitzung und erhöht bei ei
 
 ## Reihenfolgegruppen separat dokumentieren
 
-Für das neue Protokoll die Reihenfolge **M→I** oder **I→M** und den Termin separat dokumentieren. Die Personenkennung bleibt dabei stabil. Die neue Zweilaufreihenfolge ist noch keine gültige CLI-Option.
+Für das neue Protokoll die Reihenfolge **M→I** oder **I→M** und den Termin separat dokumentieren. Die Personenkennung bleibt dabei stabil. Die CLI nimmt `session order motorik imagery` oder `session order imagery motorik` an; Standard ist Motorik zuerst.
 
-Die bisherigen Gruppen A–F gehören ausschließlich zu Protokoll 1.0; ihre Zuordnung steht in der [Sitzungsanleitung](../gtec_Clib/terminal/SESSION_ANLEITUNG.md). Beispiel für die weiterhin ausführbare Dreilauf-Konfiguration:
+Die bisherigen Gruppen A–F gehören ausschließlich zu Protokoll 1.0; ihre Zuordnung steht in der [Sitzungsanleitung](../gtec_Clib/terminal/SESSION_ANLEITUNG.md). Aktuelles Beispiel für Imagery zuerst:
 
 ```text
 GoToExp "EVM-P001"
-session order imagery motorik kognitiv
+session order imagery motorik
 ```
 
 Die CLI speichert die konkrete Laufreihenfolge in den Sitzungsmetadaten. Gruppenbuchstaben werden nicht als eigenes Feld automatisch gespeichert. Reihenfolgen niemals allein aus Teilnehmernummer oder Besuchsnummer ableiten.

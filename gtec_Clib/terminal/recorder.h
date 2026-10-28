@@ -51,7 +51,8 @@ public:
     }
     struct Context {
         std::string source = "manual", run, condition, phase, reason;
-        int block = 0, trial = 0, attempt = 0, startNumber = 0;
+        int block = 0, trial = 0, attempt = 0, startNumber = 0, subtract = 0;
+        std::string protocolVersion, mode, bodyPart, side, movementVersion, language, wordLetter;
         double planned = 0, actual = 0;
     };
     void stop() {
@@ -88,7 +89,9 @@ public:
         if (extendedEvents) events << ',' << csv(context.source) << ',' << csv(context.run)
             << ',' << context.block << ',' << context.trial << ',' << context.attempt
             << ',' << csv(context.condition) << ',' << csv(context.phase) << ',' << context.planned
-            << ',' << context.actual << ',' << csv(context.reason) << ',' << context.startNumber << ',' << (context.startNumber ? 7 : 0);
+            << ',' << context.actual << ',' << csv(context.reason) << ',' << context.startNumber << ',' << context.subtract
+            << ',' << csv(context.protocolVersion) << ',' << csv(context.mode) << ',' << csv(context.bodyPart)
+            << ',' << csv(context.side) << ',' << csv(context.movementVersion) << ',' << csv(context.language) << ',' << csv(context.wordLetter);
         events << '\n';
         events.flush();
         if (!events) throw std::runtime_error("Event log write failed.");
@@ -121,7 +124,7 @@ public:
         for (const auto& name : names) data << ',' << csv(name);
         data << '\n' << std::setprecision(17);
         events << "host_utc_s,elapsed_s,samples_received,label";
-        if (extendedEvents) events << ",source,run,block,trial,attempt,condition,phase,planned_elapsed_s,actual_session_elapsed_s,reason,start_number,subtract";
+        if (extendedEvents) events << ",source,run,block,trial,attempt,condition,phase,planned_elapsed_s,actual_session_elapsed_s,reason,start_number,subtract,protocol_version,mode,body_part,side,movement_version,language,word_letter";
         events << '\n';
         data.flush(); events.flush();
         if (!data || !events) throw std::runtime_error("Cannot write recording headers.");
@@ -204,7 +207,7 @@ public:
         auto eventPath=path; eventPath+=".events.csv";
         events.open(eventPath);
         if (!events) throw std::runtime_error("Cannot create event log.");
-        events << "host_utc_s,elapsed_s,samples_received,label,source,run,block,trial,attempt,condition,phase,planned_elapsed_s,actual_session_elapsed_s,reason,start_number,subtract\n";
+        events << "host_utc_s,elapsed_s,samples_received,label,source,run,block,trial,attempt,condition,phase,planned_elapsed_s,actual_session_elapsed_s,reason,start_number,subtract,protocol_version,mode,body_part,side,movement_version,language,word_letter\n";
         events.flush();
         if (!events) throw std::runtime_error("Cannot write event log header.");
         {

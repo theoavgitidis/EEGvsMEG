@@ -67,7 +67,7 @@ public:
     void delayNextTask() { slowTask = true; }
     std::string current() const { std::lock_guard<std::mutex> lock(mutex); return text; }
     void show(const std::string& value) {
-        if ((value == "ARME HEBEN" || value == "BEINE HEBEN" || value == "BLINZELN") && slowTask.exchange(false))
+        if ((value == "HAND LINKS" || value == "HAND RECHTS" || value == "FUSS LINKS" || value == "FUSS RECHTS") && slowTask.exchange(false))
             std::this_thread::sleep_for(std::chrono::milliseconds(400));
         std::lock_guard<std::mutex> lock(mutex); text = value;
     }
@@ -101,7 +101,7 @@ int main() {
             s.testNextBoundary();
             waitFor([&]() { return status(s).find(" | paused |") != std::string::npos; });
             assert(cues.current() == "PAUSE");
-            assert(status(s).find("abgeschlossen 0/112") != std::string::npos);
+            assert(status(s).find("abgeschlossen 0/168") != std::string::npos);
             assert(status(s).find("timing_deviation_over_250ms") != std::string::npos);
             s.resume();
             assert(status(s).find("prepare Rest") != std::string::npos);
@@ -113,10 +113,10 @@ int main() {
             recorder.delayOnce("trial_end","rest");
             s.testNextBoundary();
             waitFor([&]() { return status(s).find(" | paused |") != std::string::npos; });
-            assert(status(s).find("abgeschlossen 0/112") != std::string::npos);
-            s.resume(); assert(status(s).find("Trial 1/60 | Versuch 2") != std::string::npos);
+            assert(status(s).find("abgeschlossen 0/168") != std::string::npos);
+            s.resume(); assert(status(s).find("Trial 1/64 | Versuch 2") != std::string::npos);
             nextPhase(s,"task"); nextPhase(s,"rest"); nextPhase(s,"prepare");
-            assert(status(s).find("abgeschlossen 1/112") != std::string::npos);
+            assert(status(s).find("abgeschlossen 1/168") != std::string::npos);
         } else {
             nextPhase(s,"task");
             assert(cues.current() != "PAUSE");

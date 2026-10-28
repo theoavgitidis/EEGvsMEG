@@ -11,6 +11,7 @@ import torch
 
 from analysis.cbramod_benchmark import Classifier, cached_trunk, load_pretrained, metrics
 from analysis.ml_data import load_recording
+from analysis.session_conditions import prediction_indices
 
 
 def main():
@@ -31,11 +32,10 @@ def main():
     model = Classifier(base.encoder.layers[-1], len(state["classes"]), state["tune"])
     model.load_state_dict(state["state_dict"], strict=True)
     model.eval()
-    rows, x, _, _, _ = load_recording(args.recording, signal=args.signal)
-    keep = (rows.run == state["run"]).to_numpy()
-    rows = rows[keep].copy()
-    if not len(rows):
-        raise ValueError("No windows for this model's run.")
+    rows, x, _, _, data_info = load_recording(args.recording, signal=args.signal)
+    keep = prediction_indices(rows, data_info["protocol_version"], state)
+    rows = rows.iloc[keep].copy()
+    rows["evaluation"] = state["run"]
     with torch.no_grad():
         p = model(cached_trunk(base, x[keep])).softmax(1).numpy()
     rows["prediction"] = [state["classes"][i] for i in p.argmax(1)]

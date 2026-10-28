@@ -101,6 +101,31 @@ class EventAnnotationsTest(unittest.TestCase):
                 self.assertEqual(raw.annotations.description.tolist(), [row["label"] for row in rows])
                 self.assert_fif_round_trip(raw, viewer.__name__.replace(".", "_"))
 
+    def test_protocol_two_payload_survives_both_viewers_and_fif(self):
+        payload = dict(protocol_version="eeg-session-2.0", mode="motor_imagery", body_part="foot",
+                       side="left", movement_version="fist-ankle-dorsiflexion-v1")
+        rows = [self.auto("task_onset", 25, condition="mi_foot_left", **payload),
+                self.auto("trial_end", 50, condition="mi_foot_left", **payload)]
+        for label, sample in [("task_onset", 100), ("trial_end", 200)]:
+            rows.append(dict(self.auto(label, sample, trial=2, condition="word_generation",
+                             protocol_version="eeg-session-2.0", mode="cognitive", language="de", word_letter="B"), run="Imagery"))
+        for label, sample in [("task_onset", 300), ("trial_end", 400)]:
+            rows.append(dict(self.auto(label, sample, trial=3, condition="mental_subtraction_single",
+                             start_number=83, subtract=27, protocol_version="eeg-session-2.0", mode="cognitive", language="de"), run="Imagery"))
+        self.write_events(rows)
+        from analysis.eeg_browser import _short_label
+        for viewer in (root_viewer, analysis_viewer):
+            raw = self.load(viewer)
+            tasks = [s for s in raw.annotations.description if s.startswith("task_onset")]
+            self.assertEqual(len(tasks), 3)
+            self.assertIn("MI Fuss L", _short_label(tasks[0]))
+            for key, value in payload.items():
+                self.assertIn(f"{key}={value}", tasks[0])
+            self.assertIn("language=de | word_letter=B", tasks[1])
+            self.assertIn("start_number=83 | subtract=27", tasks[2])
+            self.assertTrue(all("status=completed" in task for task in tasks))
+            self.assert_fif_round_trip(raw, "v2_" + viewer.__name__.replace(".", "_"))
+
     def test_incomplete_attempts_and_manual_labels(self):
         rows = [self.auto("task_onset", 25),
                 dict(self.auto("trial_invalidated", 30), source="manual")]

@@ -63,7 +63,13 @@ def _short_label(description):
     if label == "task_onset":
         name = {"arms": "Raise arms", "legs": "Raise legs", "blink": "Blink",
                 "imagine_arms": "Imagine arms", "imagine_legs": "Imagine legs",
-                "mental_arithmetic": "Arithmetic"}.get(fields.get("condition"), name)
+                "mental_arithmetic": "Arithmetic",
+                "me_hand_left": "ME Hand L", "me_hand_right": "ME Hand R",
+                "me_foot_left": "ME Fuss L", "me_foot_right": "ME Fuss R",
+                "mi_hand_left": "MI Hand L", "mi_hand_right": "MI Hand R",
+                "mi_foot_left": "MI Fuss L", "mi_foot_right": "MI Fuss R",
+                "mi_hands_bilateral": "MI beide Haende", "mi_feet_bilateral": "MI beide Fuesse",
+                "word_generation": "Wortgenerierung", "mental_subtraction_single": "Einzelne Subtraktion"}.get(fields.get("condition"), name)
     if fields.get("trial", "0") not in ("", "0"):
         name += " #" + fields["trial"]
     name = " ".join(name.split())

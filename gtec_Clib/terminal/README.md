@@ -2,11 +2,11 @@
 
 **OSCAR-Stand 27.10.2026:** `start session` nimmt standardmäßig mit OSCAR über Python auf; `start session raw` wählt ausdrücklich Rohdaten. Beide Varianten bleiben getrennt gespeichert. Einrichtung, Geräteübergabe, Signalwahl und noch erforderliche Windows-/Headset-Abnahme: [OSCAR-Anleitung](../../acquisition/README.md). Beide Viewer bevorzugen für neue OSCAR-Sitzungen die bereinigten Daten; `--signal raw` wählt Rohdaten. FIF-Exporte enthalten die gewählte Variante vor zusätzlichen Anzeigefiltern.
 
-**Aktuell implementierte Sitzung 1.0 (38:16 min):** [SESSION_ANLEITUNG.md](SESSION_ANLEITUNG.md).
-`start session` runs baselines, randomized motor/imagery/arithmetic trials, breaks, recording and markers.
+**Implementierte Sitzung 2.0 (45:04 min, 168 Trials):** [SESSION_ANLEITUNG.md](SESSION_ANLEITUNG.md).
+`start session` runs baselines, randomized unilateral motor/imagery trials and bilateral/cognitive comparison tasks, breaks, recording and markers.
 Use `session pause`, `session resume`, and `stop` to intervene; `mark LABEL` logs observations without changing session cues.
 
-**Geplante Sitzung 2.0 (45:04 min):** [Versuchsprotokoll](../../docs/experiment-protocol.md). Die neuen Links-/Rechts-Aufgaben und mentalen Vergleichsbedingungen sind noch nicht implementiert. Technischer Änderungsbedarf: [Sitzungsspezifikation](../../docs/session-automation-plan.md).
+**Wissenschaftliches Protokoll:** [Versuchsprotokoll](../../docs/experiment-protocol.md). Links-/Rechts-Aufgaben und mentale Vergleichsbedingungen sind hardwarefrei geprüft; Windows-/Headset-Abnahme bleibt erforderlich. Technischer Stand: [Sitzungsspezifikation](../../docs/session-automation-plan.md).
 
 **Vollständige deutsche Bedienungsanleitung:** [VERWENDUNG.md](VERWENDUNG.md)
 
@@ -107,13 +107,13 @@ start session
 Use `GoToExp "VP01"` for an existing folder. All eight EEG channels must be enabled.
 Move the cue window to the participant monitor before starting. The session enters
 fullscreen and records continuously, including breaks. The planned duration is
-38:16; unplanned pauses and trial repeats extend it.
+45:04; unplanned pauses and trial repeats extend it.
 
 `session pause` freezes the schedule; `session resume` repeats an interrupted trial
 or baseline. `stop` displays PAUSE before waiting for recorder cleanup.
 During an automated session, `mark LABEL` logs an observation without changing
 the display, and manual `cue` commands are blocked. Use `session order imagery
-motorik kognitiv` before starting to change run order. See
+motorik` before starting to change run order. See
 [SESSION_ANLEITUNG.md](SESSION_ANLEITUNG.md) for displays, files and recovery.
 
 ### Manual experiment and cue commands

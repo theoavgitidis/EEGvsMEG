@@ -1,6 +1,6 @@
-# Sitzungssteuerung: bestehende Verträge und Umsetzung von Protokoll 2.0
+# Sitzungssteuerung: Protokoll 2.0 und Dateiverträge
 
-Stand: 28.10.2026. **Die CLI implementiert weiterhin `eeg-session-1.0`.** Das neue [Versuchsprotokoll](experiment-protocol.md) mit 168 Trials und 45:04 Minuten ist die Zielspezifikation, noch keine ausführbare Funktion. Die [Sitzungsanleitung](../gtec_Clib/terminal/SESSION_ANLEITUNG.md) beschreibt den aktuellen Befehl und dessen 112 Trials in 38:16 Minuten.
+Stand: 28.10.2026. **Die CLI implementiert `eeg-session-2.0`: 168 Trials in 45:04 Minuten.** Plan, Zustände, Marker und Recorder sind hardwarefrei geprüft. Windows-Release-Build, Anzeige und vollständiger Echtzeitlauf mit Headset stehen aus. Wissenschaftliche Definitionen: [Versuchsprotokoll](experiment-protocol.md); Bedienung: [Sitzungsanleitung](../gtec_Clib/terminal/SESSION_ANLEITUNG.md).
 
 ## 1. Bestehende Architektur und Aufnahme
 
@@ -17,11 +17,11 @@ Stand: 28.10.2026. **Die CLI implementiert weiterhin `eeg-session-1.0`.** Das ne
 
 `start session` verwendet OSCAR; `start session raw` ausdrücklich den C-API-Recorder. Die Datenvarianten bleiben getrennt. Startfreigabe, Verzögerungszuordnung, Nachlauf und Fehlerverhalten sind in der [Aufnahmeanleitung](../acquisition/README.md) dokumentiert. Kein automatischer Rückfall auf Rohdaten.
 
-## 2. Anforderungen an den neuen Plan
+## 2. Implementierter Plan
 
-Aufgabenbeschreibungen, Kontingente und wissenschaftliche Grenzen werden ausschließlich im [Versuchsprotokoll](experiment-protocol.md) gepflegt. Der Generator muss daraus folgenden Vertrag erfüllen:
+Aufgabenbeschreibungen, Kontingente und wissenschaftliche Grenzen werden ausschließlich im [Versuchsprotokoll](experiment-protocol.md) gepflegt. Der Generator muss folgenden Vertrag erfüllen; `Plan::validate()` prüft vor dem Start Gesamt-/Blockzeiten, Klassenkontingente und Phasenverknüpfungen:
 
-| Merkmal | Ziel für Protokoll 2.0 |
+| Merkmal | Protokoll 2.0 |
 |---|---|
 | Läufe | M: Ausführung; I: Imagery und mentale Vergleichsaufgaben; beide Reihenfolgen |
 | Motorik | 4 Blöcke à 16 Trials = 64; 4 Bedingungen à 16 |
@@ -36,9 +36,9 @@ Aufgabenbeschreibungen, Kontingente und wissenschaftliche Grenzen werden ausschl
 
 Plan vollständig vorab erzeugen und mit Seed speichern. Klassen je Block ausgleichen, maximal zwei gleiche Bedingungen hintereinander auch über Blockgrenzen; Erholung und kognitive Inhalte unabhängig im Rahmen ihrer Kontingente zuweisen. Wiederholungen dürfen die restliche Liste nicht neu auslosen.
 
-Protokoll 2.0 erhält eigene Labels aus dem Versuchsprotokoll. Alte Labels und Daten nicht umdeuten. Sprache, Bewegungsdefinition, kognitive Parameter und Software-/Protokollversion nachvollziehbar speichern. Die zusätzlichen Felder und ihre Schemaversion müssen bei der Implementierung konkret festgelegt werden; sie existieren derzeit nicht automatisch.
+Protokoll 2.0 verwendet die eigenen Labels aus dem Versuchsprotokoll. Session-JSON meldet `schema_version=2`, `protocol_version=eeg-session-2.0`, `movement_version=fist-ankle-dorsiflexion-v1`, `task_language=de` und `planned_trials=168`. Sprache und Bewegungsdefinition beschreiben den Instruktionsstandard; die tatsächlich geübte Amplitude wird im Teilnehmerbogen dokumentiert. Alte Labels und Daten bleiben unverändert.
 
-Die bisherige Syntax `session order imagery motorik kognitiv` verlangt drei Läufe und konfiguriert **keinen** neuen Zweilaufplan. Parser, Metadaten, Terminalzählung und Planvalidator müssen gemeinsam angepasst werden. Noch keine neue CLI-Syntax als ausführbar dokumentieren.
+Aktuelle Syntax: `session order motorik imagery` oder `session order imagery motorik`. Standard ist Motorik zuerst. Alte Dreilaufbefehle, doppelte oder fehlende Läufe werden zurückgewiesen, ohne die konfigurierte Reihenfolge zu verändern.
 
 ## 3. Anzeige und Start
 
@@ -81,45 +81,45 @@ session_….csv.session.json
 
 OSCAR ergänzt bereinigte CSV, Verarbeitungs-/Gerätemetadaten und Worker-Log gemäß Aufnahmeanleitung. Zuordnung über Teilnehmer-ID plus Sitzungs-ID und gemeinsamen Namensstamm. UTC-Ereigniszeiten und lokale Zeitzone dokumentieren; bei Namenskollision eindeutigen Zusatz vergeben. Session-Metadaten bereits am Start schreiben und bei Pause/Fortsetzung/Abschluss aktualisieren, möglichst durch atomaren Dateiersatz.
 
-Die folgenden Schemata beschreiben **den bestehenden Stand**. Erweiterungen für 2.0 müssen abwärtskompatibel versioniert und zusammen mit Aufnahme, Import und Auswertung umgesetzt werden.
+Die folgenden Schemata beschreiben den implementierten Stand. Die bisherigen Spalten bleiben an ihren Positionen; Version 2 ergänzt Spalten am Ende. Die gemeinsamen Python-Importer unterstützen zusätzlich alte Dateien ohne diese Felder. Widersprüchliche Protokollversionen und gemischte alte/neue Aufgabenlabels werden in der ML-Auswertung zurückgewiesen.
 
-### EEG-CSV (bestehend)
+### EEG-CSV (Version 2)
 
 Bestehendes Format beibehalten: `sample_index`, `nominal_time_s`, `host_read_utc_s` und aktivierte Kanalwerte. Einheiten und Konfiguration stehen zusätzlich in den Metadaten.
 
-### Plan-CSV (bestehend)
+### Plan-CSV (Version 2)
 
 Eine Zeile pro Phase, einschließlich Baselines und Pausen. Tatsächliche Spalten:
 
 ```text
-session_id,phase_index,planned_start_s,run,block,trial,condition,phase,duration_s,start_number,subtract,protocol_version,seed
+session_id,phase_index,planned_start_s,run,block,trial,condition,phase,duration_s,start_number,subtract,protocol_version,seed,mode,body_part,side,movement_version,language,word_letter,next_run
 ```
 
 `planned_start_s` bezieht sich auf den ursprünglichen Plan ohne ungeplante Unterbrechungen. Vorbereitung, Aufgabe und Erholung stehen in getrennten Zeilen; `duration_s` enthält deren jeweilige Dauer. Bei Wiederholungen bleibt diese Datei unverändert, die tatsächlichen Attempts stehen in der Eventdatei.
 
-### Session-JSON (bestehend)
+### Session-JSON (Version 2)
 
 Mindestens:
 
 - Sitzungs-ID, pseudonyme Versuchsperson-ID und Dateizuordnung.
-- Protokollversion und, soweit verfügbar, Software-/Git-Version.
+- Protokollversion, Schemaversion, Bewegungsversion, Aufgabensprache und feste Auswahlregeln für Zahlen/Buchstaben.
 - Zufallsseed und Reihenfolge der Hauptläufe.
 - Start-/Endzeit in UTC, lokale Zeitzone.
 - Abtastrate, Geräteseriennummer, API-/Firmwareversion soweit verfügbar.
 - Vollständige aktive Kanalkonfiguration einschließlich Einheiten.
-- Geplante Dauer, tatsächliche Dauer, ungeplante Pausendauer.
+- Geplante Trialzahl und Dauer, tatsächliche Dauer, ungeplante Pausendauer.
 - Geplante Trials, gültig abgeschlossene Trials und Attempts/Wiederholungen.
 - Abschlusszustand und Abbruch-/Fehlergrund.
 - Samplezahl und Counter-Unterbrechungen, soweit verfügbar.
 
 Metadaten bereits am Start mit Zustand `running` schreiben und bei relevanten Zustandswechseln aktualisieren. Dateiersatz möglichst atomar durchführen, damit ein Prozessabbruch nicht das einzige Metadatendokument zerstört. Nach Absturz darf `running` nicht fälschlich als erfolgreicher Abschluss interpretiert werden.
 
-### Event-CSV (bestehend)
+### Event-CSV (Version 2)
 
 Die vorhandenen vier Spalten bleiben erhalten. Sitzungen schreiben dieses erweiterte CSV-Schema:
 
 ```text
-host_utc_s,elapsed_s,samples_received,label,source,run,block,trial,attempt,condition,phase,planned_elapsed_s,actual_session_elapsed_s,reason,start_number,subtract
+host_utc_s,elapsed_s,samples_received,label,source,run,block,trial,attempt,condition,phase,planned_elapsed_s,actual_session_elapsed_s,reason,start_number,subtract,protocol_version,mode,body_part,side,movement_version,language,word_letter
 ```
 
 `label` enthält bei automatischen Ereignissen den Ereignistyp, bei manuellen Beobachtungen den eingegebenen Text. Die zusätzlichen Felder erhalten den Kontext. `planned_elapsed_s` beschreibt den Zielzeitpunkt der betreffenden Phase beziehungsweise ihrer Grenze im laufend angepassten Ablauf. Nach einer Unterbrechung kann er vom ursprünglichen `planned_start_s` der Plan-CSV abweichen. `elapsed_s` ist recorderbezogen, `actual_session_elapsed_s` sitzungsbezogen; die beiden Startzeitpunkte sind nicht exakt identisch.
@@ -139,7 +139,9 @@ Automatische Ereignisse:
 - `trial_invalidated`, `trial_repeat`
 - Fensterschließung und relevante Timingabweichungen
 
-Semantik ausschließlich für Protokoll 1.0: `trial_start` und READY beginnen gemeinsam. Nach zwei Sekunden erscheinen Zahlen; dort liegen `cue_onset` und angewiesener `task_onset`. Nach zehn Sekunden beginnt mit dem Kreuz die Erholung. Für die bisherigen Motorik-/Imagery-Trials erscheint die Aufgabeninstruktion nach der zweisekündigen Fixation. Im Zielprotokoll 2.0 beginnt jede Aufgabe nach zwei Sekunden Kreuz; die vier Vergleichsbedingungen dauern fünf Sekunden und benötigen neue Parameter.
+In Protokoll 2.0 beginnt jeder Trial mit zwei Sekunden Kreuz. Danach liegen `cue_onset` und angewiesener `task_onset`; nach vier beziehungsweise fünf Sekunden markiert `task_offset` den Wechsel zurück zum Kreuz. `start_number` und `subtract` enthalten das tatsächliche Zahlenpaar, `word_letter` den tatsächlichen Buchstaben. Wiederholte Attempts behalten dieselben Parameter. `next_run` benennt in Plan-Pausen den danach anzuzeigenden Modus.
+
+`mode` ist `motor_execution`, `motor_imagery` oder `cognitive`; `body_part` ist `hand` oder `foot`, `side` ist `left`, `right` oder `bilateral`. Für nicht zutreffende Phasen bleiben Felder leer. Kognitive Trials tragen `language=de`. Baselines und Pausen erhalten weiterhin die Protokollversion. Alte 1.0-Dateien behalten ihren ursprünglichen READY-/Seriensubtraktionsablauf und werden nicht umetikettiert.
 
 Zeitpunkte beschreiben die angezeigte Anweisung, nicht den tatsächlich beobachteten Beginn einer Bewegung oder eines Gedankens.
 
@@ -153,24 +155,26 @@ mark Versuchsperson fragt nach
 
 Diese werden während einer Sitzung protokolliert, ohne Anzeige, Phase oder Countdown zu verändern. Das gilt auch für Labels wie `baseline`, die außerhalb der Sitzung eine Cue-Zuordnung haben. Organisatorische automatische Marker dürfen ebenfalls keinen beliebigen Text auf dem Teilnehmerbildschirm auslösen.
 
-## 6. Umsetzungsreihenfolge und Abnahme
+## 6. Import und Auswertung
 
-1. Plan-Generator, neue Labels, Laufreihenfolgen und 2704-s-Zeitmodell umsetzen; Validierung über viele Seeds und beide Reihenfolgen.
-2. CLI, Teilnehmeranzeige, Terminalzählung und kognitive Parameter gemeinsam erweitern.
-3. Metadatenschema versionieren; Seite, Körperteil, Modus, Sprache und Bewegungsversion erhalten. Trial/Attempt-Zuordnung nicht durch neue Labels verlieren.
-4. Beide Viewer-Einstiegspunkte und ML-Labelauswahl prüfen. Alte Sitzungen bleiben Protokoll 1.0; neue und alte Bewegungen nicht stillschweigend poolen. Rohdaten und OSCAR-Variante ausdrücklich unterscheiden.
-5. Hardwarefreie Regressionen für Zeitkontingente, alle Phasen, Pause/Repeat, Timingfehler, Fensterverlust, Aufnahme-/Dateifehler und vollständige Sitzung ausführen. Syntax und Anleitungen erst mit tatsächlich implementierter Bedienung angleichen.
-6. Windows-Release-Build, Vendor-DLL, zwei Monitore, Umlaute/Zahlen, laufende Terminaleingabe, Software-/Display-Timing und einen vollständigen Echtzeitlauf mit Headset abnehmen. Signalqualität und wissenschaftliche Eignung separat bewerten.
+Beide Viewer-Einstiegspunkte erhalten sämtliche neuen Kontextfelder in Annotationen einschließlich FIF-Export und zeigen kompakte, unterscheidbare Aufgabenlabels. Punktannotationen allein schließen keine EEG-Abschnitte automatisch aus. ML-Importer schließen invalidierte und unvollständige Attempts aus, prüfen eindeutige Phasenmarker und verlangen vollständig innerhalb der Aufgabe liegende 3-s-Fenster (0,5–3,5 s nach Cue). Nur alte Kognitiv-Trials erzeugen zusätzlich ein zugehöriges spätes Restfenster.
 
-Passende bestehende Prüfkommandos:
+`analysis/session_conditions.py` definiert die getrennten 2.0-Kontraste `ME_HandSide`, `ME_FootSide`, `ME_FourClass`, `MI_HandSide`, `MI_FootSide`, `MI_FourClass`, `MI_Bilateral` und `Cognitive`. Block-/Trial-IDs bleiben beim Auswählen erhalten. Ein gemischter mentaler Achtklassenvergleich wird nicht als Standard ausgewertet. Alte `Motorik`-/`Imagery`-/`Kognitiv`-Modelle gelten weiterhin nur für 1.0. Neue Checkpoints speichern die Protokollversion; Predict-CLIs prüfen zusätzlich die Klassen des gespeicherten Kontrasts.
+
+Baseline: Mu-/Beta-Bandpower für 2.0; die bisherige Fünfband-Baseline für alte Daten bleibt erhalten. CBraMod-/REVE-Vorverarbeitung wird dadurch nicht umdefiniert; der jeweilige Bericht dokumentiert Merkmalsbänder und Verarbeitung. Kein automatisches Training während der Aufnahme.
+
+## 7. Prüfstand und offene Hardware-Abnahme
+
+Hardwarefreie Prüfkommandos:
 
 ```sh
 python gtec_Clib/terminal/test_recorder.py
 python gtec_Clib/terminal/test_session.py
 python gtec_Clib/terminal/test_oscar_session.py
-python -m unittest analysis.test_event_annotations analysis.test_signal_selection analysis.test_view_eeg_cli analysis.test_waterfall_cli
+python -m unittest analysis.test_session_protocol analysis.test_event_annotations analysis.test_signal_selection analysis.test_view_eeg_cli analysis.test_waterfall_cli
+python -m unittest analysis.test_ml_pipeline analysis.test_reve_pipeline
 ```
 
-Die bestehenden Sessiontests prüfen noch 112 Trials, 2296 Sekunden und sechs Laufreihenfolgen. Frühere erfolgreiche Mock-/Sanitizer-Prüfungen validieren das bisherige Protokoll, nicht den neuen Plan. Ein echter FIF-Speicher-/Ladetest prüft die Erhaltung der Annotationen, nicht deren automatische Verwendung als Ausschlussmaske.
+Die C++-Tests prüfen 250 Seeds in beiden Reihenfolgen, exakte Rest-/Klassenkontingente, alle Aufgabenanzeigen und gespeicherten Parameter sowie eine vollständige beschleunigte 168-Trial-Sitzung. Pause/Repeat wird auch für alle mentalen Bedingungen in jeder Trialphase geprüft. Langsame Anzeige/Marker, blockierter Recorder-Stop, Fensterverlust, Aufnahme-/Metadatenfehler und EOF bleiben abgesichert. Die Python-Tests prüfen neue Kontraste, alte Dateien, widersprüchliche Protokolle, Ausschlüsse, Testtrennung und die Erhaltung der Zusatzfelder über beide Viewer und FIF. Modellpipeline-Tests verwenden kleine synthetische Eingaben ohne Checkpoint-Download.
 
-Die Umsetzung von Protokoll 2.0 und ihre Tests stehen aus. Der aktuelle Windows-/Headset-Abnahmestand und die bisherigen OSCAR-Prüfungen sind in der Aufnahmeanleitung festgehalten.
+Unter Windows ausstehend: aktueller Release-Build und Vendor-DLL, zwei Monitore/Vollbild, lesbare neue Hinweise und Pausentexte, laufende Terminaleingabe, tatsächliches Display-/Softwaretiming, Lizenzzugang sowie kompletter Echtzeitlauf mit Headset einschließlich OSCAR-Nachlauf. Diese Abnahme und die wissenschaftliche Signal-/Aufgabenvalidierung werden durch hardwarefreie Tests nicht ersetzt. OSCAR-Abnahme: [Aufnahmeanleitung](../acquisition/README.md).

@@ -6,12 +6,12 @@ Stand: 28. Oktober 2026. Befehle beschreiben den implementierten Stand.
 
 ## Automatische Sitzung
 
-`start session` führt weiterhin Protokoll 1.0 mit 38:16 Minuten geplanter Dauer aus. Die vollständige Bedienung, Anzeigen, Dateien und Unterbrechungsregeln stehen in [SESSION_ANLEITUNG.md](SESSION_ANLEITUNG.md). Das neue [Versuchsprotokoll 2.0](../../docs/experiment-protocol.md) mit 45:04 Minuten und Links-/Rechts-Aufgaben ist noch nicht implementiert. Die [Projektübersicht](../../README.md) verlinkt Spezifikation und Tests.
+`start session` führt nach aktuellem Release-Build Protokoll 2.0 mit 168 Trials und 45:04 Minuten geplanter Dauer aus. Die vollständige Bedienung, Anzeigen, Dateien und Unterbrechungsregeln stehen in [SESSION_ANLEITUNG.md](SESSION_ANLEITUNG.md). Das [Versuchsprotokoll 2.0](../../docs/experiment-protocol.md) definiert die Links-/Rechts-Aufgaben und mentalen Vergleichsbedingungen; Windows-/Headset-Abnahme bleibt erforderlich. Die [Projektübersicht](../../README.md) verlinkt Spezifikation und Tests.
 
 | Befehl | Wirkung |
 |---|---|
 | `start session` | Automatische Sitzung mit verbundenem Headset und ausgewähltem Experimentordner starten; alle acht EEG-Kanäle müssen aktiviert sein. |
-| `session order imagery motorik kognitiv` | Vor Start die Reihenfolge wählen; jeden Lauf genau einmal angeben. |
+| `session order imagery motorik` | Vor Start die Reihenfolge wählen; Motorik und Imagery jeweils genau einmal angeben. |
 | `session pause` | Ablauf anhalten, EEG weiter aufzeichnen und `PAUSE` zeigen. |
 | `session resume` | Fortsetzen; unterbrochenen Trial oder Baseline vollständig wiederholen. |
 | `mark LABEL` | Zusätzliche Beobachtung speichern, ohne den automatischen Ablauf oder die Anzeige zu verändern. |
@@ -272,7 +272,7 @@ Für eine echte Messung verwende `real` statt `test` und einen neuen Dateinamen.
 | `start session` | Startet den automatischen Pilotablauf einschließlich Aufnahme und Marker; siehe Sitzungsanleitung. |
 | `session pause` | Pausiert die automatische Sitzung; EEG-Aufnahme läuft weiter. |
 | `session resume` | Setzt eine pausierte Sitzung nach den Wiederholungsregeln fort. |
-| `session order motorik imagery kognitiv` | Wählt vor Sitzungsstart eine Permutation der drei Läufe. |
+| `session order motorik imagery` | Wählt vor Sitzungsstart Motorik → Imagery oder die umgekehrte Reihenfolge. |
 | `start real` | Startet manuelle Messwerterfassung; anschließend zeitnah `read` aufrufen. |
 | `start test` | Startet manuelle Erfassung eines Testsignals. |
 | `read SCANS` | Liest 1–2500 Scans nach `start`; zeigt die ersten fünf im Terminal. |

@@ -29,7 +29,8 @@ static void help() {
         "version | error | bluetooth | scan paired|unpaired\n"
         "open SERIAL | close | info | config | channels | index CHANNEL NAME\n"
         "enable CONFIG_INDEX 0|1   (indices 0..16; acquisition stopped)\n"
-        "start session [oscar|raw] (default: OSCAR) | session pause|resume | session order motorik imagery kognitiv\n"
+        "start session [oscar|raw] (eeg-session-2.0: 168 trials, 45:04; default: OSCAR)\n"
+        "session pause|resume | session order motorik imagery (or imagery motorik)\n"
         "start real|test | read SCANS [CSV_NAME] | stop\n"
         "record SECONDS CSV_NAME [real|test] (0 = until stop)\n"
         "mark LABEL | status (background recorder)\n"
@@ -80,8 +81,7 @@ int main() {
                         std::transform(name.begin(),name.end(),name.begin(),[](unsigned char c) { return char(std::tolower(c)); });
                         if (name == "motorik") order.push_back(0);
                         else if (name == "imagery") order.push_back(1);
-                        else if (name == "kognitiv") order.push_back(2);
-                        else throw std::runtime_error("Use session order motorik imagery kognitiv (any permutation).");
+                        else throw std::runtime_error("Use session order motorik imagery (any permutation).");
                     }
                     session.setOrder(order); std::cout << "Session run order updated.\n"; continue;
                 }

@@ -78,27 +78,39 @@ with tempfile.TemporaryDirectory() as directory:
         with next(folder.glob("*.events.csv")).open(encoding="utf-8") as f:
             return list(csv.DictReader(f))
 
-    # Entire session with real recorder, accelerated schedule, no 38-minute wait.
+    # Entire session with real recorder, accelerated schedule, no 45-minute wait.
     p, folder = launch("Complete ü")
     meta = wait_for(lambda: state_is(folder, "completed"), timeout=35)
     output = finish(p, "status")
-    assert meta["completed_trials"] == 112 and meta["repetitions"] == 0, meta
-    assert meta["planned_seconds"] == 2296 and meta["samples"] > 0
-    assert meta["completed_trials_by_run"] == {"Motorik": 60, "Imagery": 40, "Kognitiv": 12}
+    assert meta["completed_trials"] == 168 and meta["repetitions"] == 0, meta
+    assert meta["planned_seconds"] == 2704 and meta["samples"] > 0
+    assert meta["completed_trials_by_run"] == {"Motorik": 64, "Imagery": 104}
     assert len(meta["device"]["channels"]) == 17
-    assert "38:16" in output and "REST 0:00" in output, output
+    assert meta["protocol_version"] == "eeg-session-2.0" and meta["schema_version"] == 2
+    assert meta["planned_trials"] == 168 and meta["task_language"] == "de"
+    assert "45:04" in output and "REST 0:00" in output, output
     es = events(folder)
-    assert sum(e["label"] == "trial_end" for e in es) == 112
-    assert sum(e["label"] == "block_start" for e in es) == 11
+    assert sum(e["label"] == "trial_end" for e in es) == 168
+    assert sum(e["label"] == "block_start" for e in es) == 8
     assert es[-1]["label"] == "session_end"
-    assert float(es[-1]["planned_elapsed_s"]) == 2296
+    assert float(es[-1]["planned_elapsed_s"]) == 2704
     assert all(float(e["actual_session_elapsed_s"]) >= 0 for e in es)
     assert not list(folder.glob("*.reserve"))
     assert all(e["source"] == "automatic" for e in es)
     assert [int(e["samples_received"]) for e in es] == sorted(int(e["samples_received"]) for e in es)
     plan = list(csv.DictReader(next(folder.glob("*.plan.csv")).open(encoding="utf-8")))
-    assert sum(float(e["duration_s"]) for e in plan) == 2296
-    print("PASS: complete 112-trial CLI session, files, metadata, automatic events, recorder")
+    assert sum(float(e["duration_s"]) for e in plan) == 2704
+    tasks = [row for row in plan if row["phase"] == "task"]
+    assert len({row["condition"] for row in tasks}) == 12
+    for row in tasks:
+        emitted = [e for e in es if e["label"] == "cue_onset" and e["run"] == row["run"] and e["trial"] == row["trial"]]
+        assert len(emitted) == 1
+        for key in ["condition", "mode", "body_part", "side", "movement_version", "language", "word_letter", "protocol_version"]:
+            assert emitted[0][key] == row[key], (key, emitted[0], row)
+        if row["condition"] == "mental_subtraction_single":
+            assert int(emitted[0]["subtract"]) == int(row["subtract"]) and int(row["subtract"]) != 7
+    assert all(e["protocol_version"] == "eeg-session-2.0" for e in es)
+    print("PASS: complete 168-trial CLI session, files, metadata, automatic events, recorder")
 
     # Pause a trial, preserve manual observations without changing schedule, reject interfering commands.
     p, folder = launch("Paused", speed=20)
@@ -152,13 +164,13 @@ with tempfile.TemporaryDirectory() as directory:
     # Repeated sessions in one experiment never reuse or overwrite prior files.
     p, folder = launch("Repeated", speed=1)
     wait_for(lambda: state_is(folder, "running"))
-    send(p, "stop", "session order kognitiv imagery motorik", "start session raw")
+    send(p, "stop", "session order imagery motorik kognitiv", "session order imagery imagery", "session order imagery motorik", "start session raw")
     wait_for(lambda: len(list(folder.glob("*.session.json"))) == 2)
     finish(p, "stop")
     metas = [json.loads(path.read_text()) for path in folder.glob("*.session.json")]
     assert len({m["session_id"] for m in metas}) == 2 and all(m["state"] == "aborted" for m in metas)
     assert len(list(folder.glob("*.csv"))) == 6
-    assert any(m["order"] == ["Kognitiv", "Imagery", "Motorik"] for m in metas)
+    assert any(m["order"] == ["Imagery", "Motorik"] for m in metas)
     print("PASS: unique filenames and session restart")
 
     p, folder = launch("Lateness", speed=1)

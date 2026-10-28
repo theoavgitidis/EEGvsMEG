@@ -1,6 +1,6 @@
 # Teilnehmerbogen – Vorlage
 
-Stand: 28.10.2026. Für Motorik, Motor Imagery und kognitive Vergleichsaufgaben gemäß [Versuchsprotokoll](experiment-protocol.md). Ein Bogen je Person; den Sitzungsabschnitt für jede Aufnahme wiederholen. Neue Aufgaben sind für Protokoll 2.0 geplant; die CLI führt noch Protokoll 1.0 aus. Bei Bestandsaufnahmen nicht durchgeführte Aufgaben als `n/a` erfassen.
+Stand: 28.10.2026. Für Motorik, Motor Imagery und kognitive Vergleichsaufgaben gemäß [Versuchsprotokoll](experiment-protocol.md). Ein Bogen je Person; den Sitzungsabschnitt für jede Aufnahme wiederholen. Die CLI führt Protokoll 2.0 aus; die Windows-/Headset-Abnahme steht noch aus. Bei Bestandsaufnahmen nicht durchgeführte Aufgaben als `n/a` erfassen.
 
 **Nur die leere Vorlage in Git speichern.** Ausgefüllte Bögen geschützt außerhalb des Repositorys ablegen. Keine Namen, Kontaktdaten, Geburtsdaten oder Zuordnungsschlüssel eintragen; Einwilligungen und eine gegebenenfalls notwendige Namenszuordnung separat aufbewahren. `n/a` bedeutet nicht erhoben oder unbekannt; „keine Angabe“ bedeutet bewusst nicht beantwortet.
 
@@ -33,7 +33,7 @@ IDs exakt aus den Sitzungsmetadaten übernehmen. Teilnehmer-ID und Sitzungs-ID b
 | Besuchsnummer | |
 | Einwilligung für diese Erhebung dokumentiert und gültig | ja / nein / ungeklärt |
 | Alle Aufgaben erklärt, geübt und verstanden | ja / nein; ggf. Schwierigkeit: |
-| Protokollversion; konkrete Laufreihenfolge | tatsächliche Version: ___; Reihenfolge: ___; geplant 2.0: M→I oder I→M; bisher 1.0: drei Läufe |
+| Protokollversion; konkrete Laufreihenfolge | tatsächliche Version: ___; Reihenfolge: ___; 2.0: M→I oder I→M; bisher 1.0: drei Läufe |
 | Schlaf letzte Nacht (Stunden, Selbstauskunft) | |
 | Müdigkeit unmittelbar vor Beginn | 0 = keine / 1 = leicht / 2 = mittel / 3 = stark |
 | Koffein in den letzten 4 Stunden | nein / ja: Getränk, ungefähre Menge und Abstand zum Start / keine Angabe |

@@ -21,7 +21,7 @@ class Session {
     std::chrono::steady_clock::time_point epoch;
     double speed = 1, endedAt = 0;
     std::string shown;
-    std::vector<int> runOrder{0,1,2};
+    std::vector<int> runOrder{0,1};
     bool oscarRequested = false;
     struct TimingDeviation {};
     bool checkingTransition = false;
@@ -72,6 +72,14 @@ class Session {
     void display(const std::string& text) {
         if (shown != text) { cues.show(text); shown = text; }
     }
+    static void taskContext(Recorder::Context& c, const session::Phase& p) {
+        c.protocolVersion = session::protocolVersion; c.startNumber = p.startNumber; c.subtract = p.subtract; c.wordLetter = p.wordLetter;
+        if (auto spec = p.task()) {
+            c.mode = spec->mode; c.bodyPart = spec->bodyPart; c.side = spec->side;
+            c.movementVersion = spec->mode == "cognitive" ? "" : session::movementVersion;
+            c.language = spec->mode == "cognitive" ? "de" : "";
+        }
+    }
     void event(const std::string& type, const session::Phase& p, int attempt, double at, double deadline) {
         checkTransitionTime();
         // Paint first; cue/task events below then describe software-confirmed display delivery.
@@ -81,7 +89,7 @@ class Session {
         c.trial = p.trial; c.attempt = attempt; c.startNumber = p.startNumber; c.condition = p.condition; c.phase = p.stage;
         c.actual = std::max(at,now())-timeline->started; c.planned = deadline-p.duration-timeline->started;
         if (type == "phase_end" || type == "task_offset" || type == "rest_end" || type == "trial_end" || type == "baseline_end" || type == "break_end" || type == "block_end" || type == "run_end" || type == "session_end") c.planned += p.duration;
-        c.reason = reason;
+        c.reason = reason; taskContext(c,p);
         recorder.mark(type,c,type == "session_error" || type == "session_abort" || type == "trial_invalidated");
         checkTransitionTime();
     }
@@ -99,14 +107,19 @@ class Session {
             << ",\n  \"state\": " << quote(state) << ",\n  \"reason\": " << quote(reason)
             << ",\n  \"started_utc\": " << quote(startedUtc) << ",\n  \"ended_utc\": " << quote(endedUtc)
             << ",\n  \"local_timezone\": " << quote(date(true,"%Z %z"))
-            << ",\n  \"order\": [" << quote(std::vector<std::string>{"Motorik","Imagery","Kognitiv"}[runOrder[0]])
-            << ',' << quote(std::vector<std::string>{"Motorik","Imagery","Kognitiv"}[runOrder[1]])
-            << ',' << quote(std::vector<std::string>{"Motorik","Imagery","Kognitiv"}[runOrder[2]]) << ']'
-            << ",\n  \"planned_seconds\": 2296,\n  \"elapsed_seconds\": " << elapsed
+            << ",\n  \"schema_version\": 2"
+            << ",\n  \"movement_version\": " << quote(session::movementVersion)
+            << ",\n  \"task_language\": \"de\""
+            << ",\n  \"subtraction_policy\": \"single subtraction; minuend 60..199; subtrahend 12..59; unique pairs\""
+            << ",\n  \"word_letter_pool\": \"BDFGHKLMNRST\""
+            << ",\n  \"order\": [" << quote(session::runNames()[runOrder[0]])
+            << ',' << quote(session::runNames()[runOrder[1]]) << ']'
+            << ",\n  \"planned_trials\": " << timeline->plan.trials()
+            << ",\n  \"planned_seconds\": " << timeline->plan.duration() << ",\n  \"elapsed_seconds\": " << elapsed
             << ",\n  \"unplanned_pause_seconds\": " << timeline->pausedSeconds + (timeline->paused ? elapsed-timeline->pauseStarted : 0)
             << ",\n  \"completed_trials\": " << timeline->completedTrials
             << ",\n  \"completed_trials_by_run\": {\"Motorik\":" << timeline->completedByRun["Motorik"]
-            << ",\"Imagery\":" << timeline->completedByRun["Imagery"] << ",\"Kognitiv\":" << timeline->completedByRun["Kognitiv"] << '}'
+            << ",\"Imagery\":" << timeline->completedByRun["Imagery"] << '}'
             << ",\n  \"invalid_attempts\": " << timeline->invalid
             << ",\n  \"repetitions\": " << timeline->repeats
             << ",\n  \"samples\": " << snap.samples << ",\n  \"counter_discontinuities\": " << snap.discontinuities
@@ -177,7 +190,7 @@ public:
         std::lock_guard<std::mutex> lock(mutex);
         if (state == "running" || state == "paused" || recorder.active()) throw std::runtime_error("Stop acquisition before changing run order.");
         auto check = order; std::sort(check.begin(),check.end());
-        if (check != std::vector<int>{0,1,2}) throw std::runtime_error("Specify each run once: motorik imagery kognitiv.");
+        if (check != std::vector<int>{0,1}) throw std::runtime_error("Specify each run once: motorik imagery (or imagery motorik).");
         runOrder = order;
     }
     void start(UNICORN_HANDLE handle, Experiments& experiments, bool useOscar = false,
@@ -236,15 +249,18 @@ public:
         epoch = std::chrono::steady_clock::now(); startedUtc = date(false,"%Y-%m-%dT%H:%M:%SZ");
         try {
             std::ofstream plan(companion(".plan.csv"));
-            plan << "session_id,phase_index,planned_start_s,run,block,trial,condition,phase,duration_s,start_number,subtract,protocol_version,seed\n";
+            plan << "session_id,phase_index,planned_start_s,run,block,trial,condition,phase,duration_s,start_number,subtract,protocol_version,seed,mode,body_part,side,movement_version,language,word_letter,next_run\n";
             double planned = 0;
             for (size_t i = 0; i < timeline->plan.phases.size(); ++i) {
                 const auto& p = timeline->plan.phases[i];
                 plan << cell(id) << ',' << i << ',' << planned << ',' << cell(p.run) << ',' << p.block << ',' << p.trial
                     << ',' << cell(p.condition) << ',' << cell(p.stage) << ',' << p.duration << ',';
                 if (p.startNumber) plan << p.startNumber;
-                plan << ','; if (p.startNumber) plan << 7;
-                plan << ',' << cell(session::protocolVersion) << ',' << seed << '\n'; planned += p.duration;
+                plan << ','; if (p.subtract) plan << p.subtract;
+                Recorder::Context context; taskContext(context,p);
+                plan << ',' << cell(session::protocolVersion) << ',' << seed << ',' << cell(context.mode) << ',' << cell(context.bodyPart)
+                    << ',' << cell(context.side) << ',' << cell(context.movementVersion) << ',' << cell(context.language) << ',' << cell(p.wordLetter)
+                    << ',' << cell(p.nextRun) << '\n'; planned += p.duration;
             }
             plan.flush(); if (!plan) throw std::runtime_error("Cannot write session plan."); plan.close();
             saveMetadata();
@@ -323,7 +339,7 @@ public:
         if (state != "running" && state != "paused") throw std::runtime_error("No active session.");
         Recorder::Context c; const auto& p = timeline->phase(); c.run = p.run; c.block = p.block; c.trial = p.trial;
         c.attempt = timeline->attempt; c.startNumber = p.startNumber; c.condition = p.condition; c.phase = p.stage;
-        c.actual = now()-timeline->started; c.planned = timeline->deadline-p.duration-timeline->started;
+        c.actual = now()-timeline->started; c.planned = timeline->deadline-p.duration-timeline->started; taskContext(c,p);
         try { recorder.mark(label,c); } catch (const std::exception& e) { finish("failed",e.what()); throw; }
     }
     std::vector<std::string> lines() const {
@@ -331,10 +347,10 @@ public:
         if (!timeline) return {};
         double at = state == "running" || state == "paused" ? now() : endedAt; const auto& p = timeline->phase();
         std::string trials = p.isTrial() ? "Trial "+std::to_string(p.trial)+"/"+std::to_string(p.total)+" | Versuch "+std::to_string(timeline->attempt) : "kein Aufgaben-Trial";
-        int blocks = p.run == "Kognitiv" ? 3 : 4;
+        int blocks = session::blocksPerRun;
         return {"SITZUNG "+id+" | "+state+" | REST "+session::clockText(timeline->remaining(at))+" | VERSTRICHEN "+session::clockText(state == "running" || state == "paused" ? at : endedAt),
             p.run+" : "+p.instruction()+" : "+trials,
             "Block "+std::to_string(p.block)+"/"+std::to_string(p.block ? blocks : 0)+" | "+p.stage+" Rest "+session::clockText(timeline->phaseRemaining(at))+" | Aufnahme "+(recorder.active() ? "AKTIV" : "STOPP")+" | "+(oscarRequested ? "OSCAR" : "RAW"),
-            "Datei: "+dataPath.u8string()+" | abgeschlossen "+std::to_string(timeline->completedTrials)+"/112 | Wiederholungen "+std::to_string(timeline->repeats)+(reason.empty() ? "" : " | "+reason)};
+            "Datei: "+dataPath.u8string()+" | abgeschlossen "+std::to_string(timeline->completedTrials)+"/"+std::to_string(timeline->plan.trials())+" | Wiederholungen "+std::to_string(timeline->repeats)+(reason.empty() ? "" : " | "+reason)};
     }
 };

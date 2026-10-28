@@ -38,7 +38,8 @@ def event_descriptions(rows):
                 completed.add(key)
 
     descriptions = []
-    fields = ("run", "condition", "block", "trial", "attempt", "phase", "start_number", "subtract", "reason")
+    fields = ("run", "condition", "block", "trial", "attempt", "phase", "start_number", "subtract", "reason",
+              "protocol_version", "mode", "body_part", "side", "movement_version", "language", "word_letter")
     for row in rows:
         if row.get("source") != "automatic":
             descriptions.append(row["label"])

@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <functional>
 #include <iomanip>
 #include <numeric>
@@ -9,102 +10,179 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <vector>
 
 namespace session {
-constexpr const char* protocolVersion = "eeg-session-1.0";
+constexpr const char* protocolVersion = "eeg-session-2.0";
+constexpr const char* movementVersion = "fist-ankle-dorsiflexion-v1";
+constexpr int plannedSeconds = 2704, plannedTrials = 168, blocksPerRun = 4;
+inline const std::vector<std::string>& runNames() {
+    static const std::vector<std::string> names{"Motorik", "Imagery"}; return names;
+}
 inline std::string clockText(double seconds) {
     int n = int(std::ceil(std::max(0.0, seconds)));
     std::ostringstream out; out << n/60 << ':' << std::setw(2) << std::setfill('0') << n%60; return out.str();
+}
+struct Condition {
+    std::string label, cue, instruction, mode, bodyPart, side;
+    int perBlock, taskSeconds;
+};
+inline const std::vector<Condition>& conditions(int run) {
+    static const std::vector<Condition> motor{
+        {"me_hand_left","HAND LINKS","linke Faust locker schliessen und oeffnen; ca. 2 Zyklen","motor_execution","hand","left",4,4},
+        {"me_hand_right","HAND RECHTS","rechte Faust locker schliessen und oeffnen; ca. 2 Zyklen","motor_execution","hand","right",4,4},
+        {"me_foot_left","FUSS LINKS","linken Vorfuss heben/senken; Ferse auflegen; ca. 2 Zyklen","motor_execution","foot","left",4,4},
+        {"me_foot_right","FUSS RECHTS","rechten Vorfuss heben/senken; Ferse auflegen; ca. 2 Zyklen","motor_execution","foot","right",4,4}};
+    static const std::vector<Condition> mental{
+        {"mi_hand_left","HAND LINKS","linke Faustbewegung fuehlen und vorstellen; ohne Bewegung","motor_imagery","hand","left",4,4},
+        {"mi_hand_right","HAND RECHTS","rechte Faustbewegung fuehlen und vorstellen; ohne Bewegung","motor_imagery","hand","right",4,4},
+        {"mi_foot_left","FUSS LINKS","linkes Vorfussheben fuehlen und vorstellen; ohne Bewegung","motor_imagery","foot","left",4,4},
+        {"mi_foot_right","FUSS RECHTS","rechtes Vorfussheben fuehlen und vorstellen; ohne Bewegung","motor_imagery","foot","right",4,4},
+        {"mi_hands_bilateral","BEIDE HAENDE","beide Faustbewegungen gleichzeitig vorstellen; ohne Bewegung","motor_imagery","hand","bilateral",3,5},
+        {"mi_feet_bilateral","BEIDE FUESSE","beide Vorfuesse gleichzeitig heben/senken vorstellen; ohne Bewegung","motor_imagery","foot","bilateral",3,5},
+        {"word_generation","","ein deutsches Wort zum Buchstaben still finden; nicht sprechen","cognitive","","",2,5},
+        {"mental_subtraction_single","","einmal still subtrahieren und Ergebnis pruefen","cognitive","","",2,5}};
+    if (run == 0) return motor;
+    if (run == 1) return mental;
+    throw std::runtime_error("Unknown session run.");
+}
+inline const Condition* definition(const std::string& label) {
+    for (int run : {0,1}) for (const auto& item : conditions(run)) if (item.label == label) return &item;
+    return nullptr;
 }
 struct Phase {
     std::string run, stage, condition;
     int block = 0, trial = 0, total = 0, startNumber = 0;
     double duration = 0;
+    int subtract = 0;
+    std::string wordLetter, nextRun;
     bool isTrial() const { return trial > 0; }
+    const Condition* task() const { return definition(condition); }
     std::string cue(double remaining = 0) const {
-        if (stage == "break") return "PAUSE\n" + clockText(remaining);
-        if (stage == "prepare") return run == "Kognitiv" ? "READY" : "+";
+        if (stage == "break") return "PAUSE\n" + clockText(remaining) + "\nDANACH: " +
+            (nextRun == "Motorik" ? "BEWEGEN" : "VORSTELLEN / DENKAUFGABEN");
         if (stage != "task") return "+";
-        if (condition == "arms") return "ARME HEBEN";
-        if (condition == "legs") return "BEINE HEBEN";
-        if (condition == "blink") return "BLINZELN";
-        if (condition == "imagine_arms") return "ARME VORSTELLEN";
-        if (condition == "imagine_legs") return "BEINE VORSTELLEN";
-        return std::to_string(startNumber) + " − 7\nFORTLAUFEND";
+        if (condition == "word_generation") return "WORT MIT " + wordLetter;
+        if (condition == "mental_subtraction_single") return std::to_string(startNumber) + " − " + std::to_string(subtract) + "\nEINMAL RECHNEN";
+        if (auto value = task()) return value->cue;
+        throw std::runtime_error("Unknown task cue: " + condition);
     }
     std::string instruction() const {
         if (stage == "baseline") return "ruhig sitzen, Kreuz ansehen";
-        if (stage == "break") return "PAUSE";
+        if (stage == "break") return "PAUSE; danach " + nextRun;
         if (stage == "rest") return "ERHOLUNG – ruhig sitzen, Kreuz ansehen";
-        if (stage == "prepare") return run == "Kognitiv" ? "READY – noch nicht rechnen" : "Kreuz ansehen";
-        if (condition == "arms") return "ARME HEBEN – einmal anheben und ablegen";
-        if (condition == "legs") return "BEINE HEBEN – einmal anheben und absetzen";
-        if (condition == "blink") return "BLINZELN – zweimal";
-        if (condition == "imagine_arms") return "ARME VORSTELLEN – ohne Bewegung";
-        if (condition == "imagine_legs") return "BEINE VORSTELLEN – ohne Bewegung";
-        return "ab " + std::to_string(startNumber) + " fortlaufend 7 abziehen";
+        if (stage == "prepare") return "Kreuz ansehen";
+        if (auto value = task()) return value->instruction;
+        throw std::runtime_error("Unknown task instruction: " + condition);
     }
 };
 struct Plan {
     uint32_t seed;
     std::vector<Phase> phases;
     double duration() const { double n = 0; for (const auto& p : phases) n += p.duration; return n; }
-};
-inline Plan makePlan(uint32_t seed, const std::vector<int>& order = {0,1,2}) {
-    auto sorted = order; std::sort(sorted.begin(), sorted.end());
-    if (sorted != std::vector<int>{0,1,2}) throw std::runtime_error("Run order must contain Motorik, Imagery, Kognitiv once each.");
-    Plan plan{seed, {}}; std::mt19937 rng(seed);
-    auto baseline = [&](const char* name) { plan.phases.push_back({name, "baseline", "baseline", 0,0,0,0,60}); };
-    baseline("Anfangsbaseline");
-    std::vector<int> numbers(600); std::iota(numbers.begin(), numbers.end(), 300);
-    std::shuffle(numbers.begin(), numbers.end(), rng); // 300..899, unique, remains positive under normal pilot pace
-    const std::vector<std::string> runs = {"Motorik", "Imagery", "Kognitiv"};
-    for (int position = 0; position < 3; ++position) {
-        int run = order[position];
-        int blocks = run == 2 ? 3 : 4, perClass = run == 2 ? 4 : 5;
-        std::vector<std::string> conditions = run == 0 ? std::vector<std::string>{"arms","legs","blink"}
-            : run == 1 ? std::vector<std::string>{"imagine_arms","imagine_legs"} : std::vector<std::string>{"mental_arithmetic"};
-        std::vector<std::vector<int>> rests;
-        for (size_t c = 0; c < conditions.size(); ++c) {
-            std::vector<int> values;
-            int base = run == 2 ? 15 : 6, count = run == 2 ? 3 : 5;
-            for (int i = 0; i < count; ++i) values.push_back(base);
-            for (int i = 0; i < count*2; ++i) values.push_back(base+1);
-            for (int i = 0; i < count; ++i) values.push_back(base+2);
-            std::shuffle(values.begin(), values.end(), rng); rests.push_back(values);
+    int trials() const { return int(std::count_if(phases.begin(),phases.end(),[](const Phase& p) { return p.stage == "task"; })); }
+    void validate() const {
+        if (duration() != plannedSeconds || trials() != plannedTrials || phases.size() != 513)
+            throw std::runtime_error("Invalid session totals.");
+        std::map<std::pair<std::string,int>,double> durations;
+        std::map<std::pair<std::string,int>,std::map<std::string,int>> counts;
+        std::map<std::tuple<std::string,int,std::string>,std::vector<int>> rests;
+        int baselines = 0, blockBreaks = 0, runBreaks = 0;
+        for (size_t i = 0; i < phases.size(); ++i) {
+            const auto& p = phases[i];
+            if (p.stage == "baseline") { ++baselines; if (p.duration != 60) throw std::runtime_error("Invalid baseline."); continue; }
+            if (p.stage == "break") {
+                if (p.condition == "block_break" && p.duration == 45) ++blockBreaks;
+                else if (p.condition == "run_break" && p.duration == 90) ++runBreaks;
+                else throw std::runtime_error("Invalid break.");
+                continue;
+            }
+            auto spec = p.task();
+            if (!spec || p.block < 1 || p.block > 4 || p.trial < 1 || p.total != (p.run == "Motorik" ? 64 : 104))
+                throw std::runtime_error("Invalid trial context.");
+            durations[{p.run,p.block}] += p.duration;
+            if (p.stage == "prepare") {
+                ++counts[{p.run,p.block}][p.condition];
+                if (p.duration != 2 || i+2 >= phases.size()) throw std::runtime_error("Invalid preparation.");
+                const auto& task = phases[i+1]; const auto& rest = phases[i+2];
+                if (task.stage != "task" || rest.stage != "rest" || task.run != p.run || rest.run != p.run ||
+                    task.trial != p.trial || rest.trial != p.trial || task.condition != p.condition || rest.condition != p.condition ||
+                    task.startNumber != p.startNumber || rest.startNumber != p.startNumber ||
+                    task.subtract != p.subtract || rest.subtract != p.subtract || task.wordLetter != p.wordLetter || rest.wordLetter != p.wordLetter)
+                    throw std::runtime_error("Invalid trial phase linkage.");
+            } else if (p.stage == "task") {
+                if (p.duration != spec->taskSeconds) throw std::runtime_error("Invalid task duration.");
+                if (p.condition == "mental_subtraction_single" && (p.startNumber < 60 || p.startNumber > 199 || p.subtract < 12 || p.subtract > 59 || p.startNumber <= p.subtract))
+                    throw std::runtime_error("Invalid subtraction.");
+                if (p.condition == "word_generation" && p.wordLetter.size() != 1) throw std::runtime_error("Invalid letter.");
+            } else if (p.stage == "rest") rests[{p.run,p.block,p.condition}].push_back(int(p.duration));
+            else throw std::runtime_error("Invalid trial stage.");
         }
-        std::vector<int> used(conditions.size(), 0); int trial = 0;
-        std::vector<int> history;
-        for (int block = 1; block <= blocks; ++block) {
-            std::vector<int> order;
-            for (int c = 0; c < int(conditions.size()); ++c)
-                for (int i = 0; i < perClass; ++i) order.push_back(c);
-            // Rejection sampling preserves exact block counts and checks across block boundaries.
-            bool valid = false;
-            for (int attempt = 0; attempt < 100000 && !valid; ++attempt) {
-                std::shuffle(order.begin(), order.end(), rng); auto check = history; valid = true;
-                for (int c : order) {
-                    if (run != 2 && check.size() >= 2 && check.back() == c && check[check.size()-2] == c) { valid = false; break; }
+        if (baselines != 2 || blockBreaks != 6 || runBreaks != 1) throw std::runtime_error("Invalid baseline/break counts.");
+        for (int run : {0,1}) for (int block = 1; block <= 4; ++block) {
+            auto key = std::make_pair(runNames()[run],block);
+            if (durations[key] != (run == 0 ? 208 : 348) || counts[key].size() != conditions(run).size()) throw std::runtime_error("Invalid block totals.");
+            for (const auto& spec : conditions(run)) {
+                if (counts[key][spec.label] != spec.perBlock) throw std::runtime_error("Invalid block balance.");
+                auto values = rests[{key.first,block,spec.label}]; std::sort(values.begin(),values.end());
+                if ((spec.perBlock == 4 && values != std::vector<int>{6,7,7,8}) ||
+                    (spec.perBlock == 3 && values != std::vector<int>{6,7,8}) ||
+                    (spec.perBlock == 2 && values != std::vector<int>{6,8} && values != std::vector<int>{7,7}))
+                    throw std::runtime_error("Invalid rest balance.");
+            }
+        }
+    }
+};
+inline Plan makePlan(uint32_t seed, const std::vector<int>& order = {0,1}) {
+    auto sorted = order; std::sort(sorted.begin(), sorted.end());
+    if (sorted != std::vector<int>{0,1}) throw std::runtime_error("Specify each run once: motorik imagery (or imagery motorik).");
+    Plan plan{seed, {}}; std::mt19937 rng(seed);
+    auto baseline = [&](const char* name) { Phase p; p.run=name; p.stage="baseline"; p.condition="baseline"; p.duration=60; plan.phases.push_back(p); };
+    baseline("Anfangsbaseline");
+    std::string letters = "BDFGHKLMNRST"; std::shuffle(letters.begin(),letters.end(),rng); int usedLetters=0;
+    std::vector<std::pair<int,int>> numbers;
+    for (int a=60; a<=199; ++a) for (int b=12; b<=59; ++b) numbers.emplace_back(a,b);
+    std::shuffle(numbers.begin(),numbers.end(),rng); int usedNumbers=0;
+    for (size_t position = 0; position < order.size(); ++position) {
+        int run = order[position]; const auto& specs=conditions(run);
+        std::vector<std::vector<int>> cognitiveBlocks(specs.size(),std::vector<int>{0,0,1,1});
+        for (auto& values : cognitiveBlocks) std::shuffle(values.begin(),values.end(),rng);
+        int trial=0; std::vector<int> history;
+        for (int block=1; block<=4; ++block) {
+            std::vector<int> sequence; std::vector<std::vector<int>> rests;
+            for (int c=0; c<int(specs.size()); ++c) {
+                for (int i=0; i<specs[c].perBlock; ++i) sequence.push_back(c);
+                std::vector<int> values = specs[c].perBlock == 4 ? std::vector<int>{6,7,7,8} :
+                    specs[c].perBlock == 3 ? std::vector<int>{6,7,8} :
+                    cognitiveBlocks[c][block-1] ? std::vector<int>{7,7} : std::vector<int>{6,8};
+                std::shuffle(values.begin(),values.end(),rng); rests.push_back(values);
+            }
+            bool valid=false;
+            for (int attempt=0; attempt<100000 && !valid; ++attempt) {
+                std::shuffle(sequence.begin(),sequence.end(),rng); auto check=history; valid=true;
+                for (int c : sequence) {
+                    if (check.size()>=2 && check.back()==c && check[check.size()-2]==c) { valid=false; break; }
                     check.push_back(c);
                 }
             }
             if (!valid) throw std::runtime_error("Could not generate balanced trial order.");
-            for (int c : order) {
+            std::vector<int> used(specs.size(),0);
+            for (int c : sequence) {
                 history.push_back(c); ++trial;
-                int number = run == 2 ? numbers[trial-1] : 0;
-                int rest = rests[c][used[c]++];
-                for (const auto& step : std::vector<std::pair<std::string,double>>{{"prepare",2},{"task",run == 2 ? 10.0 : 4.0},{"rest",double(rest)}})
-                    plan.phases.push_back({runs[run],step.first,conditions[c],block,trial,
-                        blocks*perClass*int(conditions.size()),number,step.second});
+                Phase p; p.run=runNames()[run]; p.condition=specs[c].label; p.block=block; p.trial=trial; p.total=run==0 ? 64 : 104;
+                if (p.condition=="word_generation") p.wordLetter=letters.substr(usedLetters++,1);
+                if (p.condition=="mental_subtraction_single") { auto pair=numbers.at(usedNumbers++); p.startNumber=pair.first; p.subtract=pair.second; }
+                int rest=rests[c][used[c]++];
+                for (const auto& step : std::vector<std::pair<std::string,double>>{{"prepare",2},{"task",double(specs[c].taskSeconds)},{"rest",double(rest)}}) {
+                    p.stage=step.first; p.duration=step.second; plan.phases.push_back(p);
+                }
             }
-            if (block < blocks) plan.phases.push_back({runs[run],"break","block_break",block,0,0,0,45});
+            if (block<4) { Phase p; p.run=runNames()[run]; p.stage="break"; p.condition="block_break"; p.block=block; p.duration=45; p.nextRun=p.run; plan.phases.push_back(p); }
         }
-        if (position < 2) plan.phases.push_back({runs[run],"break","run_break",0,0,0,0,90});
+        if (position+1<order.size()) { Phase p; p.run=runNames()[run]; p.stage="break"; p.condition="run_break"; p.duration=90; p.nextRun=runNames()[order[position+1]]; plan.phases.push_back(p); }
     }
-    baseline("Endbaseline");
-    if (plan.duration() != 2296) throw std::runtime_error("Invalid session duration.");
-    return plan;
+    baseline("Endbaseline"); plan.validate(); return plan;
 }
 
 // Pure timeline: caller supplies monotonic seconds. No sleeping or device/UI access.
