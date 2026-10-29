@@ -350,6 +350,9 @@ public:
             if (!signaled || !ready || !failure.empty() || !running) {
                 if (failure.empty()) failOscar(!signaled ? "OSCAR startup timed out without an accepted readiness confirmation. Check .startup.log and .worker.log." : "OSCAR worker stopped during startup. Check .startup.log and .worker.log.");
                 trace("startup_rejected ready="+std::to_string(ready)+" raw="+std::to_string(samples)+" clean="+std::to_string(cleanedSamples));
+                // stop() joins the stdout thread, which needs this mutex to process
+                // the worker's final protocol messages after STOP.
+                lock.unlock();
                 throw std::runtime_error(failure);
             }
             trace("startup_return_running");

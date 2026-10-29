@@ -53,7 +53,12 @@ with tempfile.TemporaryDirectory() as directory:
 
     def read_meta(folder):
         files = list(folder.glob("*.session.json"))
-        return json.loads(files[-1].read_text()) if files else None
+        if not files:
+            return None
+        try:
+            return json.loads(files[-1].read_text())
+        except (json.JSONDecodeError, OSError):
+            return None
 
     def wait_for(predicate, timeout=6):
         deadline = time.monotonic() + timeout
@@ -88,6 +93,7 @@ with tempfile.TemporaryDirectory() as directory:
     assert len(meta["device"]["channels"]) == 17
     assert meta["protocol_version"] == "eeg-session-2.0" and meta["schema_version"] == 2
     assert meta["planned_trials"] == 168 and meta["task_language"] == "de"
+    assert len(meta["local_timezone"]) == 5 and meta["local_timezone"][0] in "+-" and meta["local_timezone"][1:].isdigit()
     assert "45:04" in output and "REST 0:00" in output, output
     es = events(folder)
     assert sum(e["label"] == "trial_end" for e in es) == 168

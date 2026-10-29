@@ -133,7 +133,7 @@ int main() {
             if files:
                 try:
                     meta = json.loads(files[0].read_text(encoding="utf-8"))
-                except json.JSONDecodeError:  # Metadata replacement may be observed during an update.
+                except (json.JSONDecodeError, OSError):  # Windows may briefly deny reads during metadata replacement.
                     time.sleep(.02)
                     continue
                 target = "running" if mode in success or mode == "bad_exit" else "failed"

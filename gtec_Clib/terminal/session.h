@@ -106,7 +106,9 @@ class Session {
             << ",\n  \"seed\": " << timeline->plan.seed
             << ",\n  \"state\": " << quote(state) << ",\n  \"reason\": " << quote(reason)
             << ",\n  \"started_utc\": " << quote(startedUtc) << ",\n  \"ended_utc\": " << quote(endedUtc)
-            << ",\n  \"local_timezone\": " << quote(date(true,"%Z %z"))
+            // Windows formats %Z in the active ANSI code page. Keep JSON UTF-8 by
+            // recording the unambiguous ASCII UTC offset instead.
+            << ",\n  \"local_timezone\": " << quote(date(true,"%z"))
             << ",\n  \"schema_version\": 2"
             << ",\n  \"movement_version\": " << quote(session::movementVersion)
             << ",\n  \"task_language\": \"de\""
@@ -138,8 +140,12 @@ class Session {
             << ",\n  \"device\": " << configJson << "\n}\n";
         out.flush(); if (!out) throw std::runtime_error("Session metadata write failed."); out.close();
 #ifdef _WIN32
-        if (!MoveFileExW(temporary.c_str(),destination.c_str(),MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
-            throw std::runtime_error("Session metadata replacement failed.");
+        // Readers and antivirus scanners can briefly hold the previous metadata file.
+        for (int attempt = 0; attempt < 50; ++attempt) {
+            if (MoveFileExW(temporary.c_str(),destination.c_str(),MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH)) return;
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+        throw std::runtime_error("Session metadata replacement failed.");
 #else
         std::filesystem::rename(temporary,destination);
 #endif
