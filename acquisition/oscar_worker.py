@@ -6,6 +6,7 @@ import argparse
 from collections import deque
 from contextlib import redirect_stdout
 import csv
+import faulthandler
 import importlib.metadata
 import json
 import os
@@ -248,7 +249,13 @@ def _record(args, emit, diagnostic):
         metadata_update("preparing")
         pipeline, source = build_pipeline(gp, writer, args.serial)
         diagnostic("pipeline_starting")
-        pipeline.start()
+        # Vendor startup can block while opening Bluetooth or obtaining an
+        # entitlement. Preserve its Python stack in the existing worker log.
+        faulthandler.dump_traceback_later(30, file=sys.stderr)
+        try:
+            pipeline.start()
+        finally:
+            faulthandler.cancel_dump_traceback_later()
         diagnostic("pipeline_started")
         deadline = time.monotonic() + 30
         ready = False
