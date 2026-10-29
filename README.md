@@ -23,6 +23,7 @@ Stand: 28. Oktober 2026.
 | CLI-Befehle und manuelle Aufnahme | [Verwendung](gtec_Clib/terminal/VERWENDUNG.md) |
 | Beide EEG-Viewer, Filter, Wasserfallansicht und Export | [MNE-Anleitung](gtec_Clib/terminal/MNE_ANLEITUNG.md) |
 | Dauerhafte Teilnehmer-IDs und Sitzungszuordnung | [ID-Schema](docs/participant-ids.md) |
+| Eigener Bewegungsklassifikator: Training, unabhängiger Test und kausaler Replay | [ML-Bewegungsklassifikation](docs/movement-classifier.md) |
 | Teilnehmerangaben und Sitzungsnotizen | [Teilnehmerbogen](docs/participant-record-template.md) |
 | Kurze manuelle Vorführung mit bisherigen Aufgaben | [Demo-Anleitung](presentations/Demo_Anleitung_DE.md) |
 
@@ -92,9 +93,11 @@ python -m analysis.cbramod_benchmark PFAD_ZUR_SESSION.csv --runs MI_Bilateral --
 
 Die Baseline verwendet bei 2.0 Mu-/Beta-Bandpower (8–13/13–30 Hz), bei alten Daten die bisherigen fünf Bänder. Gleiche 3-s-Fenster und zurückgehaltene Blöcke bleiben erhalten. Modellbenchmarks benötigen die dokumentierten ML-Abhängigkeiten und lokale Checkpoints; sie werden nicht während der Aufnahme ausgeführt. Modell- und Testdaten müssen dasselbe Protokoll und denselben Kontrast verwenden. `analysis.test_ml_pipeline` und `analysis.test_reve_pipeline` prüfen zusätzlich Datenaufteilung und Modelltraining mit kleinen synthetischen Eingaben, ohne neue Modellgewichte herunterzuladen.
 
-Bei einem dokumentierten Kontaktproblem kann **nur die Baseline-CLI** mit `--after-marker "ground placed" --settle-seconds 10` auf spätere Aufgaben begrenzt werden. Der Marker muss exakt einmal als manueller Marker vorkommen. Ausgeschlossen werden ganze Trials einschließlich zugehöriger Restfenster, wenn ihr Aufgaben-Cue vor Marker plus Wartezeit liegt; der Standard ohne Optionen bleibt unverändert. Die Wartezeit ist eine Ausschlussregel, keine bestätigte Einschwingzeit des Geräts oder von OSCAR. Kontraste ohne vollständige Klassen in mindestens zwei unabhängigen Blöcken erscheinen mit Begründung unter `skipped_evaluations`. Andere ML-CLIs und Viewer übernehmen diesen Ausschluss nicht automatisch. Bericht und Regressionen: [P003 nach Ground-Marker](docs/ml-feasibility-P003-2026-10-29.md), `python -m unittest analysis.test_ml_feasibility`.
+Bei einem dokumentierten Kontaktproblem kann **die Baseline-CLI** mit `--after-marker "ground placed" --settle-seconds 10` auf spätere Aufgaben begrenzt werden. Der Marker muss exakt einmal als manueller Marker vorkommen. Ausgeschlossen werden ganze Trials einschließlich zugehöriger Restfenster, wenn ihr Aufgaben-Cue vor Marker plus Wartezeit liegt; der Standard ohne Optionen bleibt unverändert. Die Wartezeit ist eine Ausschlussregel, keine bestätigte Einschwingzeit des Geräts oder von OSCAR. Kontraste ohne vollständige Klassen in mindestens zwei unabhängigen Blöcken erscheinen mit Begründung unter `skipped_evaluations`. Andere ML-CLIs und Viewer übernehmen diesen Ausschluss nicht automatisch. Bericht und Regressionen: [P003 nach Ground-Marker](docs/ml-feasibility-P003-2026-10-29.md), `python -m unittest analysis.test_ml_feasibility`.
 
 ## Bisherige Auswertungen
+
+Für die eigene Klassifikation ausgeführter Bewegungen gibt es zusätzlich `python -m analysis.movement_classifier`: drei Klassen (Ruhe/linke/rechte Hand), optional fünf einschließlich beider Füße, block- beziehungsweise sitzungsweise Auswertung, Modell-Export und kausaler Diagnose-Replay. **Explorative Offline-Baseline:** Ruhe wird vorläufig aus später Erholung abgeleitet; kontinuierliche Fehlalarme, unabhängige neue Sitzungen und Motorsteuerung sind noch nicht validiert. Anleitung und Datenanforderungen: [Bewegungsklassifikator](docs/movement-classifier.md). P003 nach dem Ground-Marker reicht für dieses Motoriktraining nicht aus; unvollständige Klassen werden zurückgewiesen. Aufnahmeprotokoll und Viewer ändern sich dadurch nicht.
 
 Diese datierten Berichte dokumentieren vorhandene Daten und Modellversuche mit den bisherigen Aufgaben. Sie sind keine Validierung des neuen Protokolls:
 
@@ -112,6 +115,7 @@ python gtec_Clib/terminal/test_recorder.py
 python gtec_Clib/terminal/test_session.py
 python gtec_Clib/terminal/test_oscar_session.py
 python -m unittest analysis.test_session_protocol analysis.test_event_annotations analysis.test_time_frequency analysis.test_eeg_browser analysis.test_spectrogram_browser analysis.test_view_eeg_cli analysis.test_waterfall_cli analysis.test_waterfall_data analysis.test_waterfall_server
+python -m unittest analysis.test_movement_classifier
 ```
 
 C++-Tests benötigen Clang++ oder MSVC `cl`; Viewer- und Annotationstests benötigen MNE, NumPy, pandas und Matplotlib; die HTTP-Tests der Wasserfallansicht benötigen zusätzlich Plotly. Optionale echte Browserprüfungen laufen mit `python -m unittest analysis.test_waterfall_ui analysis.test_waterfall_navigation`, wenn Playwright und ein installiertes Chrome verfügbar sind (`EEG_BROWSER_EXECUTABLE` kann den Browserpfad setzen). Die hardwarefreien Tests prüfen Protokoll 2.0 mit 168 Trials über 250 Zufallsseeds in beiden Laufreihenfolgen, einen vollständigen beschleunigten Sitzungsdurchlauf, Unterbrechungen, Fehler und die im Review korrigierten Timingfälle. Die Viewer-Regressionstests prüfen dichte Marker und Fenstergrößenänderungen, getrennte Kanalachsen, Skalierung und Abschneidehinweise, Navigation, unveränderte Daten sowie echte PNG-Ausgabe ohne Desktop und einen ungefilterten FIF-Speicher-/Ladetest. Die C++-Plan- und Laufzeittests bestanden außerdem mit Address-/UndefinedBehavior-Sanitizer auf macOS.

@@ -139,6 +139,8 @@ Beide mitgelieferten MNE-Viewer übernehmen bei automatischen Ereignissen zusät
 
 Die Annotationen sind weiterhin einzelne Zeitpunkte. Die Statusangabe bewertet weder Signalqualität noch schließt sie automatisch Daten aus der MNE-Auswertung aus; dazu müssen die betreffenden Trials ausdrücklich ausgewählt beziehungsweise ausgeschlossen werden.
 
+Eine separate [ML-Bewegungsklassifikation](../../docs/movement-classifier.md) kann vollständige Motorik-Trials für Ruhe/linke/rechte Hand oder fünf Klassen auswerten und ein Modell exportieren. Ruhe stammt dabei vorläufig aus später Erholung; eigene Ruhe-Trials werden durch `start session` weiterhin nicht erhoben. Der Diagnose-Replay steuert keine Hardware und ersetzt keine Prüfung kontinuierlicher Fehlalarme.
+
 ## Tests und aktueller Prüfstand
 
 ```sh

@@ -29,6 +29,7 @@ ENV/
 # Downloaded ML weights, caches, and fitted model parameters.
 /.ml-cache/
 /analysis/results/**/checkpoints/
+movement-model.npz
 
 # Intermediate presentation renders and build files.
 /.presentation-build/
