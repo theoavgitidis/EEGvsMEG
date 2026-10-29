@@ -1,0 +1,477 @@
+{
+  "dataset_url": "https://physionet.org/content/eegmmidb/1.0.0/",
+  "version": "1.0.0",
+  "license": "ODC-By-1.0",
+  "checksum_manifest_sha256": "7f5d16957d8ee7bce86cc7ccba0e5994f63f33781607eb3f838392d49311a208",
+  "audited_at_utc": "2026-10-29T18:24:25.177007+00:00",
+  "software": {
+    "mne": "1.13.2",
+    "numpy": "2.5.4"
+  },
+  "subjects": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    63,
+    64,
+    65,
+    66,
+    67,
+    68,
+    69,
+    70,
+    71,
+    72,
+    73,
+    74,
+    75,
+    76,
+    77,
+    78,
+    79,
+    80,
+    81,
+    82,
+    83,
+    84,
+    85,
+    86,
+    87,
+    88,
+    89,
+    90,
+    91,
+    92,
+    93,
+    94,
+    95,
+    96,
+    97,
+    98,
+    99,
+    100,
+    101,
+    102,
+    103,
+    104,
+    105,
+    106,
+    107,
+    108,
+    109
+  ],
+  "runs": [
+    3,
+    7,
+    11
+  ],
+  "label_mapping": {
+    "T0": "rest",
+    "T1": "me_hand_left",
+    "T2": "me_hand_right"
+  },
+  "target_positions": [
+    "Fz",
+    "C3",
+    "Cz",
+    "C4",
+    "Pz",
+    "PO7",
+    "Oz",
+    "PO8"
+  ],
+  "candidate_task_window_relative_s": [
+    0.5,
+    3.5
+  ],
+  "processing": "None: no filtering, resampling, rereferencing, artifact rejection or training. MNE reads values in V.",
+  "limitations": [
+    "Structural eligibility is not signal-quality or physiological validation.",
+    "Labels describe cues; actual compliance and left/right correctness cannot be proven from EDF alone.",
+    "Original WFDB .event sidecars are checksum-verified; annotation rows are read from EDF+ only.",
+    "T0 is inter-task rest, not an independently randomized neutral class; no rest windows are selected.",
+    "Public subjects keep a dataset namespace; no local EVM participant IDs are assigned.",
+    "No train/test split or montage transfer is validated; future cross-subject tests must hold out whole people."
+  ],
+  "summary": {
+    "recordings": 327,
+    "subjects": 109,
+    "recordings_without_structural_issues": 315,
+    "subjects_with_three_structurally_usable_runs": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63,
+      64,
+      65,
+      66,
+      67,
+      68,
+      69,
+      70,
+      71,
+      72,
+      73,
+      74,
+      75,
+      76,
+      77,
+      78,
+      79,
+      80,
+      81,
+      82,
+      83,
+      84,
+      85,
+      86,
+      87,
+      90,
+      91,
+      93,
+      94,
+      95,
+      96,
+      97,
+      98,
+      99,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      108,
+      109
+    ],
+    "duration_hours": 11.22861111111111,
+    "sampling_rate_counts": {
+      "160.0": 318,
+      "128.0": 9
+    },
+    "annotation_counts": {
+      "rest": 4927,
+      "me_hand_right": 2456,
+      "me_hand_left": 2471
+    },
+    "eligible_task_window_counts": {
+      "me_hand_right": 2356,
+      "me_hand_left": 2369
+    },
+    "excluded_task_windows": 202,
+    "recording_issue_counts": {
+      "annotation_gap_or_overlap": 12,
+      "unexpected_sampling_rate": 9
+    }
+  },
+  "flagged_recordings": [
+    {
+      "file": "S088/S088R03.edf",
+      "subject_id": "physionet:S088",
+      "run": 3,
+      "issues": [
+        "annotation_gap_or_overlap",
+        "unexpected_sampling_rate"
+      ],
+      "sampling_rate_hz": 128.0,
+      "annotation_counts": {
+        "rest": 19,
+        "me_hand_left": 9,
+        "me_hand_right": 10
+      },
+      "excluded_task_windows": 19
+    },
+    {
+      "file": "S088/S088R07.edf",
+      "subject_id": "physionet:S088",
+      "run": 7,
+      "issues": [
+        "annotation_gap_or_overlap",
+        "unexpected_sampling_rate"
+      ],
+      "sampling_rate_hz": 128.0,
+      "annotation_counts": {
+        "rest": 19,
+        "me_hand_right": 9,
+        "me_hand_left": 10
+      },
+      "excluded_task_windows": 19
+    },
+    {
+      "file": "S088/S088R11.edf",
+      "subject_id": "physionet:S088",
+      "run": 11,
+      "issues": [
+        "annotation_gap_or_overlap",
+        "unexpected_sampling_rate"
+      ],
+      "sampling_rate_hz": 128.0,
+      "annotation_counts": {
+        "rest": 19,
+        "me_hand_right": 10,
+        "me_hand_left": 9
+      },
+      "excluded_task_windows": 19
+    },
+    {
+      "file": "S089/S089R03.edf",
+      "subject_id": "physionet:S089",
+      "run": 3,
+      "issues": [
+        "annotation_gap_or_overlap"
+      ],
+      "sampling_rate_hz": 160.0,
+      "annotation_counts": {
+        "rest": 22,
+        "me_hand_right": 11,
+        "me_hand_left": 11
+      },
+      "excluded_task_windows": 22
+    },
+    {
+      "file": "S089/S089R07.edf",
+      "subject_id": "physionet:S089",
+      "run": 7,
+      "issues": [
+        "annotation_gap_or_overlap"
+      ],
+      "sampling_rate_hz": 160.0,
+      "annotation_counts": {
+        "rest": 15,
+        "me_hand_left": 8,
+        "me_hand_right": 7
+      },
+      "excluded_task_windows": 15
+    },
+    {
+      "file": "S089/S089R11.edf",
+      "subject_id": "physionet:S089",
+      "run": 11,
+      "issues": [
+        "annotation_gap_or_overlap"
+      ],
+      "sampling_rate_hz": 160.0,
+      "annotation_counts": {
+        "rest": 15,
+        "me_hand_left": 7,
+        "me_hand_right": 8
+      },
+      "excluded_task_windows": 15
+    },
+    {
+      "file": "S092/S092R03.edf",
+      "subject_id": "physionet:S092",
+      "run": 3,
+      "issues": [
+        "annotation_gap_or_overlap",
+        "unexpected_sampling_rate"
+      ],
+      "sampling_rate_hz": 128.0,
+      "annotation_counts": {
+        "rest": 19,
+        "me_hand_left": 10,
+        "me_hand_right": 9
+      },
+      "excluded_task_windows": 19
+    },
+    {
+      "file": "S092/S092R07.edf",
+      "subject_id": "physionet:S092",
+      "run": 7,
+      "issues": [
+        "annotation_gap_or_overlap",
+        "unexpected_sampling_rate"
+      ],
+      "sampling_rate_hz": 128.0,
+      "annotation_counts": {
+        "rest": 19,
+        "me_hand_left": 10,
+        "me_hand_right": 9
+      },
+      "excluded_task_windows": 19
+    },
+    {
+      "file": "S092/S092R11.edf",
+      "subject_id": "physionet:S092",
+      "run": 11,
+      "issues": [
+        "annotation_gap_or_overlap",
+        "unexpected_sampling_rate"
+      ],
+      "sampling_rate_hz": 128.0,
+      "annotation_counts": {
+        "rest": 19,
+        "me_hand_left": 10,
+        "me_hand_right": 9
+      },
+      "excluded_task_windows": 19
+    },
+    {
+      "file": "S100/S100R03.edf",
+      "subject_id": "physionet:S100",
+      "run": 3,
+      "issues": [
+        "annotation_gap_or_overlap",
+        "unexpected_sampling_rate"
+      ],
+      "sampling_rate_hz": 128.0,
+      "annotation_counts": {
+        "rest": 12,
+        "me_hand_left": 6,
+        "me_hand_right": 6
+      },
+      "excluded_task_windows": 12
+    },
+    {
+      "file": "S100/S100R07.edf",
+      "subject_id": "physionet:S100",
+      "run": 7,
+      "issues": [
+        "annotation_gap_or_overlap",
+        "unexpected_sampling_rate"
+      ],
+      "sampling_rate_hz": 128.0,
+      "annotation_counts": {
+        "rest": 12,
+        "me_hand_right": 6,
+        "me_hand_left": 6
+      },
+      "excluded_task_windows": 12
+    },
+    {
+      "file": "S100/S100R11.edf",
+      "subject_id": "physionet:S100",
+      "run": 11,
+      "issues": [
+        "annotation_gap_or_overlap",
+        "unexpected_sampling_rate"
+      ],
+      "sampling_rate_hz": 128.0,
+      "annotation_counts": {
+        "rest": 12,
+        "me_hand_left": 6,
+        "me_hand_right": 6
+      },
+      "excluded_task_windows": 12
+    }
+  ]
+}
