@@ -223,13 +223,6 @@ def _record(args, emit, diagnostic):
     for suffix in ("", ".oscar.csv", ".processing.json", ".device.json", ".ready"):
         if Path(str(args.output) + suffix).exists():
             raise FileExistsError(f"Recording artifact already exists: {args.output}{suffix}")
-    stop = threading.Event()
-    def commands():
-        for line in sys.stdin:
-            if line.strip() == "STOP":
-                break
-        stop.set()  # parent EOF is also a stop, not an orphaned recording
-    threading.Thread(target=commands, daemon=True).start()
     writer = DualWriter(args.output)
     pipeline = None
     metadata = {"schema_version": 1, "mode": "oscar", "state": "preparing", "sampling_rate_hz": 250,
@@ -250,7 +243,11 @@ def _record(args, emit, diagnostic):
         # g.Pype resolves OSCAR lazily on the first pipeline cycle. Load it
         # before opening the live stream so SciPy imports cannot delay it.
         diagnostic("oscar_import_starting")
-        import gtec_oscar  # noqa: F401
+        faulthandler.dump_traceback_later(30, file=sys.stderr)
+        try:
+            import gtec_oscar  # noqa: F401
+        finally:
+            faulthandler.cancel_dump_traceback_later()
         diagnostic("oscar_imported")
         pipeline, source = build_pipeline(gp, writer, args.serial)
         diagnostic("pipeline_starting")
@@ -262,6 +259,13 @@ def _record(args, emit, diagnostic):
         finally:
             faulthandler.cancel_dump_traceback_later()
         diagnostic("pipeline_started")
+        stop = threading.Event()
+        def commands():
+            for line in sys.stdin:
+                if line.strip() == "STOP":
+                    break
+            stop.set()  # parent EOF is also a stop, not an orphaned recording
+        threading.Thread(target=commands, daemon=True).start()
         deadline = time.monotonic() + 30
         ready = False
         stop_target = None

@@ -309,7 +309,9 @@ public:
                             {
                                 // Close before remove; Windows does not guarantee delete-sharing.
                                 std::ifstream confirmation(readyPath,std::ios::binary);
-                                if (!confirmation) throw std::runtime_error("Cannot open OSCAR readiness file.");
+                                // The worker replaces this file atomically. It may be removed
+                                // between exists() and open() after stdout already confirmed it.
+                                if (!confirmation) continue;
                                 char buffer[256]; confirmation.read(buffer,sizeof(buffer));
                                 contents.assign(buffer,size_t(confirmation.gcount()));
                                 if (confirmation.bad()) throw std::runtime_error("Cannot read OSCAR readiness file.");

@@ -4,6 +4,8 @@
 #include <stdexcept>
 #include <chrono>
 #include <thread>
+#include <vector>
+#include <fstream>
 #ifdef _WIN32
 #include <windows.h>
 #else
@@ -33,6 +35,17 @@ class WorkerProcess {
             out.append(c == L'"' ? slashes*2+1 : slashes,L'\\'); slashes = 0; out += c;
         }
         out.append(slashes*2,L'\\'); return out+L'"';
+    }
+    static std::pair<std::filesystem::path,std::filesystem::path> interpreter(const std::string& configured) {
+        auto executable=std::filesystem::u8path(configured);
+        auto root=executable.parent_path().parent_path();
+        std::ifstream input(root/"pyvenv.cfg");
+        std::string line, home;
+        while (std::getline(input,line)) if (line.rfind("home = ",0)==0) { home=line.substr(7); break; }
+        auto packages=root/"Lib"/"site-packages";
+        auto base=home.empty() ? std::filesystem::path{} : std::filesystem::u8path(home)/"python.exe";
+        if (std::filesystem::is_regular_file(base) && std::filesystem::is_directory(packages)) return {base,packages};
+        return {executable,{}};
     }
 #else
     pid_t process = -1;
@@ -78,11 +91,41 @@ public:
         SetHandleInformation(input,HANDLE_FLAG_INHERIT,0); SetHandleInformation(output,HANDLE_FLAG_INHERIT,0);
         HANDLE log = CreateFileW(logPath.c_str(),GENERIC_WRITE,FILE_SHARE_READ,&sa,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,nullptr);
         if (log == INVALID_HANDLE_VALUE) { CloseHandle(childInput); CloseHandle(childOutput); dispose(); throw std::runtime_error("Cannot create worker log."); }
-        STARTUPINFOW si{}; si.cb=sizeof(si); si.dwFlags=STARTF_USESTDHANDLES;
-        si.hStdInput=childInput; si.hStdOutput=childOutput; si.hStdError=log;
+        SIZE_T attributeSize=0;
+        InitializeProcThreadAttributeList(nullptr,1,0,&attributeSize);
+        std::vector<unsigned char> attributeStorage(attributeSize);
+        auto attributes=reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(attributeStorage.data());
+        if (!InitializeProcThreadAttributeList(attributes,1,0,&attributeSize)) {
+            CloseHandle(childInput); CloseHandle(childOutput); CloseHandle(log); dispose();
+            throw std::runtime_error("Cannot initialize OSCAR worker handle list.");
+        }
+        HANDLE inherited[] = {childInput,childOutput,log};
+        if (!UpdateProcThreadAttribute(attributes,0,PROC_THREAD_ATTRIBUTE_HANDLE_LIST,
+                                       inherited,sizeof(inherited),nullptr,nullptr)) {
+            DeleteProcThreadAttributeList(attributes);
+            CloseHandle(childInput); CloseHandle(childOutput); CloseHandle(log); dispose();
+            throw std::runtime_error("Cannot restrict OSCAR worker handle inheritance.");
+        }
+        STARTUPINFOEXW si{}; si.StartupInfo.cb=sizeof(si); si.StartupInfo.dwFlags=STARTF_USESTDHANDLES;
+        si.StartupInfo.hStdInput=childInput; si.StartupInfo.hStdOutput=childOutput; si.StartupInfo.hStdError=log;
+        si.lpAttributeList=attributes;
+        auto [childPython,packages]=interpreter(python);
+        std::wstring previousPythonPath;
+        bool hadPythonPath=false;
+        if (!packages.empty()) {
+            DWORD size=GetEnvironmentVariableW(L"PYTHONPATH",nullptr,0);
+            hadPythonPath=size != 0;
+            if (hadPythonPath) { previousPythonPath.resize(size); GetEnvironmentVariableW(L"PYTHONPATH",previousPythonPath.data(),size); previousPythonPath.pop_back(); }
+            auto pythonPath=packages.wstring();
+            if (hadPythonPath) pythonPath+=L";"+previousPythonPath;
+            if (!SetEnvironmentVariableW(L"PYTHONPATH",pythonPath.c_str())) throw std::runtime_error("Cannot configure OSCAR Python package path.");
+        }
         PROCESS_INFORMATION pi{};
-        std::wstring command=quoted(wide(python))+L" -u "+quoted(script.wstring())+L" --serial "+quoted(wide(serial))+L" --output "+quoted(path.wstring());
-        BOOL ok=CreateProcessW(nullptr,command.data(),nullptr,nullptr,TRUE,CREATE_NO_WINDOW,nullptr,nullptr,&si,&pi);
+        std::wstring command=quoted(childPython.wstring())+L" -u "+quoted(script.wstring())+L" --serial "+quoted(wide(serial))+L" --output "+quoted(path.wstring());
+        BOOL ok=CreateProcessW(nullptr,command.data(),nullptr,nullptr,TRUE,CREATE_NO_WINDOW|EXTENDED_STARTUPINFO_PRESENT,
+                               nullptr,nullptr,&si.StartupInfo,&pi);
+        if (!packages.empty()) SetEnvironmentVariableW(L"PYTHONPATH",hadPythonPath ? previousPythonPath.c_str() : nullptr);
+        DeleteProcThreadAttributeList(attributes);
         CloseHandle(childInput); CloseHandle(childOutput); CloseHandle(log);
         if (!ok) { dispose(); throw std::runtime_error("Cannot launch OSCAR Python; set EEG_OSCAR_PYTHON to its executable path."); }
         process=pi.hProcess; CloseHandle(pi.hThread);
