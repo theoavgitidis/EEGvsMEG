@@ -92,6 +92,8 @@ python -m analysis.cbramod_benchmark PFAD_ZUR_SESSION.csv --runs MI_Bilateral --
 
 Die Baseline verwendet bei 2.0 Mu-/Beta-Bandpower (8–13/13–30 Hz), bei alten Daten die bisherigen fünf Bänder. Gleiche 3-s-Fenster und zurückgehaltene Blöcke bleiben erhalten. Modellbenchmarks benötigen die dokumentierten ML-Abhängigkeiten und lokale Checkpoints; sie werden nicht während der Aufnahme ausgeführt. Modell- und Testdaten müssen dasselbe Protokoll und denselben Kontrast verwenden. `analysis.test_ml_pipeline` und `analysis.test_reve_pipeline` prüfen zusätzlich Datenaufteilung und Modelltraining mit kleinen synthetischen Eingaben, ohne neue Modellgewichte herunterzuladen.
 
+Bei einem dokumentierten Kontaktproblem kann **nur die Baseline-CLI** mit `--after-marker "ground placed" --settle-seconds 10` auf spätere Aufgaben begrenzt werden. Der Marker muss exakt einmal als manueller Marker vorkommen. Ausgeschlossen werden ganze Trials einschließlich zugehöriger Restfenster, wenn ihr Aufgaben-Cue vor Marker plus Wartezeit liegt; der Standard ohne Optionen bleibt unverändert. Die Wartezeit ist eine Ausschlussregel, keine bestätigte Einschwingzeit des Geräts oder von OSCAR. Kontraste ohne vollständige Klassen in mindestens zwei unabhängigen Blöcken erscheinen mit Begründung unter `skipped_evaluations`. Andere ML-CLIs und Viewer übernehmen diesen Ausschluss nicht automatisch. Bericht und Regressionen: [P003 nach Ground-Marker](docs/ml-feasibility-P003-2026-10-29.md), `python -m unittest analysis.test_ml_feasibility`.
+
 ## Bisherige Auswertungen
 
 Diese datierten Berichte dokumentieren vorhandene Daten und Modellversuche mit den bisherigen Aufgaben. Sie sind keine Validierung des neuen Protokolls:

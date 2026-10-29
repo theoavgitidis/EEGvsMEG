@@ -1,0 +1,2217 @@
+{
+  "recording": "/Users/theoa/Desktop/Projects/recordings/P-003/session_20261029_153043.csv",
+  "participant": "P003",
+  "signal": "oscar",
+  "signal_description": "OSCAR; 83 Samples Verz\u00f6gerung; auf Rohsample-Zeitachse ausgerichtet; g.Pype non-commercial use",
+  "selected_recording": "/Users/theoa/Desktop/Projects/recordings/P-003/session_20261029_153043.csv.oscar.csv",
+  "processing": {
+    "schema_version": 1,
+    "mode": "oscar",
+    "state": "complete",
+    "sampling_rate_hz": 250,
+    "raw_file": "session_20261029_153043.csv",
+    "oscar_file": "session_20261029_153043.csv.oscar.csv",
+    "default_signal": "oscar",
+    "versions": {
+      "gpype": "4.1.0",
+      "gtec-oscar": "1.3.2",
+      "gtec-unicorn": "1.0.0",
+      "gtec-licensing": "2.4.0"
+    },
+    "channel_names": [
+      "EEG 1",
+      "EEG 2",
+      "EEG 3",
+      "EEG 4",
+      "EEG 5",
+      "EEG 6",
+      "EEG 7",
+      "EEG 8",
+      "Accelerometer X",
+      "Accelerometer Y",
+      "Accelerometer Z",
+      "Gyroscope X",
+      "Gyroscope Y",
+      "Gyroscope Z",
+      "Battery Level",
+      "Counter",
+      "Validation Indicator"
+    ],
+    "channel_units": [
+      "uV",
+      "uV",
+      "uV",
+      "uV",
+      "uV",
+      "uV",
+      "uV",
+      "uV",
+      "g",
+      "g",
+      "g",
+      "deg/s",
+      "deg/s",
+      "deg/s",
+      "%",
+      "n",
+      "n"
+    ],
+    "alignment": "sample_index is the original raw sample index; verified by all auxiliary channels",
+    "oscar_delay_samples": 83,
+    "raw_samples": 676428,
+    "oscar_samples": 676337,
+    "noncommercial_mark": true,
+    "stop_target_raw_samples": 676332
+  },
+  "session_id": "session_20261029_153043",
+  "quality_rule": {
+    "marker": "ground placed",
+    "marker_sample": 234736,
+    "marker_time_s": 938.944,
+    "settle_seconds": 10.0,
+    "cutoff_sample": 237236,
+    "cutoff_time_s": 948.944,
+    "policy": "retain entire trial only if task cue is at or after cutoff; original indices unchanged"
+  },
+  "inputs_sha256": {
+    "session_20261029_153043.csv.oscar.csv": "3a37ff4ecaab3159e215bab4271e386d6e41f97fdc30461b57abf97d9be41a4c",
+    "session_20261029_153043.csv.events.csv": "ae65b785f9199e5a2e58fdfe484b0c17bc1b4b3bc9dad06f7535a9cd78d7fb64",
+    "session_20261029_153043.csv.session.json": "66bdd01235b870a0cd0b3335299d8f545f488717a6a3b0fd01cb08139f89bb58",
+    "session_20261029_153043.csv.plan.csv": "a09f718cb1ff65d151370687f490ce67e2a6ff32c7fa39fcdad96754eb4a633e",
+    "session_20261029_153043.csv.processing.json": "8cc5b49b0b96fe613ccab545f8cea9c5139676d99de524c01fe73a3003a6fbd5"
+  },
+  "software_versions": {
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "pandas": "3.1.0"
+  },
+  "permutation_seed": 20261022,
+  "session_seed": 4188517853,
+  "channel_order": [
+    "EEG 1",
+    "EEG 2",
+    "EEG 3",
+    "EEG 4",
+    "EEG 5",
+    "EEG 6",
+    "EEG 7",
+    "EEG 8"
+  ],
+  "sampling_rate_hz": 250,
+  "eeg_unit": "uV",
+  "retained_windows": [
+    {
+      "run": "Imagery",
+      "block": 1,
+      "trial": 1,
+      "attempt": 1,
+      "label": "mi_hand_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/1/1/1",
+      "start_sample": 280109,
+      "stop_sample": 280859
+    },
+    {
+      "run": "Imagery",
+      "block": 1,
+      "trial": 2,
+      "attempt": 1,
+      "label": "mi_foot_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/1/2/1",
+      "start_sample": 283109,
+      "stop_sample": 283859
+    },
+    {
+      "run": "Imagery",
+      "block": 1,
+      "trial": 3,
+      "attempt": 1,
+      "label": "mi_hand_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/1/3/1",
+      "start_sample": 286613,
+      "stop_sample": 287363
+    },
+    {
+      "run": "Imagery",
+      "block": 1,
+      "trial": 4,
+      "attempt": 1,
+      "label": "mental_subtraction_single",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/1/4/1",
+      "start_sample": 290121,
+      "stop_sample": 290871
+    },
+    {
+      "run": "Imagery",
+      "block": 1,
+      "trial": 5,
+      "attempt": 1,
+      "label": "mi_foot_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/1/5/1",
+      "start_sample": 293861,
+      "stop_sample": 294611
+    },
+    {
+      "run": "Imagery",
+      "block": 1,
+      "trial": 6,
+      "attempt": 1,
+      "label": "mi_foot_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/1/6/1",
+      "start_sample": 297117,
+      "stop_sample": 297867
+    },
+    {
+      "run": "Imagery",
+      "block": 1,
+      "trial": 7,
+      "attempt": 1,
+      "label": "mi_foot_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/1/7/1",
+      "start_sample": 300365,
+      "stop_sample": 301115
+    },
+    {
+      "run": "Imagery",
+      "block": 1,
+      "trial": 8,
+      "attempt": 1,
+      "label": "mi_hand_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/1/8/1",
+      "start_sample": 303621,
+      "stop_sample": 304371
+    },
+    {
+      "run": "Imagery",
+      "block": 1,
+      "trial": 9,
+      "attempt": 1,
+      "label": "mi_hands_bilateral",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/1/9/1",
+      "start_sample": 306869,
+      "stop_sample": 307619
+    },
+    {
+      "run": "Imagery",
+      "block": 1,
+      "trial": 10,
+      "attempt": 1,
+      "label": "word_generation",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/1/10/1",
+      "start_sample": 310373,
+      "stop_sample": 311123
+    },
+    {
+      "run": "Imagery",
+      "block": 1,
+      "trial": 11,
+      "attempt": 1,
+      "label": "mi_hand_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/1/11/1",
+      "start_sample": 313621,
+      "stop_sample": 314371
+    },
+    {
+      "run": "Imagery",
+      "block": 1,
+      "trial": 12,
+      "attempt": 1,
+      "label": "mental_subtraction_single",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/1/12/1",
+      "start_sample": 316865,
+      "stop_sample": 317615
+    },
+    {
+      "run": "Imagery",
+      "block": 1,
+      "trial": 13,
+      "attempt": 1,
+      "label": "mi_feet_bilateral",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/1/13/1",
+      "start_sample": 320125,
+      "stop_sample": 320875
+    },
+    {
+      "run": "Imagery",
+      "block": 1,
+      "trial": 14,
+      "attempt": 1,
+      "label": "mi_hands_bilateral",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/1/14/1",
+      "start_sample": 323869,
+      "stop_sample": 324619
+    },
+    {
+      "run": "Imagery",
+      "block": 1,
+      "trial": 15,
+      "attempt": 1,
+      "label": "mi_hands_bilateral",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/1/15/1",
+      "start_sample": 327121,
+      "stop_sample": 327871
+    },
+    {
+      "run": "Imagery",
+      "block": 1,
+      "trial": 16,
+      "attempt": 1,
+      "label": "mi_feet_bilateral",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/1/16/1",
+      "start_sample": 330877,
+      "stop_sample": 331627
+    },
+    {
+      "run": "Imagery",
+      "block": 1,
+      "trial": 17,
+      "attempt": 1,
+      "label": "word_generation",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/1/17/1",
+      "start_sample": 334369,
+      "stop_sample": 335119
+    },
+    {
+      "run": "Imagery",
+      "block": 1,
+      "trial": 18,
+      "attempt": 1,
+      "label": "mi_foot_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/1/18/1",
+      "start_sample": 338129,
+      "stop_sample": 338879
+    },
+    {
+      "run": "Imagery",
+      "block": 1,
+      "trial": 19,
+      "attempt": 1,
+      "label": "mi_feet_bilateral",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/1/19/1",
+      "start_sample": 341121,
+      "stop_sample": 341871
+    },
+    {
+      "run": "Imagery",
+      "block": 1,
+      "trial": 20,
+      "attempt": 1,
+      "label": "mi_hand_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/1/20/1",
+      "start_sample": 344377,
+      "stop_sample": 345127
+    },
+    {
+      "run": "Imagery",
+      "block": 1,
+      "trial": 21,
+      "attempt": 1,
+      "label": "mi_hand_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/1/21/1",
+      "start_sample": 347381,
+      "stop_sample": 348131
+    },
+    {
+      "run": "Imagery",
+      "block": 1,
+      "trial": 22,
+      "attempt": 1,
+      "label": "mi_foot_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/1/22/1",
+      "start_sample": 350629,
+      "stop_sample": 351379
+    },
+    {
+      "run": "Imagery",
+      "block": 1,
+      "trial": 23,
+      "attempt": 1,
+      "label": "mi_hand_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/1/23/1",
+      "start_sample": 353629,
+      "stop_sample": 354379
+    },
+    {
+      "run": "Imagery",
+      "block": 1,
+      "trial": 24,
+      "attempt": 1,
+      "label": "mi_foot_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/1/24/1",
+      "start_sample": 357133,
+      "stop_sample": 357883
+    },
+    {
+      "run": "Imagery",
+      "block": 1,
+      "trial": 25,
+      "attempt": 1,
+      "label": "mi_hand_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/1/25/1",
+      "start_sample": 360377,
+      "stop_sample": 361127
+    },
+    {
+      "run": "Imagery",
+      "block": 1,
+      "trial": 26,
+      "attempt": 1,
+      "label": "mi_foot_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/1/26/1",
+      "start_sample": 363625,
+      "stop_sample": 364375
+    },
+    {
+      "run": "Imagery",
+      "block": 2,
+      "trial": 27,
+      "attempt": 1,
+      "label": "mi_hands_bilateral",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/2/27/1",
+      "start_sample": 378385,
+      "stop_sample": 379135
+    },
+    {
+      "run": "Imagery",
+      "block": 2,
+      "trial": 28,
+      "attempt": 1,
+      "label": "mi_hand_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/2/28/1",
+      "start_sample": 382141,
+      "stop_sample": 382891
+    },
+    {
+      "run": "Imagery",
+      "block": 2,
+      "trial": 29,
+      "attempt": 1,
+      "label": "mi_hands_bilateral",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/2/29/1",
+      "start_sample": 385385,
+      "stop_sample": 386135
+    },
+    {
+      "run": "Imagery",
+      "block": 2,
+      "trial": 30,
+      "attempt": 1,
+      "label": "mi_hand_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/2/30/1",
+      "start_sample": 388889,
+      "stop_sample": 389639
+    },
+    {
+      "run": "Imagery",
+      "block": 2,
+      "trial": 31,
+      "attempt": 1,
+      "label": "mi_foot_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/2/31/1",
+      "start_sample": 392393,
+      "stop_sample": 393143
+    },
+    {
+      "run": "Imagery",
+      "block": 2,
+      "trial": 32,
+      "attempt": 1,
+      "label": "mi_foot_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/2/32/1",
+      "start_sample": 395641,
+      "stop_sample": 396391
+    },
+    {
+      "run": "Imagery",
+      "block": 2,
+      "trial": 33,
+      "attempt": 1,
+      "label": "mental_subtraction_single",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/2/33/1",
+      "start_sample": 399145,
+      "stop_sample": 399895
+    },
+    {
+      "run": "Imagery",
+      "block": 2,
+      "trial": 34,
+      "attempt": 1,
+      "label": "word_generation",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/2/34/1",
+      "start_sample": 402641,
+      "stop_sample": 403391
+    },
+    {
+      "run": "Imagery",
+      "block": 2,
+      "trial": 35,
+      "attempt": 1,
+      "label": "mi_feet_bilateral",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/2/35/1",
+      "start_sample": 406145,
+      "stop_sample": 406895
+    },
+    {
+      "run": "Imagery",
+      "block": 2,
+      "trial": 36,
+      "attempt": 1,
+      "label": "mi_hand_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/2/36/1",
+      "start_sample": 409649,
+      "stop_sample": 410399
+    },
+    {
+      "run": "Imagery",
+      "block": 2,
+      "trial": 37,
+      "attempt": 1,
+      "label": "mental_subtraction_single",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/2/37/1",
+      "start_sample": 413141,
+      "stop_sample": 413891
+    },
+    {
+      "run": "Imagery",
+      "block": 2,
+      "trial": 38,
+      "attempt": 1,
+      "label": "mi_foot_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/2/38/1",
+      "start_sample": 416649,
+      "stop_sample": 417399
+    },
+    {
+      "run": "Imagery",
+      "block": 2,
+      "trial": 39,
+      "attempt": 1,
+      "label": "mi_hand_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/2/39/1",
+      "start_sample": 419893,
+      "stop_sample": 420643
+    },
+    {
+      "run": "Imagery",
+      "block": 2,
+      "trial": 40,
+      "attempt": 1,
+      "label": "mi_foot_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/2/40/1",
+      "start_sample": 423141,
+      "stop_sample": 423891
+    },
+    {
+      "run": "Imagery",
+      "block": 2,
+      "trial": 41,
+      "attempt": 1,
+      "label": "mi_hand_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/2/41/1",
+      "start_sample": 426393,
+      "stop_sample": 427143
+    },
+    {
+      "run": "Imagery",
+      "block": 2,
+      "trial": 42,
+      "attempt": 1,
+      "label": "mi_feet_bilateral",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/2/42/1",
+      "start_sample": 429645,
+      "stop_sample": 430395
+    },
+    {
+      "run": "Imagery",
+      "block": 2,
+      "trial": 43,
+      "attempt": 1,
+      "label": "mi_hand_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/2/43/1",
+      "start_sample": 433397,
+      "stop_sample": 434147
+    },
+    {
+      "run": "Imagery",
+      "block": 2,
+      "trial": 44,
+      "attempt": 1,
+      "label": "mi_foot_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/2/44/1",
+      "start_sample": 436401,
+      "stop_sample": 437151
+    },
+    {
+      "run": "Imagery",
+      "block": 2,
+      "trial": 45,
+      "attempt": 1,
+      "label": "mi_foot_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/2/45/1",
+      "start_sample": 439397,
+      "stop_sample": 440147
+    },
+    {
+      "run": "Imagery",
+      "block": 2,
+      "trial": 46,
+      "attempt": 1,
+      "label": "mi_hands_bilateral",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/2/46/1",
+      "start_sample": 442901,
+      "stop_sample": 443651
+    },
+    {
+      "run": "Imagery",
+      "block": 2,
+      "trial": 47,
+      "attempt": 1,
+      "label": "mi_hand_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/2/47/1",
+      "start_sample": 446149,
+      "stop_sample": 446899
+    },
+    {
+      "run": "Imagery",
+      "block": 2,
+      "trial": 48,
+      "attempt": 1,
+      "label": "mi_hand_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/2/48/1",
+      "start_sample": 449409,
+      "stop_sample": 450159
+    },
+    {
+      "run": "Imagery",
+      "block": 2,
+      "trial": 49,
+      "attempt": 1,
+      "label": "mi_foot_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/2/49/1",
+      "start_sample": 452409,
+      "stop_sample": 453159
+    },
+    {
+      "run": "Imagery",
+      "block": 2,
+      "trial": 50,
+      "attempt": 1,
+      "label": "word_generation",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/2/50/1",
+      "start_sample": 455657,
+      "stop_sample": 456407
+    },
+    {
+      "run": "Imagery",
+      "block": 2,
+      "trial": 51,
+      "attempt": 1,
+      "label": "mi_feet_bilateral",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/2/51/1",
+      "start_sample": 459161,
+      "stop_sample": 459911
+    },
+    {
+      "run": "Imagery",
+      "block": 2,
+      "trial": 52,
+      "attempt": 1,
+      "label": "mi_foot_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/2/52/1",
+      "start_sample": 462405,
+      "stop_sample": 463155
+    },
+    {
+      "run": "Imagery",
+      "block": 3,
+      "trial": 53,
+      "attempt": 1,
+      "label": "mental_subtraction_single",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/3/53/1",
+      "start_sample": 476661,
+      "stop_sample": 477411
+    },
+    {
+      "run": "Imagery",
+      "block": 3,
+      "trial": 54,
+      "attempt": 1,
+      "label": "mi_hand_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/3/54/1",
+      "start_sample": 480153,
+      "stop_sample": 480903
+    },
+    {
+      "run": "Imagery",
+      "block": 3,
+      "trial": 55,
+      "attempt": 1,
+      "label": "mi_feet_bilateral",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/3/55/1",
+      "start_sample": 483153,
+      "stop_sample": 483903
+    },
+    {
+      "run": "Imagery",
+      "block": 3,
+      "trial": 56,
+      "attempt": 1,
+      "label": "mi_feet_bilateral",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/3/56/1",
+      "start_sample": 486657,
+      "stop_sample": 487407
+    },
+    {
+      "run": "Imagery",
+      "block": 3,
+      "trial": 57,
+      "attempt": 1,
+      "label": "mi_hand_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/3/57/1",
+      "start_sample": 489917,
+      "stop_sample": 490667
+    },
+    {
+      "run": "Imagery",
+      "block": 3,
+      "trial": 58,
+      "attempt": 1,
+      "label": "mi_hands_bilateral",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/3/58/1",
+      "start_sample": 492905,
+      "stop_sample": 493655
+    },
+    {
+      "run": "Imagery",
+      "block": 3,
+      "trial": 59,
+      "attempt": 1,
+      "label": "mi_foot_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/3/59/1",
+      "start_sample": 496653,
+      "stop_sample": 497403
+    },
+    {
+      "run": "Imagery",
+      "block": 3,
+      "trial": 60,
+      "attempt": 1,
+      "label": "mi_foot_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/3/60/1",
+      "start_sample": 499669,
+      "stop_sample": 500419
+    },
+    {
+      "run": "Imagery",
+      "block": 3,
+      "trial": 61,
+      "attempt": 1,
+      "label": "mi_hand_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/3/61/1",
+      "start_sample": 503161,
+      "stop_sample": 503911
+    },
+    {
+      "run": "Imagery",
+      "block": 3,
+      "trial": 62,
+      "attempt": 1,
+      "label": "mi_hand_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/3/62/1",
+      "start_sample": 506421,
+      "stop_sample": 507171
+    },
+    {
+      "run": "Imagery",
+      "block": 3,
+      "trial": 63,
+      "attempt": 1,
+      "label": "mental_subtraction_single",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/3/63/1",
+      "start_sample": 509669,
+      "stop_sample": 510419
+    },
+    {
+      "run": "Imagery",
+      "block": 3,
+      "trial": 64,
+      "attempt": 1,
+      "label": "word_generation",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/3/64/1",
+      "start_sample": 513169,
+      "stop_sample": 513919
+    },
+    {
+      "run": "Imagery",
+      "block": 3,
+      "trial": 65,
+      "attempt": 1,
+      "label": "word_generation",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/3/65/1",
+      "start_sample": 516909,
+      "stop_sample": 517659
+    },
+    {
+      "run": "Imagery",
+      "block": 3,
+      "trial": 66,
+      "attempt": 1,
+      "label": "mi_hand_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/3/66/1",
+      "start_sample": 520169,
+      "stop_sample": 520919
+    },
+    {
+      "run": "Imagery",
+      "block": 3,
+      "trial": 67,
+      "attempt": 1,
+      "label": "mi_foot_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/3/67/1",
+      "start_sample": 523661,
+      "stop_sample": 524411
+    },
+    {
+      "run": "Imagery",
+      "block": 3,
+      "trial": 68,
+      "attempt": 1,
+      "label": "mi_hand_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/3/68/1",
+      "start_sample": 526921,
+      "stop_sample": 527671
+    },
+    {
+      "run": "Imagery",
+      "block": 3,
+      "trial": 69,
+      "attempt": 1,
+      "label": "mi_foot_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/3/69/1",
+      "start_sample": 530413,
+      "stop_sample": 531163
+    },
+    {
+      "run": "Imagery",
+      "block": 3,
+      "trial": 70,
+      "attempt": 1,
+      "label": "mi_foot_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/3/70/1",
+      "start_sample": 533673,
+      "stop_sample": 534423
+    },
+    {
+      "run": "Imagery",
+      "block": 3,
+      "trial": 71,
+      "attempt": 1,
+      "label": "mi_foot_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/3/71/1",
+      "start_sample": 537177,
+      "stop_sample": 537927
+    },
+    {
+      "run": "Imagery",
+      "block": 3,
+      "trial": 72,
+      "attempt": 1,
+      "label": "mi_foot_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/3/72/1",
+      "start_sample": 540421,
+      "stop_sample": 541171
+    },
+    {
+      "run": "Imagery",
+      "block": 3,
+      "trial": 73,
+      "attempt": 1,
+      "label": "mi_hands_bilateral",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/3/73/1",
+      "start_sample": 543421,
+      "stop_sample": 544171
+    },
+    {
+      "run": "Imagery",
+      "block": 3,
+      "trial": 74,
+      "attempt": 1,
+      "label": "mi_hand_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/3/74/1",
+      "start_sample": 546673,
+      "stop_sample": 547423
+    },
+    {
+      "run": "Imagery",
+      "block": 3,
+      "trial": 75,
+      "attempt": 1,
+      "label": "mi_hands_bilateral",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/3/75/1",
+      "start_sample": 549929,
+      "stop_sample": 550679
+    },
+    {
+      "run": "Imagery",
+      "block": 3,
+      "trial": 76,
+      "attempt": 1,
+      "label": "mi_foot_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/3/76/1",
+      "start_sample": 553421,
+      "stop_sample": 554171
+    },
+    {
+      "run": "Imagery",
+      "block": 3,
+      "trial": 77,
+      "attempt": 1,
+      "label": "mi_hand_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/3/77/1",
+      "start_sample": 556681,
+      "stop_sample": 557431
+    },
+    {
+      "run": "Imagery",
+      "block": 3,
+      "trial": 78,
+      "attempt": 1,
+      "label": "mi_feet_bilateral",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/3/78/1",
+      "start_sample": 559929,
+      "stop_sample": 560679
+    },
+    {
+      "run": "Imagery",
+      "block": 4,
+      "trial": 79,
+      "attempt": 1,
+      "label": "mi_hand_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/4/79/1",
+      "start_sample": 574929,
+      "stop_sample": 575679
+    },
+    {
+      "run": "Imagery",
+      "block": 4,
+      "trial": 80,
+      "attempt": 1,
+      "label": "word_generation",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/4/80/1",
+      "start_sample": 578421,
+      "stop_sample": 579171
+    },
+    {
+      "run": "Imagery",
+      "block": 4,
+      "trial": 81,
+      "attempt": 1,
+      "label": "mi_hands_bilateral",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/4/81/1",
+      "start_sample": 581925,
+      "stop_sample": 582675
+    },
+    {
+      "run": "Imagery",
+      "block": 4,
+      "trial": 82,
+      "attempt": 1,
+      "label": "word_generation",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/4/82/1",
+      "start_sample": 585433,
+      "stop_sample": 586183
+    },
+    {
+      "run": "Imagery",
+      "block": 4,
+      "trial": 83,
+      "attempt": 1,
+      "label": "mi_hand_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/4/83/1",
+      "start_sample": 588937,
+      "stop_sample": 589687
+    },
+    {
+      "run": "Imagery",
+      "block": 4,
+      "trial": 84,
+      "attempt": 1,
+      "label": "mi_feet_bilateral",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/4/84/1",
+      "start_sample": 592185,
+      "stop_sample": 592935
+    },
+    {
+      "run": "Imagery",
+      "block": 4,
+      "trial": 85,
+      "attempt": 1,
+      "label": "mi_foot_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/4/85/1",
+      "start_sample": 595933,
+      "stop_sample": 596683
+    },
+    {
+      "run": "Imagery",
+      "block": 4,
+      "trial": 86,
+      "attempt": 1,
+      "label": "mi_foot_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/4/86/1",
+      "start_sample": 599425,
+      "stop_sample": 600175
+    },
+    {
+      "run": "Imagery",
+      "block": 4,
+      "trial": 87,
+      "attempt": 1,
+      "label": "mi_hand_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/4/87/1",
+      "start_sample": 602689,
+      "stop_sample": 603439
+    },
+    {
+      "run": "Imagery",
+      "block": 4,
+      "trial": 88,
+      "attempt": 1,
+      "label": "mi_feet_bilateral",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/4/88/1",
+      "start_sample": 605685,
+      "stop_sample": 606435
+    },
+    {
+      "run": "Imagery",
+      "block": 4,
+      "trial": 89,
+      "attempt": 1,
+      "label": "mi_feet_bilateral",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/4/89/1",
+      "start_sample": 608937,
+      "stop_sample": 609687
+    },
+    {
+      "run": "Imagery",
+      "block": 4,
+      "trial": 90,
+      "attempt": 1,
+      "label": "mi_foot_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/4/90/1",
+      "start_sample": 612437,
+      "stop_sample": 613187
+    },
+    {
+      "run": "Imagery",
+      "block": 4,
+      "trial": 91,
+      "attempt": 1,
+      "label": "mi_foot_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/4/91/1",
+      "start_sample": 615685,
+      "stop_sample": 616435
+    },
+    {
+      "run": "Imagery",
+      "block": 4,
+      "trial": 92,
+      "attempt": 1,
+      "label": "mi_hands_bilateral",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/4/92/1",
+      "start_sample": 618929,
+      "stop_sample": 619679
+    },
+    {
+      "run": "Imagery",
+      "block": 4,
+      "trial": 93,
+      "attempt": 1,
+      "label": "mi_hand_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/4/93/1",
+      "start_sample": 622697,
+      "stop_sample": 623447
+    },
+    {
+      "run": "Imagery",
+      "block": 4,
+      "trial": 94,
+      "attempt": 1,
+      "label": "mental_subtraction_single",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/4/94/1",
+      "start_sample": 625941,
+      "stop_sample": 626691
+    },
+    {
+      "run": "Imagery",
+      "block": 4,
+      "trial": 95,
+      "attempt": 1,
+      "label": "mi_foot_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/4/95/1",
+      "start_sample": 629189,
+      "stop_sample": 629939
+    },
+    {
+      "run": "Imagery",
+      "block": 4,
+      "trial": 96,
+      "attempt": 1,
+      "label": "mi_hand_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/4/96/1",
+      "start_sample": 632189,
+      "stop_sample": 632939
+    },
+    {
+      "run": "Imagery",
+      "block": 4,
+      "trial": 97,
+      "attempt": 1,
+      "label": "mental_subtraction_single",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/4/97/1",
+      "start_sample": 635693,
+      "stop_sample": 636443
+    },
+    {
+      "run": "Imagery",
+      "block": 4,
+      "trial": 98,
+      "attempt": 1,
+      "label": "mi_foot_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/4/98/1",
+      "start_sample": 639445,
+      "stop_sample": 640195
+    },
+    {
+      "run": "Imagery",
+      "block": 4,
+      "trial": 99,
+      "attempt": 1,
+      "label": "mi_hand_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/4/99/1",
+      "start_sample": 642949,
+      "stop_sample": 643699
+    },
+    {
+      "run": "Imagery",
+      "block": 4,
+      "trial": 100,
+      "attempt": 1,
+      "label": "mi_foot_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/4/100/1",
+      "start_sample": 646197,
+      "stop_sample": 646947
+    },
+    {
+      "run": "Imagery",
+      "block": 4,
+      "trial": 101,
+      "attempt": 1,
+      "label": "mi_hand_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/4/101/1",
+      "start_sample": 649197,
+      "stop_sample": 649947
+    },
+    {
+      "run": "Imagery",
+      "block": 4,
+      "trial": 102,
+      "attempt": 1,
+      "label": "mi_hand_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/4/102/1",
+      "start_sample": 652441,
+      "stop_sample": 653191
+    },
+    {
+      "run": "Imagery",
+      "block": 4,
+      "trial": 103,
+      "attempt": 1,
+      "label": "mi_hands_bilateral",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/4/103/1",
+      "start_sample": 655441,
+      "stop_sample": 656191
+    },
+    {
+      "run": "Imagery",
+      "block": 4,
+      "trial": 104,
+      "attempt": 1,
+      "label": "mi_foot_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Imagery/4/104/1",
+      "start_sample": 658697,
+      "stop_sample": 659447
+    },
+    {
+      "run": "Motorik",
+      "block": 4,
+      "trial": 59,
+      "attempt": 1,
+      "label": "me_foot_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Motorik/4/59/1",
+      "start_sample": 238349,
+      "stop_sample": 239099
+    },
+    {
+      "run": "Motorik",
+      "block": 4,
+      "trial": 60,
+      "attempt": 1,
+      "label": "me_hand_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Motorik/4/60/1",
+      "start_sample": 241341,
+      "stop_sample": 242091
+    },
+    {
+      "run": "Motorik",
+      "block": 4,
+      "trial": 61,
+      "attempt": 1,
+      "label": "me_foot_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Motorik/4/61/1",
+      "start_sample": 244601,
+      "stop_sample": 245351
+    },
+    {
+      "run": "Motorik",
+      "block": 4,
+      "trial": 62,
+      "attempt": 1,
+      "label": "me_foot_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Motorik/4/62/1",
+      "start_sample": 248093,
+      "stop_sample": 248843
+    },
+    {
+      "run": "Motorik",
+      "block": 4,
+      "trial": 63,
+      "attempt": 1,
+      "label": "me_foot_right",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Motorik/4/63/1",
+      "start_sample": 251357,
+      "stop_sample": 252107
+    },
+    {
+      "run": "Motorik",
+      "block": 4,
+      "trial": 64,
+      "attempt": 1,
+      "label": "me_foot_left",
+      "protocol_version": "eeg-session-2.0",
+      "trial_key": "Motorik/4/64/1",
+      "start_sample": 254601,
+      "stop_sample": 255351
+    }
+  ],
+  "skipped_evaluations": {
+    "ME_HandSide": {
+      "reason": "Not all contrast classes remain after exclusions.",
+      "n": 1,
+      "blocks": [
+        4
+      ]
+    },
+    "ME_FootSide": {
+      "reason": "At least two classes and two independent blocks are required.",
+      "n": 5,
+      "blocks": [
+        4
+      ]
+    },
+    "ME_FourClass": {
+      "reason": "Not all contrast classes remain after exclusions.",
+      "n": 6,
+      "blocks": [
+        4
+      ]
+    }
+  },
+  "samples": 676337,
+  "duration_seconds": 2705.348,
+  "sample_index_contiguous": true,
+  "nonfinite_eeg_values": 0,
+  "validation_counts": {
+    "1.0": 676337
+  },
+  "zero_fraction_by_eeg_channel": {
+    "EEG 1": 0.0,
+    "EEG 2": 0.0,
+    "EEG 3": 0.0,
+    "EEG 4": 0.0,
+    "EEG 5": 0.0,
+    "EEG 6": 0.0,
+    "EEG 7": 0.0,
+    "EEG 8": 0.0
+  },
+  "task_duration_range_s": [
+    3.968,
+    5.04
+  ],
+  "protocol_version": "eeg-session-2.0",
+  "eeg_bands_hz": [
+    [
+      8,
+      13
+    ],
+    [
+      13,
+      30
+    ]
+  ],
+  "exclusions": [
+    {
+      "key": "Motorik/1/1/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/1/10/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/1/11/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/1/12/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/1/13/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/1/14/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/1/15/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/1/16/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/1/2/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/1/3/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/1/4/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/1/5/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/1/6/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/1/7/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/1/8/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/1/9/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/2/17/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/2/18/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/2/19/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/2/20/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/2/21/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/2/22/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/2/23/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/2/24/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/2/25/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/2/26/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/2/27/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/2/28/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/2/29/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/2/30/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/2/31/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/2/32/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/3/33/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/3/34/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/3/35/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/3/36/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/3/37/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/3/38/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/3/39/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/3/40/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/3/41/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/3/42/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/3/43/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/3/44/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/3/45/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/3/46/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/3/47/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/3/48/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/4/49/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/4/50/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/4/51/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/4/52/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/4/53/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/4/54/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/4/55/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/4/56/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/4/57/1",
+      "reason": "before_quality_cutoff"
+    },
+    {
+      "key": "Motorik/4/58/1",
+      "reason": "before_quality_cutoff"
+    }
+  ],
+  "skipped": 58,
+  "method": "Fixed ridge penalty=10, training-fold standardization; leave-one-block-out; 3s epochs; 199 label permutations within blocks (legacy task/rest: within trial pairs). Exploratory, no multiplicity correction.",
+  "results": {
+    "MI_HandSide": {
+      "eeg": {
+        "n": 32,
+        "classes": [
+          "mi_hand_left",
+          "mi_hand_right"
+        ],
+        "class_counts": {
+          "mi_hand_left": 16,
+          "mi_hand_right": 16
+        },
+        "test_blocks": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "balanced_accuracy": 0.75,
+        "fold_balanced_accuracy": [
+          0.75,
+          0.75,
+          0.75,
+          0.75
+        ],
+        "confusion_true_rows": [
+          [
+            12,
+            4
+          ],
+          [
+            4,
+            12
+          ]
+        ],
+        "permutation_p_exploratory": 0.025,
+        "permutations": 199
+      },
+      "imu": {
+        "n": 32,
+        "classes": [
+          "mi_hand_left",
+          "mi_hand_right"
+        ],
+        "class_counts": {
+          "mi_hand_left": 16,
+          "mi_hand_right": 16
+        },
+        "test_blocks": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "balanced_accuracy": 0.25,
+        "fold_balanced_accuracy": [
+          0.25,
+          0.25,
+          0.5,
+          0.0
+        ],
+        "confusion_true_rows": [
+          [
+            5,
+            11
+          ],
+          [
+            13,
+            3
+          ]
+        ],
+        "permutation_p_exploratory": 1.0,
+        "permutations": 199
+      },
+      "time": {
+        "n": 32,
+        "classes": [
+          "mi_hand_left",
+          "mi_hand_right"
+        ],
+        "class_counts": {
+          "mi_hand_left": 16,
+          "mi_hand_right": 16
+        },
+        "test_blocks": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "balanced_accuracy": 0.5,
+        "fold_balanced_accuracy": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "confusion_true_rows": [
+          [
+            8,
+            8
+          ],
+          [
+            8,
+            8
+          ]
+        ],
+        "permutation_p_exploratory": 1.0,
+        "permutations": 199
+      }
+    },
+    "MI_FootSide": {
+      "eeg": {
+        "n": 32,
+        "classes": [
+          "mi_foot_left",
+          "mi_foot_right"
+        ],
+        "class_counts": {
+          "mi_foot_left": 16,
+          "mi_foot_right": 16
+        },
+        "test_blocks": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "balanced_accuracy": 0.375,
+        "fold_balanced_accuracy": [
+          0.25,
+          0.625,
+          0.375,
+          0.25
+        ],
+        "confusion_true_rows": [
+          [
+            6,
+            10
+          ],
+          [
+            10,
+            6
+          ]
+        ],
+        "permutation_p_exploratory": 0.905,
+        "permutations": 199
+      },
+      "imu": {
+        "n": 32,
+        "classes": [
+          "mi_foot_left",
+          "mi_foot_right"
+        ],
+        "class_counts": {
+          "mi_foot_left": 16,
+          "mi_foot_right": 16
+        },
+        "test_blocks": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "balanced_accuracy": 0.5,
+        "fold_balanced_accuracy": [
+          0.625,
+          0.375,
+          0.5,
+          0.5
+        ],
+        "confusion_true_rows": [
+          [
+            7,
+            9
+          ],
+          [
+            7,
+            9
+          ]
+        ],
+        "permutation_p_exploratory": 0.62,
+        "permutations": 199
+      },
+      "time": {
+        "n": 32,
+        "classes": [
+          "mi_foot_left",
+          "mi_foot_right"
+        ],
+        "class_counts": {
+          "mi_foot_left": 16,
+          "mi_foot_right": 16
+        },
+        "test_blocks": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "balanced_accuracy": 0.5,
+        "fold_balanced_accuracy": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "confusion_true_rows": [
+          [
+            8,
+            8
+          ],
+          [
+            8,
+            8
+          ]
+        ],
+        "permutation_p_exploratory": 1.0,
+        "permutations": 199
+      }
+    },
+    "MI_FourClass": {
+      "eeg": {
+        "n": 64,
+        "classes": [
+          "mi_foot_left",
+          "mi_foot_right",
+          "mi_hand_left",
+          "mi_hand_right"
+        ],
+        "class_counts": {
+          "mi_foot_left": 16,
+          "mi_foot_right": 16,
+          "mi_hand_left": 16,
+          "mi_hand_right": 16
+        },
+        "test_blocks": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "balanced_accuracy": 0.28125,
+        "fold_balanced_accuracy": [
+          0.25,
+          0.3125,
+          0.4375,
+          0.125
+        ],
+        "confusion_true_rows": [
+          [
+            3,
+            6,
+            3,
+            4
+          ],
+          [
+            7,
+            3,
+            4,
+            2
+          ],
+          [
+            2,
+            4,
+            5,
+            5
+          ],
+          [
+            4,
+            4,
+            1,
+            7
+          ]
+        ],
+        "permutation_p_exploratory": 0.335,
+        "permutations": 199
+      },
+      "imu": {
+        "n": 64,
+        "classes": [
+          "mi_foot_left",
+          "mi_foot_right",
+          "mi_hand_left",
+          "mi_hand_right"
+        ],
+        "class_counts": {
+          "mi_foot_left": 16,
+          "mi_foot_right": 16,
+          "mi_hand_left": 16,
+          "mi_hand_right": 16
+        },
+        "test_blocks": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "balanced_accuracy": 0.21875,
+        "fold_balanced_accuracy": [
+          0.1875,
+          0.25,
+          0.3125,
+          0.125
+        ],
+        "confusion_true_rows": [
+          [
+            3,
+            3,
+            8,
+            2
+          ],
+          [
+            2,
+            4,
+            7,
+            3
+          ],
+          [
+            4,
+            3,
+            3,
+            6
+          ],
+          [
+            3,
+            3,
+            6,
+            4
+          ]
+        ],
+        "permutation_p_exploratory": 0.765,
+        "permutations": 199
+      },
+      "time": {
+        "n": 64,
+        "classes": [
+          "mi_foot_left",
+          "mi_foot_right",
+          "mi_hand_left",
+          "mi_hand_right"
+        ],
+        "class_counts": {
+          "mi_foot_left": 16,
+          "mi_foot_right": 16,
+          "mi_hand_left": 16,
+          "mi_hand_right": 16
+        },
+        "test_blocks": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "balanced_accuracy": 0.25,
+        "fold_balanced_accuracy": [
+          0.25,
+          0.25,
+          0.25,
+          0.25
+        ],
+        "confusion_true_rows": [
+          [
+            0,
+            8,
+            0,
+            8
+          ],
+          [
+            0,
+            8,
+            0,
+            8
+          ],
+          [
+            0,
+            8,
+            0,
+            8
+          ],
+          [
+            0,
+            8,
+            0,
+            8
+          ]
+        ],
+        "permutation_p_exploratory": 1.0,
+        "permutations": 199
+      }
+    },
+    "MI_Bilateral": {
+      "eeg": {
+        "n": 24,
+        "classes": [
+          "mi_feet_bilateral",
+          "mi_hands_bilateral"
+        ],
+        "class_counts": {
+          "mi_feet_bilateral": 12,
+          "mi_hands_bilateral": 12
+        },
+        "test_blocks": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "balanced_accuracy": 0.45833333333333337,
+        "fold_balanced_accuracy": [
+          0.5,
+          0.5,
+          0.3333333333333333,
+          0.5
+        ],
+        "confusion_true_rows": [
+          [
+            7,
+            5
+          ],
+          [
+            8,
+            4
+          ]
+        ],
+        "permutation_p_exploratory": 0.705,
+        "permutations": 199
+      },
+      "imu": {
+        "n": 24,
+        "classes": [
+          "mi_feet_bilateral",
+          "mi_hands_bilateral"
+        ],
+        "class_counts": {
+          "mi_feet_bilateral": 12,
+          "mi_hands_bilateral": 12
+        },
+        "test_blocks": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "balanced_accuracy": 0.5833333333333334,
+        "fold_balanced_accuracy": [
+          0.5,
+          0.3333333333333333,
+          0.8333333333333333,
+          0.6666666666666666
+        ],
+        "confusion_true_rows": [
+          [
+            5,
+            7
+          ],
+          [
+            3,
+            9
+          ]
+        ],
+        "permutation_p_exploratory": 0.265,
+        "permutations": 199
+      },
+      "time": {
+        "n": 24,
+        "classes": [
+          "mi_feet_bilateral",
+          "mi_hands_bilateral"
+        ],
+        "class_counts": {
+          "mi_feet_bilateral": 12,
+          "mi_hands_bilateral": 12
+        },
+        "test_blocks": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "balanced_accuracy": 0.5,
+        "fold_balanced_accuracy": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "confusion_true_rows": [
+          [
+            12,
+            0
+          ],
+          [
+            12,
+            0
+          ]
+        ],
+        "permutation_p_exploratory": 1.0,
+        "permutations": 199
+      }
+    },
+    "Cognitive": {
+      "eeg": {
+        "n": 16,
+        "classes": [
+          "mental_subtraction_single",
+          "word_generation"
+        ],
+        "class_counts": {
+          "mental_subtraction_single": 8,
+          "word_generation": 8
+        },
+        "test_blocks": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "balanced_accuracy": 0.5625,
+        "fold_balanced_accuracy": [
+          0.5,
+          0.5,
+          0.5,
+          0.75
+        ],
+        "confusion_true_rows": [
+          [
+            4,
+            4
+          ],
+          [
+            3,
+            5
+          ]
+        ],
+        "permutation_p_exploratory": 0.29,
+        "permutations": 199
+      },
+      "imu": {
+        "n": 16,
+        "classes": [
+          "mental_subtraction_single",
+          "word_generation"
+        ],
+        "class_counts": {
+          "mental_subtraction_single": 8,
+          "word_generation": 8
+        },
+        "test_blocks": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "balanced_accuracy": 0.625,
+        "fold_balanced_accuracy": [
+          0.5,
+          0.75,
+          0.5,
+          0.75
+        ],
+        "confusion_true_rows": [
+          [
+            7,
+            1
+          ],
+          [
+            5,
+            3
+          ]
+        ],
+        "permutation_p_exploratory": 0.215,
+        "permutations": 199
+      },
+      "time": {
+        "n": 16,
+        "classes": [
+          "mental_subtraction_single",
+          "word_generation"
+        ],
+        "class_counts": {
+          "mental_subtraction_single": 8,
+          "word_generation": 8
+        },
+        "test_blocks": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "balanced_accuracy": 0.5,
+        "fold_balanced_accuracy": [
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "confusion_true_rows": [
+          [
+            2,
+            6
+          ],
+          [
+            2,
+            6
+          ]
+        ],
+        "permutation_p_exploratory": 1.0,
+        "permutations": 199
+      }
+    }
+  }
+}

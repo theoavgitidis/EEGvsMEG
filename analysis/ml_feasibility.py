@@ -4,6 +4,7 @@ Usage: python analysis/ml_feasibility.py RECORDING.csv --output RESULT.json
 No model selection: fixed standardized ridge classifier, penalty 10.
 """
 import argparse
+import importlib.metadata
 import json
 from pathlib import Path
 
@@ -23,17 +24,23 @@ def features(epoch, fs, bands=((1, 4), (4, 8), (8, 13), (13, 30), (30, 40))):
     ])
 
 
-def predict_cv(x, y, groups):
+def cv_partitions(y, groups):
     classes = np.unique(y)
     if len(classes) < 2 or len(np.unique(groups)) < 2:
         raise ValueError("At least two classes and two independent blocks are required.")
-    pred = np.empty(len(y), dtype=y.dtype)
-    folds = []
     for group in np.unique(groups):
         test = groups == group
         train = ~test
         if set(y[train]) != set(classes) or set(y[test]) != set(classes):
             raise ValueError("Each held-out block and training partition must contain every class.")
+        yield train, test
+
+
+def predict_cv(x, y, groups):
+    classes = np.unique(y)
+    pred = np.empty(len(y), dtype=y.dtype)
+    folds = []
+    for train, test in cv_partitions(y, groups):
         mu, sd = x[train].mean(0), x[train].std(0)
         sd[sd < 1e-12] = 1
         a = np.column_stack([np.ones(train.sum()), (x[train] - mu) / sd])
@@ -45,6 +52,31 @@ def predict_cv(x, y, groups):
         folds.append(float(np.mean([np.mean(pred[test & (y == c)] == c) for c in classes])))
     score = float(np.mean([np.mean(pred[y == c] == c) for c in classes]))
     return score, folds, [[int(np.sum((y == c) & (pred == p))) for p in classes] for c in classes]
+
+
+def exclude_before_marker(windows, events, fs, samples, marker=None, settle_seconds=0):
+    """Exclude whole trial pairs if their task cue precedes a manual quality marker."""
+    if not np.isfinite(settle_seconds) or settle_seconds < 0:
+        raise ValueError("Settling time must be finite and nonnegative.")
+    if marker is None:
+        if settle_seconds:
+            raise ValueError("Settling time requires --after-marker.")
+        return windows.copy(), [], None
+    matches = events[(events.source == "manual") & (events.label == marker)]
+    if len(matches) != 1:
+        raise ValueError(f"Expected exactly one manual marker {marker!r}; found {len(matches)}.")
+    sample = float(matches.iloc[0].samples_received)
+    if not np.isfinite(sample) or not sample.is_integer() or not 0 <= sample < samples:
+        raise ValueError("Quality marker sample must be an integer within the recording.")
+    cutoff = int(sample) + int(np.ceil(settle_seconds * fs))
+    # Task windows start 0.5 s after cue; legacy rest windows share the trial key.
+    onset = windows.groupby("trial_key").start_sample.min() - int(round(.5 * fs))
+    rejected = sorted(onset[onset < cutoff].index)
+    exclusions = [{"key": key, "reason": "before_quality_cutoff"} for key in rejected]
+    rule = {"marker": marker, "marker_sample": int(sample), "marker_time_s": sample / fs,
+            "settle_seconds": settle_seconds, "cutoff_sample": cutoff, "cutoff_time_s": cutoff / fs,
+            "policy": "retain entire trial only if task cue is at or after cutoff; original indices unchanged"}
+    return windows[~windows.trial_key.isin(rejected)].reset_index(drop=True), exclusions, rule
 
 
 def evaluate(rows, feature_key, permutations=199):
@@ -65,7 +97,9 @@ def evaluate(rows, feature_key, permutations=199):
                 idx = np.flatnonzero(groups == group)
                 shuffled[idx] = rng.permutation(y[idx])
         null.append(predict_cv(x, shuffled, groups)[0])
-    return {"n": len(rows), "classes": np.unique(y).tolist(), "balanced_accuracy": score,
+    return {"n": len(rows), "classes": np.unique(y).tolist(),
+            "class_counts": {c: int(np.sum(y == c)) for c in np.unique(y)},
+            "test_blocks": np.unique(groups).tolist(), "balanced_accuracy": score,
             "fold_balanced_accuracy": folds, "confusion_true_rows": confusion,
             "permutation_p_exploratory": (1 + sum(s >= score for s in null)) / (1 + permutations),
             "permutations": permutations}
@@ -76,11 +110,14 @@ def main():
     parser.add_argument("--signal", choices=["auto", "raw", "oscar"], default="auto")
     parser.add_argument("recording", type=Path)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--after-marker", help="Exact unique manual marker label; exclude earlier task cues.")
+    parser.add_argument("--settle-seconds", type=float, default=0,
+                        help="Additional exclusion after --after-marker (default: 0).")
     args = parser.parse_args()
     if args.output.exists():
         raise FileExistsError("Choose a new report path; recordings and prior results are never overwritten.")
     from analysis.recording_files import resolve_recording
-    from analysis.ml_data import trial_windows
+    from analysis.ml_data import sha256, trial_windows
     from analysis.session_conditions import CURRENT, select_evaluations
     selected = resolve_recording(args.recording, args.signal)
     meta = json.loads(Path(str(selected.raw) + ".session.json").read_text(errors="replace"))
@@ -97,6 +134,11 @@ def main():
         raise ValueError("Non-contiguous sample indices; event offsets cannot be trusted.")
     windows, exclusions = trial_windows(events, len(data), fs, meta.get("protocol_version"))
     protocol = windows.protocol_version.iloc[0]
+    candidates = [(name, set(windows.iloc[ix].label))
+                  for name, ix in select_evaluations(windows, protocol)]
+    windows, quality_exclusions, quality_rule = exclude_before_marker(
+        windows, events, fs, len(data), args.after_marker, args.settle_seconds)
+    exclusions.extend(quality_exclusions)
     eeg, imu = data[eeg_cols].to_numpy(), data[imu_cols].to_numpy()
     invalid = set()
     for window in windows.to_dict("records"):
@@ -107,7 +149,19 @@ def main():
     for trial in sorted(invalid):
         exclusions.append({"key": trial, "reason": "invalid_samples_in_trial_pair"})
     windows = windows[~windows.trial_key.isin(invalid)].reset_index(drop=True)
-    evaluations = select_evaluations(windows, protocol)
+    evaluations, skipped_evaluations = [], {}
+    for name, labels in candidates:
+        indices = np.flatnonzero(windows.label.isin(labels).to_numpy())
+        sub = windows.iloc[indices]
+        try:
+            if set(sub.label) != labels:
+                raise ValueError("Not all contrast classes remain after exclusions.")
+            list(cv_partitions(sub.label.to_numpy(), sub.block.to_numpy()))
+        except ValueError as error:
+            skipped_evaluations[name] = {"reason": str(error), "n": len(sub),
+                                         "blocks": sorted(sub.block.unique().tolist())}
+            continue
+        evaluations.append((name, indices))
     bands = ((8, 13), (13, 30)) if protocol == CURRENT else ((1, 4), (4, 8), (8, 13), (13, 30), (30, 40))
     rows = []
     for window in windows.to_dict("records"):
@@ -124,6 +178,14 @@ def main():
     result = {"recording": str(args.recording.resolve()), "participant": meta["participant_id"],
               "signal": selected.signal, "signal_description": selected.label,
               "selected_recording": str(selected.data.resolve()), "processing": selected.metadata,
+              "session_id": meta["session_id"], "quality_rule": quality_rule,
+              "inputs_sha256": {p.name: sha256(p) for p in
+                  [selected.data, selected.events, selected.session,
+                   Path(str(selected.raw) + ".plan.csv"), selected.processing] if p.exists()},
+              "software_versions": {p: importlib.metadata.version(p) for p in ["numpy", "scipy", "pandas"]},
+              "permutation_seed": 20261022, "session_seed": meta.get("seed"),
+              "channel_order": eeg_cols, "sampling_rate_hz": fs, "eeg_unit": "uV",
+              "retained_windows": windows.to_dict("records"), "skipped_evaluations": skipped_evaluations,
               "samples": len(data), "duration_seconds": len(data) / fs,
               "sample_index_contiguous": bool(np.all(np.diff(data.sample_index) == 1)),
               "nonfinite_eeg_values": int((~np.isfinite(eeg)).sum()),
