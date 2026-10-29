@@ -1,0 +1,235 @@
+{
+  "status": "exploratory public executed-fist baseline; no local Unicorn transfer validation",
+  "reported_at_utc": "2026-10-29T18:43:11.693403+00:00",
+  "training_code_commit": "8f76606136a887ef02c07429b40ecb16c6ba74cd",
+  "command": "python -m analysis.movement_classifier train-physionet prepared-fists-250hz-v1 --output-dir hand-side-model-v1",
+  "measured_runtime_s": {
+    "wall_including_validation_training_and_export": 5.04,
+    "user": 4.4,
+    "system": 0.21
+  },
+  "task": "hand-side",
+  "input_domain": "physionet-executed-fists",
+  "preparation_manifest_sha256": "f582d74dcdfe4ea1e00720fed10dc3a18bd409a74239fe69e119df0725833ff1",
+  "source_checksum_manifest_sha256": "7f5d16957d8ee7bce86cc7ccba0e5994f63f33781607eb3f838392d49311a208",
+  "prepared_files_sha256": {
+    "histories_uv.npy": "a3038489319e835749571aa88b1bd6e5f1040455ea31628598c4faecd5336dd7",
+    "features.npy": "e7f78b3140b037dec4819ae3a7f3296f78c05ef3621a0bfe3d9ccf5606b85413",
+    "windows.csv": "8a3c6c0cc5f237ce2d2390224e3502139db9c68229c50cd23719b673931af10f"
+  },
+  "output_files_sha256": {
+    "report.json": "694214d07a5d03c51123a30f65b2046908276024ee7dfeac414476ebd0195d1e",
+    "report.md": "23c972d4f9a3c42777445df82437cf7fb47d104df109562c402f1532832ec864",
+    "predictions.csv": "3c7336d5bf88eedca174d91d4ef6725c19bd9f3f19016ca201c11f28f9075ee0",
+    "movement-model.npz": "bb15097e3cb0f7290f65fd17be5ab2ff141a31878e84364b44338feb96f03593"
+  },
+  "config": {
+    "sampling_rate_hz": 250,
+    "unit": "uV",
+    "channel_order": [
+      "EEG 1",
+      "EEG 2",
+      "EEG 3",
+      "EEG 4",
+      "EEG 5",
+      "EEG 6",
+      "EEG 7",
+      "EEG 8"
+    ],
+    "history_samples": 875,
+    "warmup_samples": 125,
+    "feature_samples": 750,
+    "filter": "4th-order Butterworth 7-35 Hz; causal sosfilt; reset per window; subtract first sample",
+    "bands_hz": [
+      [
+        8,
+        13
+      ],
+      [
+        13,
+        30
+      ]
+    ],
+    "reference": "as recorded; no additional rereferencing",
+    "features": "log Welch bandpower; nperseg=500; band-major, then recorded channel order",
+    "classifier": "StandardScaler + balanced LogisticRegression(C=1, max_iter=2000, random_state=0)"
+  },
+  "external_import_config": {
+    "source_sampling_rate_hz": 160,
+    "target_sampling_rate_hz": 250,
+    "source_unit": "uV in EDF header; MNE returns V",
+    "output_unit": "uV",
+    "channel_positions": [
+      "Fz",
+      "C3",
+      "Cz",
+      "C4",
+      "Pz",
+      "PO7",
+      "Oz",
+      "PO8"
+    ],
+    "history_relative_to_cue_s": [
+      0.0,
+      3.5
+    ],
+    "feature_relative_to_cue_s": [
+      0.5,
+      3.5
+    ],
+    "resampling": "per-history scipy.signal.resample_poly(up=25, down=16, axis=0, window=('kaiser', 5.0), padtype='constant', cval=0)",
+    "timing": "Cue rounded to nearest 160-Hz sample; exclusive stop after 560 source samples. No source samples outside this history.",
+    "reference": "as recorded; no additional rereferencing",
+    "feature_config": {
+      "sampling_rate_hz": 250,
+      "unit": "uV",
+      "channel_order": [
+        "EEG 1",
+        "EEG 2",
+        "EEG 3",
+        "EEG 4",
+        "EEG 5",
+        "EEG 6",
+        "EEG 7",
+        "EEG 8"
+      ],
+      "history_samples": 875,
+      "warmup_samples": 125,
+      "feature_samples": 750,
+      "filter": "4th-order Butterworth 7-35 Hz; causal sosfilt; reset per window; subtract first sample",
+      "bands_hz": [
+        [
+          8,
+          13
+        ],
+        [
+          13,
+          30
+        ]
+      ],
+      "reference": "as recorded; no additional rereferencing",
+      "features": "log Welch bandpower; nperseg=500; band-major, then recorded channel order",
+      "classifier": "StandardScaler + balanced LogisticRegression(C=1, max_iter=2000, random_state=0)"
+    }
+  },
+  "software_versions": {
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "pandas": "3.1.0",
+    "scikit-learn": "1.9.1"
+  },
+  "training_parameters": {
+    "C": 1,
+    "class_weight": "balanced",
+    "max_iter": 2000,
+    "random_state": 0,
+    "scaling": "StandardScaler fitted only on training people in every fold",
+    "hyperparameter_search": false,
+    "final_model": "refit on all 4725 public trials after evaluation"
+  },
+  "dataset_summary": {
+    "trials": 4725,
+    "persons": 105,
+    "class_counts": {
+      "me_hand_right": 2356,
+      "me_hand_left": 2369
+    },
+    "excluded_recordings": 12,
+    "excluded_task_windows": 202
+  },
+  "evaluation": {
+    "split": "leave-one-participant-out",
+    "n_windows": 4725,
+    "n_trials": 4725,
+    "accuracy": 0.562962962962963,
+    "balanced_accuracy": 0.5629055012358986,
+    "macro_f1": 0.5627429010043699,
+    "class_order": [
+      "me_hand_left",
+      "me_hand_right"
+    ],
+    "confusion_true_rows": [
+      [
+        1383,
+        986
+      ],
+      [
+        1079,
+        1277
+      ]
+    ],
+    "per_class": {
+      "me_hand_left": {
+        "precision": 0.5617384240454915,
+        "recall": 0.583790628957366,
+        "f1": 0.5725522666114676,
+        "support": 2369
+      },
+      "me_hand_right": {
+        "precision": 0.5642951833848873,
+        "recall": 0.5420203735144312,
+        "f1": 0.5529335353972722,
+        "support": 2356
+      }
+    }
+  },
+  "person_distribution": {
+    "n": 105,
+    "trials_each": 45,
+    "train_trials_each_fold": 4680,
+    "mean_balanced_accuracy": 0.5633405931542578,
+    "median_balanced_accuracy": 0.5573122529644269,
+    "sd_balanced_accuracy": 0.08038239643987899,
+    "min_balanced_accuracy": 0.38142292490118573,
+    "max_balanced_accuracy": 0.8422619047619048,
+    "q25_balanced_accuracy": 0.5079051383399209,
+    "q75_balanced_accuracy": 0.6175889328063241,
+    "above_50_percent": 83,
+    "at_50_percent": 2,
+    "below_50_percent": 20,
+    "at_least_70_percent": 3
+  },
+  "descriptive_person_bootstrap": {
+    "quantity": "unweighted mean of observed held-out-person balanced accuracies",
+    "resampling_unit": "whole person score",
+    "persons_per_draw": 105,
+    "draws": 10000,
+    "seed": 20261029,
+    "percentiles": [
+      2.5,
+      97.5
+    ],
+    "interval": [
+      0.547917660970844,
+      0.5790245904026959
+    ],
+    "limitation": "Descriptive only: folds share training data; this is not a formal independent confidence interval for the entire learning procedure or a significance test."
+  },
+  "verification": {
+    "regression_command": "python -m unittest analysis.test_movement_classifier analysis.test_ml_pipeline analysis.test_reve_pipeline",
+    "regression_tests_passed": 28,
+    "real_output_checks": [
+      "4725 unique trials, each tested exactly once",
+      "105 held-out people, all three runs and 45 trials together",
+      "per-fold and pooled metrics recalculated from saved test predictions",
+      "exported model reloaded without pickle; scaler equals full-data refit statistics",
+      "exported probabilities finite, shape 4725 x 2, each row sums to one",
+      "prepared input checksums and all cached feature histories verified by training loader"
+    ]
+  },
+  "person_results_file": "physionet_fists_training_persons_2026-10-29.csv",
+  "person_results_sha256": "0f4f73fbcc6e1f8af6152999f33ee28bf047d41396ba443d9e75a8553282a2cc",
+  "limitations": [
+    "Structural checks do not validate artifact-free EEG or correct cue compliance.",
+    "Only left/right executed fists; no rest, foot or imagery class.",
+    "Per-history centered FIR resampling is offline; not a validated streaming adapter.",
+    "No additional reference or artifact correction; source/device differences remain.",
+    "No split is learned here; later evaluation must hold out whole people.",
+    "Generic local EEG 1..8 names still require independently verified physical placement.",
+    "Public-data cross-person evaluation is not a local Unicorn transfer or streaming validation.",
+    "Model probabilities are uncalibrated; no event gating is defined without a rest class.",
+    "105 folds share training people; no independent final cohort or external dataset test.",
+    "Eight-channel bandpower baseline; no performance claim for alternative models.",
+    "No formal permutation significance test and no hyperparameter search performed."
+  ]
+}

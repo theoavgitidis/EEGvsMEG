@@ -73,7 +73,7 @@ Der eigene Importer bereitet PhysioNet-Faustbewegungen mit einem gesonderten Que
 
 Die erste Ausgabe ist auf diesem Rechner bereits vorhanden; für einen erneuten Import einen neuen Ordner wählen. `train-physionet` verwendet ausschließlich `hand-side`, mindestens zwei Personen und Leave-one-participant-out über alle Läufe einer Person. Die Standardisierung bleibt trainingsintern. Binäre Modellwahrscheinlichkeiten und Modellpersistenz sind gegen scikit-learn geprüft. Ein öffentliches Modell ist im Manifest gekennzeichnet und wird von den lokalen Auswertungs-/Replay-Pfaden nicht als validierter Unicorn-Transfer akzeptiert.
 
-Der vollständige Import von 4.725 echten Trials wurde ausgeführt und in der ML-Umgebung geladen. Das öffentliche Training wurde hier nur mit synthetischen Daten getestet. Exakte Umrechnung, Offline-Resampling, Ausgabeformat und konkrete Ausschlüsse: [PhysioNet-Importer](physionet-fist-data.md#importer-und-trainingsschnittstelle).
+Der vollständige Import von 4.725 echten Trials wurde ausgeführt und in der ML-Umgebung geladen. Auch das öffentliche Training ist inzwischen ausgeführt: **56,29 % Balanced Accuracy** über 105 vollständig zurückgehaltene Personen-Folds. Modell, Testvorhersagen und vollständiger Bericht liegen unter `~/.cache/eegvsmeg/physionet-eegmmidb-1.0.0/hand-side-model-v1/`; das ist ein schwacher explorativer Benchmark, kein Unicorn-Transfernachweis. Ergebnis, Streuung und tatsächlich durchgeführte Prüfungen: [PhysioNet-Trainingsbericht](physionet-fist-training-2026-10-29.md). Exakte Umrechnung, Offline-Resampling, Ausgabeformat und konkrete Ausschlüsse: [PhysioNet-Importer](physionet-fist-data.md#importer-und-trainingsschnittstelle).
 
 ### Bekannte Qualitätsprobleme
 

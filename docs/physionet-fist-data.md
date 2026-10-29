@@ -1,6 +1,6 @@
 # Öffentliche EEG-Daten: ausgeführte linke/rechte Faustbewegung
 
-Stand: 29.10.2026. Auswahl, Originaldownload, technische Labelprüfung und ein Importer für die Bewegungspipeline sind implementiert. Der vollständige Datenimport wurde ausgeführt; echtes Modelltraining und die Übertragung auf das Unicorn-Headset sind noch nicht validiert.
+Stand: 29.10.2026. Auswahl, Originaldownload, technische Labelprüfung und ein Importer für die Bewegungspipeline sind implementiert. Vollständiger Import und erster öffentlicher Trainingslauf wurden ausgeführt. Die Achtkanal-Baseline erreicht **56,29 % Balanced Accuracy** bei zurückgehaltenen Personen; die Übertragung auf das Unicorn-Headset ist nicht validiert. Ergebnis und Grenzen: [Trainingsbericht](physionet-fist-training-2026-10-29.md).
 
 ## Auswahl und Herkunft
 
@@ -124,11 +124,11 @@ Die CLI-Anbindung an den vorhandenen Klassifikator ist:
   --output-dir ~/.cache/eegvsmeg/physionet-eegmmidb-1.0.0/hand-side-model-v1
 ```
 
-Dieser **optionale nächste Schritt** trainiert `hand-side` mit zwei Klassen und der bestehenden Standardisierung/logistischen Regression. Mindestens zwei Personen sind nötig. Leave-one-participant-out hält alle Läufe und Trials einer Person gemeinsam zurück; Standardisierung und Modell werden nur auf den übrigen Personen gelernt. Der Modellvertrag kennzeichnet die öffentliche Datenquelle und den Import ausdrücklich. Lokale `evaluate`-/`replay`-Aufrufe akzeptieren öffentliche Modelle nicht als bereits validierten Unicorn-Transfer. Der binäre Kontrast hat keine Ruheklasse und erzeugt keine Freigabe für die Gesten-Ereignislogik.
+Dieser Befehl trainiert `hand-side` mit zwei Klassen und der bestehenden Standardisierung/logistischen Regression. Der erste vollständige Lauf wurde ausgeführt; für eine Wiederholung einen neuen Ausgabeordner wählen. Mindestens zwei Personen sind nötig. Leave-one-participant-out hält alle Läufe und Trials einer Person gemeinsam zurück; Standardisierung und Modell werden nur auf den übrigen Personen gelernt. Der Modellvertrag kennzeichnet die öffentliche Datenquelle und den Import ausdrücklich. Lokale `evaluate`-/`replay`-Aufrufe akzeptieren öffentliche Modelle nicht als bereits validierten Unicorn-Transfer. Der binäre Kontrast hat keine Ruheklasse und erzeugt keine Freigabe für die Gesten-Ereignislogik.
 
 ### Tatsächlich ausgeführter Import
 
-Der vollständige Import nach `prepared-fists-250hz-v1` wurde ausgeführt: **4.725 Trials aus 105 Personen**, 2.369 links und 2.356 rechts; zwölf Aufnahmen beziehungsweise 202 Aufgaben bleiben ausgeschlossen. Die Originaldateien wurden erneut gegen ihre offiziellen Prüfsummen geprüft. Anschließend wurde der vollständige vorbereitete Datensatz in `eeg-ml` geladen und jede Merkmalszeile gegen ihre EEG-Historie nachgerechnet. Damit ist die Schnittstelle praktisch geprüft. Der Trainingsbefehl wurde mit synthetischen Personen end-to-end getestet; auf dem echten öffentlichen Datensatz wurde in diesem Schritt kein Modell trainiert.
+Der vollständige Import nach `prepared-fists-250hz-v1` wurde ausgeführt: **4.725 Trials aus 105 Personen**, 2.369 links und 2.356 rechts; zwölf Aufnahmen beziehungsweise 202 Aufgaben bleiben ausgeschlossen. Die Originaldateien wurden erneut gegen ihre offiziellen Prüfsummen geprüft. Anschließend wurde der vollständige vorbereitete Datensatz in `eeg-ml` geladen und jede Merkmalszeile gegen ihre EEG-Historie nachgerechnet. Damit ist die Schnittstelle praktisch geprüft. Der Trainingsbefehl wurde zunächst mit synthetischen Personen end-to-end getestet; der anschließend ausgeführte echte Lauf ist im [Trainingsbericht](physionet-fist-training-2026-10-29.md) dokumentiert.
 
 Die abgeleiteten Dateien benötigen zusammen rund **266 MB**. Der maximale Cue-Rundungsfehler dieses konkreten Imports ist **0 s**; alle Onsets lagen bereits auf dem 160-Hz-Sample-Raster. Der kleine [Importsnapshot](../analysis/results/physionet_fists_import_2026-10-29.json) hält Importvertrag, Umfang, Softwareversionen und die SHA-256-Prüfsummen von Eingabemanifest und vorbereiteten Dateien fest. EEG-Arrays und Modellparameter werden nicht ins Repository aufgenommen.
 
