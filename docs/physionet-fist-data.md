@@ -1,6 +1,6 @@
 # Öffentliche EEG-Daten: ausgeführte linke/rechte Faustbewegung
 
-Stand: 29.10.2026. Dieser Schritt umfasst Auswahl, Originaldownload und technische Labelprüfung. Kein Training, keine Artefaktbereinigung und keine validierte Übertragung auf das Unicorn-Headset.
+Stand: 29.10.2026. Auswahl, Originaldownload, technische Labelprüfung und ein Importer für die Bewegungspipeline sind implementiert. Der vollständige Datenimport wurde ausgeführt; echtes Modelltraining und die Übertragung auf das Unicorn-Headset sind noch nicht validiert.
 
 ## Auswahl und Herkunft
 
@@ -81,7 +81,56 @@ T0-Annotationen und unbeschriftete Dateiende bleiben erhalten beziehungsweise we
 
 `audit.json` enthält die vollständigen Dateibefunde einschließlich Prüfsummen und Ausschlüssen. `summary.json` enthält den kompakten Befund und auffällige Aufnahmen. `eligible_task_window` bedeutet lediglich, dass Metadaten und Zeitgrenzen die Prüfung bestehen. Artefakte, Cue-/Augenbewegungseinflüsse, eine möglicherweise vertauschte Seitenannotation und tatsächliche Bewegungsausführung sind damit nicht validiert. Die strukturell verfügbaren Aufgabenfenster sind noch kein freigegebener Trainingssplit. Es werden weder Personen umetikettiert noch abweichende Samplingraten stillschweigend korrigiert.
 
-Vor späterem Training müssen Qualitätsregeln, Referenzierung, Einheiten, Samplingrate und Kanalwahl festgelegt werden. Für personenübergreifende Tests ganze Personen zurückhalten; alle Fenster desselben Trials zusammenhalten. Die öffentliche Datenquelle bleibt vom lokalen Protokoll und den lokalen Testdaten unterscheidbar. Der vorhandene Bewegungsklassifikator akzeptiert diese EDF-Dateien noch nicht als Eingabe.
+Der unten beschriebene Import legt Referenzierung, Einheiten, Samplingrate und Kanalwahl ausdrücklich fest. Weitere Artefakt-/Qualitätsregeln müssen vor einer wissenschaftlichen Modellstudie festgelegt werden. Für personenübergreifende Tests ganze Personen zurückhalten; alle Fenster desselben Trials zusammenhalten. Die öffentliche Datenquelle bleibt vom lokalen Protokoll und den lokalen Testdaten unterscheidbar.
+
+## Importer und Trainingsschnittstelle
+
+Die beiden vorhandenen Umgebungen haben unterschiedliche Aufgaben: `eeg-mne` liest EDF und bereitet Daten vor; `eeg-ml` lädt die vorbereiteten Dateien und kann das bestehende Modell trainieren. Es müssen keine neuen Pakete installiert oder Umgebungen vermischt werden.
+
+```bash
+~/.venvs/eeg-mne/bin/python -m analysis.physionet_dataset \
+  --output-dir ~/.cache/eegvsmeg/physionet-eegmmidb-1.0.0/prepared-fists-250hz-v1
+```
+
+Dieser Importer prüft die Originale und Marker **erneut**, statt ungeprüft eine frühere Audit-CSV als Trainingsfreigabe zu übernehmen. Die bekannten strukturellen Ausschlüsse bleiben erhalten. Fehlende, beschädigte oder nicht lesbare Eingaben brechen den Import ab; sie werden nicht als erfolgreiche Teilmenge übergangen. Ein vorhandener Ausgabeordner wird nicht überschrieben.
+
+Der feste Eingabevertrag:
+
+1. Nur ausgeführte unilaterale Handaufgaben aus Läufen 3/7/11. Keine Ruhe-, Fuß- oder Imagery-Fenster und keine Umdeutung ins lokale Sitzungsprotokoll.
+2. Kanalauswahl **über Namen** in der Reihenfolge `Fz, C3, Cz, C4, Pz, PO7, Oz, PO8`. Generische lokale Namen `EEG 1` bis `EEG 8` werden dadurch noch nicht als korrekt verkabelt bestätigt.
+3. MNE liefert physisch skalierte **Volt**; Multiplikation mit `1e6` erzeugt ausdrücklich **µV**. Die Header-Einheit muss weiterhin `uV` sein.
+4. Pro Trial genau **560 Originalsamples bei 160 Hz** ab dem zum nächsten Sample gerundeten Cue: 3,5 s bis zum exklusiven Ende. Original-Onset, Dauer, Samplegrenzen und Rundungsfehler bleiben in der Fenstertabelle erhalten.
+5. Resampling ausschließlich innerhalb dieser Historie mit `scipy.signal.resample_poly`: **25/16**, Kaiser-Fenster mit Parameter 5, konstante Null-Randfortsetzung. Ergebnis: **875 Samples × 8 Kanäle bei 250 Hz in µV**. Es werden keine Originalsamples vor oder nach dieser Historie verwendet. Das erhöht die Samplingrate, nicht die gemessene zeitliche Information.
+6. Die vorhandene gemeinsame Merkmalsfunktion verwendet 0–0,5 s als Filtervorlauf und 0,5–3,5 s für 16 logarithmische Mu-/Beta-Bandpowermerkmale. Ihre Parameter stehen unverändert in `analysis.movement_features`. Keine zusätzliche Referenzierung oder Artefaktbereinigung; die öffentliche Aufnahmereferenz bleibt eine Transfergrenze.
+
+Die zentrierte FIR-Interpolation verwendet innerhalb der bereits vollständigen Historie auch spätere Samples. Sie ist eine ausdrücklich dokumentierte **Offline-Vorverarbeitung**, kein validierter Streaming-Resampler. Der kausale Bandpass der nachfolgenden Merkmalsfunktion ändert diese Eigenschaft nicht. Alle benötigten Originalsamples liegen spätestens am Ende der 3,5-s-Historie vor; die Pipeline greift nicht über dieses Ende hinaus.
+
+Ausgaben im neuen Ordner:
+
+| Datei | Inhalt |
+|---|---|
+| `histories_uv.npy` | Float64-Array mit Form `Trials × 875 × 8`; verarbeitetes EEG, außerhalb Git aufbewahren |
+| `features.npy` | `Trials × 16`, dieselben Merkmale wie beim Bewegungsklassifikator |
+| `windows.csv` | Label, Originalcode, Person, Aufnahme, Lauf, Trialkennung, Quellgrenzen und Zeilenzuordnung |
+| `manifest.json` | Exakter Import-/Merkmalsvertrag, Original- und Ausgabe-Prüfsummen, Softwareversionen, Ausschlüsse und Grenzen |
+
+`load_prepared()` im Modul `analysis.physionet_dataset` ist die Python-Schnittstelle: Es liefert Fenstertabelle, Merkmalsmatrix und Manifest. Es benötigt kein MNE und lädt ohne Pickle. Es prüft Datei-Hashes, Form, Klassen, Zeilenreihenfolge, Personen-/Trialzuordnung und die Übereinstimmung sämtlicher gespeicherter Merkmale mit den gespeicherten Historien. Die öffentlichen Personenkennungen bleiben erhalten. Identische EDF-Dateien dürfen nicht als unabhängige Aufnahmen importiert werden.
+
+Die CLI-Anbindung an den vorhandenen Klassifikator ist:
+
+```bash
+~/.venvs/eeg-ml/bin/python -m analysis.movement_classifier train-physionet \
+  ~/.cache/eegvsmeg/physionet-eegmmidb-1.0.0/prepared-fists-250hz-v1 \
+  --output-dir ~/.cache/eegvsmeg/physionet-eegmmidb-1.0.0/hand-side-model-v1
+```
+
+Dieser **optionale nächste Schritt** trainiert `hand-side` mit zwei Klassen und der bestehenden Standardisierung/logistischen Regression. Mindestens zwei Personen sind nötig. Leave-one-participant-out hält alle Läufe und Trials einer Person gemeinsam zurück; Standardisierung und Modell werden nur auf den übrigen Personen gelernt. Der Modellvertrag kennzeichnet die öffentliche Datenquelle und den Import ausdrücklich. Lokale `evaluate`-/`replay`-Aufrufe akzeptieren öffentliche Modelle nicht als bereits validierten Unicorn-Transfer. Der binäre Kontrast hat keine Ruheklasse und erzeugt keine Freigabe für die Gesten-Ereignislogik.
+
+### Tatsächlich ausgeführter Import
+
+Der vollständige Import nach `prepared-fists-250hz-v1` wurde ausgeführt: **4.725 Trials aus 105 Personen**, 2.369 links und 2.356 rechts; zwölf Aufnahmen beziehungsweise 202 Aufgaben bleiben ausgeschlossen. Die Originaldateien wurden erneut gegen ihre offiziellen Prüfsummen geprüft. Anschließend wurde der vollständige vorbereitete Datensatz in `eeg-ml` geladen und jede Merkmalszeile gegen ihre EEG-Historie nachgerechnet. Damit ist die Schnittstelle praktisch geprüft. Der Trainingsbefehl wurde mit synthetischen Personen end-to-end getestet; auf dem echten öffentlichen Datensatz wurde in diesem Schritt kein Modell trainiert.
+
+Die abgeleiteten Dateien benötigen zusammen rund **266 MB**. Der maximale Cue-Rundungsfehler dieses konkreten Imports ist **0 s**; alle Onsets lagen bereits auf dem 160-Hz-Sample-Raster. Der kleine [Importsnapshot](../analysis/results/physionet_fists_import_2026-10-29.json) hält Importvertrag, Umfang, Softwareversionen und die SHA-256-Prüfsummen von Eingabemanifest und vorbereiteten Dateien fest. EEG-Arrays und Modellparameter werden nicht ins Repository aufgenommen.
 
 ## Tatsächlich ausgeführter Download und Befund am 29.10.2026
 
@@ -121,6 +170,8 @@ cp ~/.cache/eegvsmeg/physionet-eegmmidb-1.0.0/audit/summary.json \
 
 ```bash
 ~/.venvs/eeg-mne/bin/python -m unittest analysis.test_physionet
+~/.venvs/eeg-mne/bin/python -m unittest analysis.test_physionet_dataset
+~/.venvs/eeg-ml/bin/python -m unittest analysis.test_movement_classifier
 ```
 
-Die Tests verwenden ausschließlich synthetisches EEG und simulierte Downloads. Sie prüfen unter anderem den laufabhängigen Labelvertrag, Prüfsummen und unveränderte Originale, einen echten synthetischen EDF+-Lesevorgang, Einheiten-/Samplingfehler, konstante Signale, kurze Aufgaben und falsche Annotationgrenzen. Es werden keine weiteren Abhängigkeiten installiert und keine Hardwaretests behauptet.
+Die Tests verwenden ausschließlich synthetisches EEG und simulierte Downloads. Sie prüfen unter anderem den laufabhängigen Labelvertrag, Prüfsummen und unveränderte Originale, synthetischen EDF+-Import einschließlich absichtlich vertauschter Kanalreihenfolge, Einheiten-/Samplingfehler, konstante Signale, kurze Aufgaben und falsche Annotationgrenzen. Weitere Regressionen prüfen Resampling und physische Dauer, manipulierte Caches, binäre Wahrscheinlichkeiten gegen scikit-learn, Modellpersistenz, vollständige Personentrennung und den Trainingsbefehl. Es werden keine weiteren Abhängigkeiten installiert und keine Hardwaretests behauptet.

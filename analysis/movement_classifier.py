@@ -1,4 +1,4 @@
-"""Person-specific executed-movement baseline: train, evaluate and causal replay.
+"""Executed-movement baseline: local sessions, prepared public data and causal replay.
 
 Run with ``python -m analysis.movement_classifier --help``. No hardware control.
 """
@@ -9,7 +9,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from scipy.signal import butter, sosfilt, welch
 from scipy.special import softmax
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, balanced_accuracy_score, confusion_matrix, precision_recall_fscore_support
@@ -19,38 +18,13 @@ from analysis.ml_data import CHANNELS, sha256, trial_windows
 from analysis.ml_feasibility import exclude_before_marker
 from analysis.recording_files import resolve_recording
 from analysis.session_conditions import CURRENT
+from analysis.movement_features import CONFIG, FS, HISTORY, WARMUP, WINDOW, window_features
 
-FS = 250
-WARMUP = 125
-WINDOW = 750
-HISTORY = WARMUP + WINDOW
 TASKS = {
     "hands": ["rest", "me_hand_left", "me_hand_right"],
     "five": ["rest", "me_hand_left", "me_hand_right", "me_foot_left", "me_foot_right"],
+    "hand-side": ["me_hand_left", "me_hand_right"],
 }
-CONFIG = {
-    "sampling_rate_hz": FS, "unit": "uV", "channel_order": CHANNELS,
-    "history_samples": HISTORY, "warmup_samples": WARMUP, "feature_samples": WINDOW,
-    "filter": "4th-order Butterworth 7-35 Hz; causal sosfilt; reset per window; subtract first sample",
-    "bands_hz": [[8, 13], [13, 30]], "reference": "as recorded; no additional rereferencing",
-    "features": "log Welch bandpower; nperseg=500; band-major, then recorded channel order",
-    "classifier": "StandardScaler + balanced LogisticRegression(C=1, max_iter=2000, random_state=0)",
-}
-
-
-def window_features(history):
-    """Use exactly 3.5 seconds of past EEG in uV; no future samples or fit state."""
-    history = np.asarray(history, dtype=float)
-    if history.shape != (HISTORY, len(CHANNELS)) or not np.isfinite(history).all():
-        raise ValueError(f"Expected {HISTORY} finite samples x eight EEG channels in uV.")
-    filtered = sosfilt(butter(4, [7, 35], fs=FS, btype="bandpass", output="sos"),
-                       history - history[0], axis=0)[WARMUP:]
-    frequency, psd = welch(filtered, fs=FS, nperseg=500, axis=0)
-    return np.concatenate([
-        np.log(np.maximum(np.trapezoid(psd[(frequency >= lo) & (frequency <= hi)],
-            frequency[(frequency >= lo) & (frequency <= hi)], axis=0), 1e-20))
-        for lo, hi in CONFIG["bands_hz"]
-    ])
 
 
 def read_signal(path, signal="raw"):
@@ -105,9 +79,14 @@ def movement_windows(events, samples, task="hands"):
     if not np.isfinite(positions).all() or np.any(positions != np.floor(positions)):
         raise ValueError("Event sample positions must be finite integers.")
     tasks, exclusions = trial_windows(events, samples, FS, CURRENT)
-    tasks = tasks[(tasks.run == "Motorik") & tasks.label.isin(TASKS[task][1:])]
+    tasks = tasks[(tasks.run == "Motorik") & tasks.label.isin(
+        [label for label in TASKS[task] if label != "rest"])]
     rows = []
     for row in tasks.to_dict("records"):
+        if "rest" not in TASKS[task]:
+            rows.append({**row, "input_start_sample": row["start_sample"] - WARMUP,
+                         "label_source": "instructed_execution; actual onset unmeasured"})
+            continue
         group = events[(events.source == "automatic") & (events.run == row["run"])
                        & (events.block == row["block"]) & (events.trial == row["trial"])
                        & (events.attempt == row["attempt"])]
@@ -168,10 +147,11 @@ def load_dataset(paths, task="hands", signal="raw", marker=None, settle_seconds=
 
 
 def partitions(rows, classes):
-    """Whole sessions if available; otherwise whole blocks. Task/rest pairs stay together."""
+    """Whole people, otherwise sessions/blocks. All windows of a trial stay together."""
     if set(rows.label) != set(classes):
         raise ValueError(f"All required classes must remain after exclusions: {classes}")
-    groups = (rows.session_key if rows.session_key.nunique() > 1
+    groups = (rows.participant_id if rows.participant_id.nunique() > 1 else
+              rows.session_key if rows.session_key.nunique() > 1
               else rows.block.map(lambda b: f"block/{int(b)}")).to_numpy()
     if len(np.unique(groups)) < 2:
         raise ValueError("At least two independent complete blocks/sessions are required.")
@@ -202,14 +182,16 @@ def probabilities(model, x):
     x = np.asarray(x, dtype=float)
     if x.ndim != 2 or x.shape[1] != 16 or not np.isfinite(x).all():
         raise ValueError("Expected finite 16-feature rows.")
-    return softmax(((x - model["mean"]) / model["scale"]) @ model["weights"].T
-                   + model["intercept"], axis=1)
+    logits = ((x - model["mean"]) / model["scale"]) @ model["weights"].T + model["intercept"]
+    if len(model["classes"]) == 2:
+        logits = np.column_stack([np.zeros(len(x)), logits[:, 0]])
+    return softmax(logits, axis=1)
 
 
 def metrics(y, predicted, classes):
     precision, recall, f1, support = precision_recall_fscore_support(
         y, predicted, labels=classes, zero_division=0)
-    return {"n_windows": len(y), "n_trials": len(y) // 2,
+    return {"n_windows": len(y), "n_trials": len(y) // (2 if "rest" in classes else 1),
             "accuracy": float(accuracy_score(y, predicted)),
             "balanced_accuracy": float(balanced_accuracy_score(y, predicted)),
             "macro_f1": float(f1.mean()), "class_order": list(classes),
@@ -234,7 +216,9 @@ def cross_validate(rows, x, task):
     predictions["prediction"] = predicted
     predictions["uncalibrated_score"] = scores
     predictions["held_out"] = fold_names
-    return {"split": "leave-one-session-out" if rows.session_key.nunique() > 1 else "leave-one-block-out",
+    split = ("leave-one-participant-out" if rows.participant_id.nunique() > 1 else
+             "leave-one-session-out" if rows.session_key.nunique() > 1 else "leave-one-block-out")
+    return {"split": split,
             "folds": folds, **metrics(y, predicted, TASKS[task])}, predictions
 
 
@@ -254,8 +238,9 @@ def load_model(path):
     classes = model["classes"].tolist()
     if classes != sorted(TASKS[manifest["task"]]):
         raise ValueError("Model classes do not match task.")
+    outputs = 1 if len(classes) == 2 else len(classes)
     for key, shape in [("mean", (16,)), ("scale", (16,)),
-                       ("weights", (len(classes), 16)), ("intercept", (len(classes),))]:
+                       ("weights", (outputs, 16)), ("intercept", (outputs,))]:
         if model[key].shape != shape or not np.isfinite(model[key]).all():
             raise ValueError("Invalid model parameters.")
     if np.any(model["scale"] <= 0):
@@ -264,6 +249,8 @@ def load_model(path):
 
 
 def check_sources(manifest, sources, independent=False):
+    if manifest.get("input_domain") == "physionet-executed-fists":
+        raise ValueError("Public-data models are not validated for local Unicorn evaluation or replay.")
     training = manifest["training_sources"]
     for source in sources:
         if (source["participant_id"] != training[0]["participant_id"]
@@ -343,9 +330,10 @@ def write_results(folder, report, predictions):
     (folder / "report.json").write_text(json.dumps(report, indent=2, allow_nan=False) + "\n", encoding="utf-8")
     predictions.to_csv(folder / "predictions.csv", index=False)
     result = report["evaluation"]
+    public = report.get("input_domain") == "physionet-executed-fists"
     lines = ["# Explorative Bewegungsklassifikation", "",
              f"Aufgabe: `{report['task']}`. Aufteilung: `{result['split']}`.", "",
-             f"{result['n_trials']} Trials, {result['n_windows']} Aufgaben-/Erholungsfenster. "
+             f"{result['n_trials']} Trials, {result['n_windows']} Auswertungsfenster. "
              f"Balanced Accuracy: {result['balanced_accuracy']:.1%}; "
              f"Accuracy: {result['accuracy']:.1%}; Macro-F1: {result['macro_f1']:.3f}.", "",
              "## Klassen", "", "| Klasse | Fenster | Precision | Recall | F1 |",
@@ -362,9 +350,13 @@ def write_results(folder, report, predictions):
                       "|---|---:|---:|"])
         for fold in result["folds"]:
             lines.append(f"| {fold['held_out']} | {fold['n_windows']} | {fold['balanced_accuracy']:.1%} |")
-    lines.extend(["", "## Grenzen", "",
-                  "Personenspezifischer Offline-Pilot; neuronale Herkunft und Echtzeitsteuerung sind nicht validiert. "
-                  "Ruhe stammt aus später Erholung und wurde nicht als unabhängiger Ruhe-Trial erhoben. "
+    scope = ("Öffentlicher PhysioNet-Offline-Benchmark mit vollständig zurückgehaltenen Personen; "
+             "keine Validierung auf lokalen Unicorn-Aufnahmen. " if public else
+             "Personenspezifischer Offline-Pilot; neuronale Herkunft und Echtzeitsteuerung sind nicht validiert. ")
+    rest = ("Ruhe stammt aus später Erholung und wurde nicht als unabhängiger Ruhe-Trial erhoben. "
+            if "rest" in TASKS[report["task"]] else
+            "Zweiklassenvergleich links/rechts; keine Ruhe-, Unknown- oder Gestenerkennung. ")
+    lines.extend(["", "## Grenzen", "", scope + rest +
                   "Marker beschreiben die Anweisung, nicht den gemessenen Bewegungsbeginn. "
                   "Fenstermetriken messen weder Fehlereignisse pro Minute noch die Erkennungslatenz. "
                   "Modellscores sind unkalibriert. Ausschlüsse, Eingabe-Hashes, Softwareversionen und "
@@ -373,6 +365,32 @@ def write_results(folder, report, predictions):
         lines.extend(["", "Das exportierte Modell wurde nach der Kreuzvalidierung auf allen Eingabefenstern "
                       "neu trainiert. Die obigen Testwerte stammen aus den getrennten Folds."])
     (folder / "report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def train_physionet(folder, output):
+    """Train the existing binary baseline with whole-person folds on prepared public data."""
+    from analysis.physionet_dataset import load_prepared
+
+    rows, x, preparation = load_prepared(folder)
+    if rows.participant_id.nunique() < 2:
+        raise ValueError("Public-data evaluation requires at least two complete participants.")
+    sources = [source for source in preparation["sources"] if source["imported_trials"]]
+    report = {**base_report(sources), "task": "hand-side", "input_domain": preparation["input_domain"],
+              "preparation": preparation, "preparation_manifest_sha256": sha256(Path(folder) / "manifest.json"),
+              "limitations": preparation["limitations"] + [
+                  "Public-data cross-person evaluation is not a local Unicorn transfer or streaming validation.",
+                  "Model probabilities are uncalibrated; no event gating is defined without a rest class."]}
+    result, predictions = cross_validate(rows, x, "hand-side")
+    model = fit_model(x, rows.label.to_numpy(), "hand-side")
+    manifest = {"schema_version": 1, "config": CONFIG, "task": "hand-side",
+                "input_domain": preparation["input_domain"], "external_import_config": preparation["import_config"],
+                "preparation_manifest_sha256": report["preparation_manifest_sha256"],
+                "training_sources": sources, "software_versions": report["software_versions"]}
+    report.update({"evaluation": result,
+                   "exported_model": "movement-model.npz; refitted on all public task windows after held-out evaluation"})
+    write_results(output, report, predictions)
+    save_model(Path(output) / "movement-model.npz", model, manifest)
+    print(f"{result['split']}: balanced accuracy={result['balanced_accuracy']:.3f}; {output}")
 
 
 def main(argv=None):
@@ -389,6 +407,9 @@ def main(argv=None):
         command.add_argument("--settle-seconds", type=float, default=0)
         if name == "train":
             command.add_argument("--task", choices=TASKS, default="hands")
+    public = commands.add_parser("train-physionet", help="Prepared left/right fist data; hold out whole people.")
+    public.add_argument("dataset", type=Path)
+    public.add_argument("--output-dir", type=Path, required=True, help="New directory; never overwrite.")
     replay = commands.add_parser("replay", help="Diagnostic causal CSV replay; no hardware commands or performance claim.")
     replay.add_argument("model", type=Path)
     replay.add_argument("recording", type=Path)
@@ -400,8 +421,13 @@ def main(argv=None):
     destination = args.output if args.command == "replay" else args.output_dir
     if destination.exists():
         parser.error("Output exists; choose a new path. Inputs and prior results are never overwritten.")
+    if args.command == "train-physionet":
+        train_physionet(args.dataset, args.output_dir)
+        return
     if args.command == "replay":
         model, manifest = load_model(args.model)
+        if "rest" not in TASKS[manifest["task"]]:
+            raise ValueError("Gesture replay requires a trained rest class; hand-side is an offline contrast.")
         _, eeg, valid, source = read_signal(args.recording, manifest["training_sources"][0]["signal"])
         check_sources(manifest, [source])
         # Respect a training session's known quality cutoff during diagnostic replay.
@@ -433,6 +459,8 @@ def main(argv=None):
     rows, x, sources = load_dataset(args.recordings, task, args.signal,
                                    args.after_marker, args.settle_seconds)
     report = {**base_report(sources), "task": task}
+    if "rest" not in TASKS[task]:
+        report["limitations"][1] = "Two-class hand-side contrast; no rest, unknown or event detection."
     if args.command == "train":
         result, predictions = cross_validate(rows, x, task)
         model = fit_model(x, rows.label.to_numpy(), task)

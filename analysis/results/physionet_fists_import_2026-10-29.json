@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "input_domain": "physionet-executed-fists",
+  "checksum_manifest_sha256": "7f5d16957d8ee7bce86cc7ccba0e5994f63f33781607eb3f838392d49311a208",
+  "created_at_utc": "2026-10-29T18:34:29.928247+00:00",
+  "import_config": {
+    "source_sampling_rate_hz": 160,
+    "target_sampling_rate_hz": 250,
+    "source_unit": "uV in EDF header; MNE returns V",
+    "output_unit": "uV",
+    "channel_positions": [
+      "Fz",
+      "C3",
+      "Cz",
+      "C4",
+      "Pz",
+      "PO7",
+      "Oz",
+      "PO8"
+    ],
+    "history_relative_to_cue_s": [
+      0.0,
+      3.5
+    ],
+    "feature_relative_to_cue_s": [
+      0.5,
+      3.5
+    ],
+    "resampling": "per-history scipy.signal.resample_poly(up=25, down=16, axis=0, window=('kaiser', 5.0), padtype='constant', cval=0)",
+    "timing": "Cue rounded to nearest 160-Hz sample; exclusive stop after 560 source samples. No source samples outside this history.",
+    "reference": "as recorded; no additional rereferencing",
+    "feature_config": {
+      "sampling_rate_hz": 250,
+      "unit": "uV",
+      "channel_order": [
+        "EEG 1",
+        "EEG 2",
+        "EEG 3",
+        "EEG 4",
+        "EEG 5",
+        "EEG 6",
+        "EEG 7",
+        "EEG 8"
+      ],
+      "history_samples": 875,
+      "warmup_samples": 125,
+      "feature_samples": 750,
+      "filter": "4th-order Butterworth 7-35 Hz; causal sosfilt; reset per window; subtract first sample",
+      "bands_hz": [
+        [
+          8,
+          13
+        ],
+        [
+          13,
+          30
+        ]
+      ],
+      "reference": "as recorded; no additional rereferencing",
+      "features": "log Welch bandpower; nperseg=500; band-major, then recorded channel order",
+      "classifier": "StandardScaler + balanced LogisticRegression(C=1, max_iter=2000, random_state=0)"
+    }
+  },
+  "software_versions": {
+    "mne": "1.13.2",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "pandas": "3.0.6"
+  },
+  "summary": {
+    "trials": 4725,
+    "persons": 105,
+    "class_counts": {
+      "me_hand_right": 2356,
+      "me_hand_left": 2369
+    },
+    "excluded_recordings": 12,
+    "excluded_task_windows": 202
+  },
+  "files_sha256": {
+    "histories_uv.npy": "a3038489319e835749571aa88b1bd6e5f1040455ea31628598c4faecd5336dd7",
+    "features.npy": "e7f78b3140b037dec4819ae3a7f3296f78c05ef3621a0bfe3d9ccf5606b85413",
+    "windows.csv": "8a3c6c0cc5f237ce2d2390224e3502139db9c68229c50cd23719b673931af10f"
+  },
+  "limitations": [
+    "Structural checks do not validate artifact-free EEG or correct cue compliance.",
+    "Only left/right executed fists; no rest, foot or imagery class.",
+    "Per-history centered FIR resampling is offline; not a validated streaming adapter.",
+    "No additional reference or artifact correction; source/device differences remain.",
+    "No split is learned here; later evaluation must hold out whole people.",
+    "Generic local EEG 1..8 names still require independently verified physical placement."
+  ],
+  "preparation_manifest_sha256": "f582d74dcdfe4ea1e00720fed10dc3a18bd409a74239fe69e119df0725833ff1",
+  "validation": "Complete real-data import and full load in existing ML environment; all cached features recomputed against stored histories. No real-data model training performed."
+}

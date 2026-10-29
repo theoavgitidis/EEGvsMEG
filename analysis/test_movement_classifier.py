@@ -18,6 +18,7 @@ from analysis.movement_classifier import (
 )
 from analysis.ml_feasibility import exclude_before_marker
 from analysis.session_conditions import CURRENT
+from analysis.test_physionet_dataset import synthetic_prepared
 
 
 def synthetic_recording(folder, session="SYNTHETIC-1", blocks=3, five=False):
@@ -183,6 +184,65 @@ class MovementTests(unittest.TestCase):
             np.testing.assert_array_equal(probabilities(model, self.x), probabilities(restored, self.x))
             with self.assertRaises(FileExistsError):
                 save_model(path, model, manifest)
+
+    def test_binary_hand_side_probabilities_persistence_and_trial_counts(self):
+        rows, x, sources = load_dataset([self.path], task="hand-side")
+        self.assertNotIn("rest", set(rows.label))
+        self.assertEqual(len(rows), len(self.rows) // 2)
+        model = fit_model(x, rows.label.to_numpy(), "hand-side")
+        scaler = StandardScaler().fit(x)
+        classifier = LogisticRegression(C=1, class_weight="balanced", max_iter=2000, random_state=0)
+        classifier.fit(scaler.transform(x), rows.label)
+        np.testing.assert_allclose(probabilities(model, x), classifier.predict_proba(scaler.transform(x)))
+        result, _ = cross_validate(rows, x, "hand-side")
+        self.assertEqual(result["n_trials"], len(rows))
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "binary.npz"
+            save_model(path, model, {"schema_version": 1, "config": CONFIG,
+                "task": "hand-side", "training_sources": sources})
+            restored, _ = load_model(path)
+            np.testing.assert_array_equal(probabilities(restored, x), probabilities(model, x))
+            with self.assertRaisesRegex(ValueError, "rest class"):
+                main(["replay", str(path), str(self.path), "--output", str(Path(folder) / "replay.csv")])
+
+    def test_public_folds_hold_out_whole_people_and_cli_uses_prepared_data(self):
+        from analysis.physionet_dataset import load_prepared
+        with tempfile.TemporaryDirectory() as folder, redirect_stdout(io.StringIO()):
+            dataset = synthetic_prepared(Path(folder) / "prepared")
+            rows, x, _ = load_prepared(dataset)
+            seen = np.zeros(len(rows), dtype=int)
+            for _, train, test in partitions(rows, TASKS["hand-side"]):
+                self.assertFalse(set(rows.loc[train, "participant_id"]) & set(rows.loc[test, "participant_id"]))
+                self.assertEqual(rows.loc[test, "participant_id"].nunique(), 1)
+                self.assertEqual(rows.loc[test, "run"].nunique(), 3)
+                seen[test] += 1
+                first = fit_model(x[train], rows.label.to_numpy()[train], "hand-side")
+                changed = x.copy()
+                changed[test] += 1000
+                second = fit_model(changed[train], rows.label.to_numpy()[train], "hand-side")
+                np.testing.assert_array_equal(first["mean"], second["mean"])
+                np.testing.assert_array_equal(first["weights"], second["weights"])
+            np.testing.assert_array_equal(seen, 1)
+            output = Path(folder) / "trained"
+            main(["train-physionet", str(dataset), "--output-dir", str(output)])
+            report = json.loads((output / "report.json").read_text())
+            self.assertEqual(report["evaluation"]["split"], "leave-one-participant-out")
+            self.assertEqual(report["evaluation"]["n_trials"], 18)
+            self.assertGreater(report["evaluation"]["balanced_accuracy"], .95)
+            _, manifest = load_model(output / "movement-model.npz")
+            self.assertEqual(manifest["input_domain"], "physionet-executed-fists")
+            with self.assertRaisesRegex(ValueError, "not validated"):
+                check_sources(manifest, self.sources)
+            with self.assertRaises(SystemExit), redirect_stderr(io.StringIO()):
+                main(["train-physionet", str(dataset), "--output-dir", str(output)])
+
+    def test_public_training_cannot_claim_cross_person_evaluation_with_one_person(self):
+        with tempfile.TemporaryDirectory() as folder:
+            dataset = synthetic_prepared(Path(folder) / "prepared", participants=(1,))
+            output = Path(folder) / "trained"
+            with self.assertRaisesRegex(ValueError, "at least two"):
+                main(["train-physionet", str(dataset), "--output-dir", str(output)])
+            self.assertFalse(output.exists())
 
     def test_corrupt_model_config_or_parameters_are_rejected(self):
         model = fit_model(self.x, self.rows.label.to_numpy(), "hands")

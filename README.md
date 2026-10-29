@@ -24,7 +24,7 @@ Stand: 28. Oktober 2026.
 | Beide EEG-Viewer, Filter, Wasserfallansicht und Export | [MNE-Anleitung](gtec_Clib/terminal/MNE_ANLEITUNG.md) |
 | Dauerhafte Teilnehmer-IDs und Sitzungszuordnung | [ID-Schema](docs/participant-ids.md) |
 | Eigener Bewegungsklassifikator: Training, unabhängiger Test und kausaler Replay | [ML-Bewegungsklassifikation](docs/movement-classifier.md) |
-| Öffentliche Faustbewegungsdaten: Download, Herkunft und Labelprüfung | [PhysioNet-Datenaudit](docs/physionet-fist-data.md) |
+| Öffentliche Faustbewegungsdaten: Download, Labelprüfung und Trainingsimport | [PhysioNet-Datenaudit und Importer](docs/physionet-fist-data.md) |
 | Teilnehmerangaben und Sitzungsnotizen | [Teilnehmerbogen](docs/participant-record-template.md) |
 | Kurze manuelle Vorführung mit bisherigen Aufgaben | [Demo-Anleitung](presentations/Demo_Anleitung_DE.md) |
 
@@ -98,7 +98,7 @@ Bei einem dokumentierten Kontaktproblem kann **die Baseline-CLI** mit `--after-m
 
 ## Bisherige Auswertungen
 
-Für öffentliche Trainingsquellen stehen `python -m analysis.download_physionet` und `python -m analysis.audit_physionet` bereit. Die Auswahl umfasst tatsächliches linkes/rechtes Faustöffnen und -schließen aus PhysioNet 1.0.0 (Läufe 3/7/11, alle 109 Personen). Originaldaten liegen standardmäßig außerhalb des Checkouts unter `~/.cache/eegvsmeg/`; Prüfsummen, Einheiten, Kanäle, Samplingrate und Labelgrenzen werden explizit geprüft. Dies ist Datenvorbereitung, noch kein Modelltraining oder validierter Unicorn-Transfer. Befehle und Grenzen: [PhysioNet-Anleitung](docs/physionet-fist-data.md).
+Für öffentliche Trainingsquellen stehen `python -m analysis.download_physionet` und `python -m analysis.audit_physionet` bereit. Die Auswahl umfasst tatsächliches linkes/rechtes Faustöffnen und -schließen aus PhysioNet 1.0.0 (Läufe 3/7/11, alle 109 Personen). Originaldaten liegen standardmäßig außerhalb des Checkouts unter `~/.cache/eegvsmeg/`; Prüfsummen, Einheiten, Kanäle, Samplingrate und Labelgrenzen werden explizit geprüft. `python -m analysis.physionet_dataset --output-dir NEUER_ORDNER` importiert geeignete Trials als achtkanalige µV-Historien bei 250 Hz samt den vorhandenen Bewegungsmerkmalen. Der vollständige Import liefert 4.725 Trials aus 105 Personen. `analysis.movement_classifier train-physionet` kann darauf den binären Handseitenkontrast mit ganzen zurückgehaltenen Personen trainieren. Der echte Import ist geprüft; echtes öffentliches Modelltraining und Unicorn-Transfer sind noch nicht validiert. Befehle und Grenzen: [PhysioNet-Anleitung](docs/physionet-fist-data.md).
 
 Für die eigene Klassifikation ausgeführter Bewegungen gibt es zusätzlich `python -m analysis.movement_classifier`: drei Klassen (Ruhe/linke/rechte Hand), optional fünf einschließlich beider Füße, block- beziehungsweise sitzungsweise Auswertung, Modell-Export und kausaler Diagnose-Replay. **Explorative Offline-Baseline:** Ruhe wird vorläufig aus später Erholung abgeleitet; kontinuierliche Fehlalarme, unabhängige neue Sitzungen und Motorsteuerung sind noch nicht validiert. Anleitung und Datenanforderungen: [Bewegungsklassifikator](docs/movement-classifier.md). P003 nach dem Ground-Marker reicht für dieses Motoriktraining nicht aus; unvollständige Klassen werden zurückgewiesen. Aufnahmeprotokoll und Viewer ändern sich dadurch nicht.
 
@@ -120,6 +120,7 @@ python gtec_Clib/terminal/test_oscar_session.py
 python -m unittest analysis.test_session_protocol analysis.test_event_annotations analysis.test_time_frequency analysis.test_eeg_browser analysis.test_spectrogram_browser analysis.test_view_eeg_cli analysis.test_waterfall_cli analysis.test_waterfall_data analysis.test_waterfall_server
 python -m unittest analysis.test_movement_classifier
 python -m unittest analysis.test_physionet
+python -m unittest analysis.test_physionet_dataset
 ```
 
 C++-Tests benötigen Clang++ oder MSVC `cl`; Viewer- und Annotationstests benötigen MNE, NumPy, pandas und Matplotlib; die HTTP-Tests der Wasserfallansicht benötigen zusätzlich Plotly. Optionale echte Browserprüfungen laufen mit `python -m unittest analysis.test_waterfall_ui analysis.test_waterfall_navigation`, wenn Playwright und ein installiertes Chrome verfügbar sind (`EEG_BROWSER_EXECUTABLE` kann den Browserpfad setzen). Die hardwarefreien Tests prüfen Protokoll 2.0 mit 168 Trials über 250 Zufallsseeds in beiden Laufreihenfolgen, einen vollständigen beschleunigten Sitzungsdurchlauf, Unterbrechungen, Fehler und die im Review korrigierten Timingfälle. Die Viewer-Regressionstests prüfen dichte Marker und Fenstergrößenänderungen, getrennte Kanalachsen, Skalierung und Abschneidehinweise, Navigation, unveränderte Daten sowie echte PNG-Ausgabe ohne Desktop und einen ungefilterten FIF-Speicher-/Ladetest. Die C++-Plan- und Laufzeittests bestanden außerdem mit Address-/UndefinedBehavior-Sanitizer auf macOS.

@@ -10,10 +10,11 @@ Stand: 29.10.2026. Implementierte **explorative Offline-Baseline** für ausgefü
 |---|---|
 | `--task hands` (Standard) | `rest`, `me_hand_left`, `me_hand_right` |
 | `--task five` | zusätzlich `me_foot_left`, `me_foot_right` |
+| `--task hand-side` | nur `me_hand_left`, `me_hand_right`; keine Ruhefenster |
 
 Imagery, kognitive Aufgaben und alte Arm-/Beinlabels werden nicht als ausgeführte Hand-/Fußbewegungen umgedeutet. Der Aufnahmeablauf und die beiden Viewer bleiben unverändert. Ein neues fokussiertes Aufnahmeprotokoll mit eigenen Ruhe-Trials ist damit noch nicht implementiert.
 
-**Ruhe ist vorläufig abgeleitet:** Zu jedem ausgewählten vollständigen Motorik-Trial kommt ein gleich langes Fenster aus dessen später Erholung. Das sind keine separat erhobenen Ruhe-Trials. Füße werden im Handmodell weder als Hand noch als Ruhe verwendet. Allgemeine Alltagssituationen, andere Bewegungen und Blinzler bilden keine trainierte Unknown-Klasse.
+**Ruhe ist bei `hands`/`five` vorläufig abgeleitet:** Zu jedem ausgewählten vollständigen Motorik-Trial kommt ein gleich langes Fenster aus dessen später Erholung. Das sind keine separat erhobenen Ruhe-Trials. `hand-side` verwendet nur Aufgabenfenster und verlangt kein passendes spätes Erholungsfenster; es ist ein Offline-Zweiklassenkontrast. Füße werden im Handmodell weder als Hand noch als Ruhe verwendet. Allgemeine Alltagssituationen, andere Bewegungen und Blinzler bilden keine trainierte Unknown-Klasse.
 
 Benötigt werden EEG-CSV, `.events.csv` und `.session.json`; Plan und OSCAR-Verarbeitungsdatei werden, soweit vorhanden, ebenfalls gehasht. Alle acht aktivierten EEG-Kanäle in aufgezeichneter Reihenfolge und bestätigten µV sowie 250 Hz sind Pflicht. `sample_index` und `nominal_time_s` müssen konsistent sein. Validation Indicator, nichtendliche Werte und Counter-Sprünge werden über die komplette Eingabehistorie geprüft. Ein ungültiges Aufgaben- **oder** Erholungsfenster schließt das ganze Paar aus. Invalidierte und unvollständige Attempts bleiben ausgeschlossen; Originaldateien werden nicht verändert.
 
@@ -28,6 +29,8 @@ Die reale Elektrodenplatzierung, Kontaktqualität und korrekte Ausführung werde
 - Trainingsinterne Standardisierung und logistische Regression mit `C=1`, balancierten Klassengewichten, `max_iter=2000`, Seed 0. Kein Hyperparametervergleich und keine Modellauswahl anhand der Testwerte.
 
 Die Filterparameter und der Vorlauf sind feste Entwicklungsentscheidungen, kein belegtes Optimum. Große Artefakte können trotz gültigem Validation Indicator bestehen bleiben. Die vorhandene Offline-Baseline `analysis.ml_feasibility` verwendet eine andere Filterung und liefert daher keine unmittelbar austauschbaren Werte.
+
+Die Merkmalsfunktion und ihr bisheriger Vertrag liegen gemeinsam in `analysis.movement_features`; der Klassifikator importiert sie unverändert. Dadurch kann auch die separate MNE-Umgebung öffentliche EEG-Daten vorbereiten, ohne scikit-learn zu benötigen.
 
 ## Training
 
@@ -54,6 +57,23 @@ Ausgaben im **neuen**, zuvor nicht vorhandenen Ordner:
 - `movement-model.npz`: anschließend auf allen Eingabefenstern trainiertes Modell, numerische Parameter und JSON-Vertrag; Laden mit `allow_pickle=False`. Modellparameter werden durch `.gitignore` vor versehentlichem Commit geschützt.
 
 Die Ruheklasse hat ein Fenster pro Bewegungs-Trial und damit mehr Beispiele als jede einzelne Bewegungsklasse. Klassengewichte gleichen dies beim Training aus; **Balanced Accuracy**, Macro-F1 und klassenweise Precision/Recall ergänzen die normale Accuracy. Die vielen EEG-Samples sind keine unabhängigen Trainingsbeispiele.
+
+### Öffentliche PhysioNet-Daten
+
+Der eigene Importer bereitet PhysioNet-Faustbewegungen mit einem gesonderten Quellenvertrag als achtkanalige µV-Historien bei 250 Hz und dieselben 16 Merkmale vor. Die Originalereignisse, Personen- und Trialzuordnung bleiben erhalten. Nur dieser öffentliche Pfad erlaubt mehrere Personen; lokale Sitzungsdateien werden weiterhin personenspezifisch geladen.
+
+```bash
+~/.venvs/eeg-mne/bin/python -m analysis.physionet_dataset \
+  --output-dir ~/.cache/eegvsmeg/physionet-eegmmidb-1.0.0/prepared-fists-250hz-v1
+
+~/.venvs/eeg-ml/bin/python -m analysis.movement_classifier train-physionet \
+  ~/.cache/eegvsmeg/physionet-eegmmidb-1.0.0/prepared-fists-250hz-v1 \
+  --output-dir ~/.cache/eegvsmeg/physionet-eegmmidb-1.0.0/hand-side-model-v1
+```
+
+Die erste Ausgabe ist auf diesem Rechner bereits vorhanden; für einen erneuten Import einen neuen Ordner wählen. `train-physionet` verwendet ausschließlich `hand-side`, mindestens zwei Personen und Leave-one-participant-out über alle Läufe einer Person. Die Standardisierung bleibt trainingsintern. Binäre Modellwahrscheinlichkeiten und Modellpersistenz sind gegen scikit-learn geprüft. Ein öffentliches Modell ist im Manifest gekennzeichnet und wird von den lokalen Auswertungs-/Replay-Pfaden nicht als validierter Unicorn-Transfer akzeptiert.
+
+Der vollständige Import von 4.725 echten Trials wurde ausgeführt und in der ML-Umgebung geladen. Das öffentliche Training wurde hier nur mit synthetischen Daten getestet. Exakte Umrechnung, Offline-Resampling, Ausgabeformat und konkrete Ausschlüsse: [PhysioNet-Importer](physionet-fist-data.md#importer-und-trainingsschnittstelle).
 
 ### Bekannte Qualitätsprobleme
 
@@ -90,6 +110,8 @@ Der Replay verarbeitet alle 50 Samples = 200 ms ausschließlich die jeweils letz
 
 Die Ereignislogik beginnt gesperrt. Drei hinreichend sichere Ruhevorhersagen schalten sie frei; anschließend erzeugen drei gleiche Bewegungsvorhersagen ein einziges Ereignis. Weitere Bewegungsvorhersagen erzeugen bis zur erneuten bestätigten Ruhe kein Ereignis. Unsicherheit oder ungültige Samples sperren die Logik erneut. Nach ungültigen Samples ist zunächst eine vollständige saubere Historie nötig. Schwelle und Bestätigungszahl sind unvalidierte Entwicklungswerte; überlappende Vorhersagen sind nicht unabhängig.
 
+`hand-side` hat keine trainierte Ruheklasse und wird deshalb vom Gesten-Replay zurückgewiesen.
+
 Der Replay kann auch auf Trainingsdaten ausgeführt werden und kennzeichnet dies ausdrücklich. Bei bekannten Trainingssitzungen wird der gespeicherte Qualitäts-Cutoff übernommen. Für neue Sitzungen sind Kontaktprobleme und andere Ausschlüsse vor Interpretation gesondert zu prüfen; der Replay übernimmt keine manuell nachträglich gesetzte Ausschlussregel aus einem separaten Auswertungsbericht.
 
 **Die Ereignisse sind Diagnoseausgaben, keine freigegebenen Motorbefehle.** Diese Version misst keine kontinuierlichen Fehlalarme pro Minute oder Ereignis-Latenzen: Dafür fehlen unabhängig markierte Ruhe-/Störsituationen und gemessene Bewegungsbeginne. Sie erkennt zunächst mehrsekündige Bewegungsphasen; die zuverlässige Erkennung einzelner kurzer Gesten ist separat zu untersuchen. Für echte Hardware fehlen noch der Live-Adapter, unabhängige Stopp-/Timeout-Logik und Hardwaretests.
@@ -100,4 +122,4 @@ Der Replay kann auch auf Trainingsdaten ausgeführt werden und kennzeichnet dies
 ~/.venvs/eeg-ml/bin/python -m unittest analysis.test_movement_classifier
 ```
 
-Synthetische Daten prüfen Klassen inklusive Füßen, Invalidierung, vollständige Paare, Filtervorlauf, Samples/Einheiten, Qualitätsmarker, Block-/Sitzungstrennung, Modellpersistenz, unabhängige Auswertung, kausalen Replay und Ereignissperre. Das ersetzt keine fachliche Validierung mit echten EEG-Daten und keinen Windows-/Headset-Lauf.
+Synthetische Daten prüfen Klassen inklusive Füßen und binärem Handseitenkontrast, Invalidierung, vollständige Paare, Filtervorlauf, Samples/Einheiten, Qualitätsmarker, Block-/Sitzungs-/Personentrennung, binäre Wahrscheinlichkeiten, Modellpersistenz, unabhängige Auswertung, kausalen Replay und Ereignissperre. Der öffentliche Trainingsbefehl wird mit synthetischen vorbereiteten Daten end-to-end geprüft. Das ersetzt keine fachliche Validierung mit echten EEG-Daten und keinen Windows-/Headset-Lauf.
