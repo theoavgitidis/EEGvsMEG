@@ -247,6 +247,11 @@ def _record(args, emit, diagnostic):
         write_json(meta_path, metadata)
     try:
         metadata_update("preparing")
+        # g.Pype resolves OSCAR lazily on the first pipeline cycle. Load it
+        # before opening the live stream so SciPy imports cannot delay it.
+        diagnostic("oscar_import_starting")
+        import gtec_oscar  # noqa: F401
+        diagnostic("oscar_imported")
         pipeline, source = build_pipeline(gp, writer, args.serial)
         diagnostic("pipeline_starting")
         # Vendor startup can block while opening Bluetooth or obtaining an
