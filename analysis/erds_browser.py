@@ -5,10 +5,10 @@ import io
 import json
 from pathlib import Path
 import secrets
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
 import webbrowser
 
-from .erds_data import head_geometry, json_safe
+from .erds_data import channel_trials, head_geometry, json_safe, trial_detail
 
 
 def create_erds_server(result, *, title='Handbewegungen · ERD/ERS', port=0):
@@ -19,6 +19,7 @@ def create_erds_server(result, *, title='Handbewegungen · ERD/ERS', port=0):
     data = json.dumps(payload, ensure_ascii=False, allow_nan=False).encode('utf-8')
     javascript = get_plotlyjs().encode('utf-8')
     html = Path(__file__).with_name('erds_view.html').read_bytes()
+    viewer_js = Path(__file__).with_name('erds_view.js').read_bytes()
     summary = io.StringIO(newline='')
     writer = csv.writer(summary)
     writer.writerow(['condition', 'channel', 'band', 'n', 'reference_uV2',
@@ -33,6 +34,7 @@ def create_erds_server(result, *, title='Handbewegungen · ERD/ERS', port=0):
     prefix = '/' + secrets.token_urlsafe(24) + '/'
     resources = {'': (html, 'text/html; charset=utf-8'),
                  'plotly.min.js': (javascript, 'text/javascript; charset=utf-8'),
+                 'erds_view.js': (viewer_js, 'text/javascript; charset=utf-8'),
                  'data': (data, 'application/json; charset=utf-8'),
                  'report.json': (data, 'application/json; charset=utf-8'),
                  'summary.csv': (summary.getvalue().encode('utf-8-sig'), 'text/csv; charset=utf-8')}
@@ -45,7 +47,22 @@ def create_erds_server(result, *, title='Handbewegungen · ERD/ERS', port=0):
             url = urlsplit(self.path)
             key = url.path[len(prefix):] if url.path.startswith(prefix) else None
             content, kind = resources.get(key, (b'Not found', 'text/plain'))
-            self.send_response(200 if key in resources else 404)
+            status = 200 if key in resources else 404
+            if key in ('channel', 'trial'):
+                kind = 'application/json; charset=utf-8'
+                try:
+                    query = parse_qs(url.query, keep_blank_values=True, strict_parsing=True)
+                    expected = {'channel', 'band'} if key == 'channel' else {'channel', 'key'}
+                    if set(query) != expected or any(len(v) != 1 for v in query.values()):
+                        raise ValueError('Ungültige oder doppelte Auswahlparameter.')
+                    selection = (channel_trials(result, query['channel'][0], query['band'][0]) if key == 'channel'
+                                 else trial_detail(result, query['key'][0], query['channel'][0]))
+                    content = json.dumps(json_safe(selection), ensure_ascii=False, allow_nan=False).encode('utf-8')
+                    status = 200
+                except ValueError as error:
+                    content = json.dumps({'error': str(error)}, ensure_ascii=False).encode('utf-8')
+                    status = 400
+            self.send_response(status)
             self.send_header('Content-Type', kind)
             self.send_header('Cache-Control', 'no-store')
             self.send_header('Content-Length', str(len(content)))

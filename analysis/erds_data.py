@@ -35,7 +35,9 @@ def json_safe(value):
     if isinstance(value, np.ndarray):
         return json_safe(value.tolist())
     if isinstance(value, dict):
-        return {k: json_safe(v) for k, v in value.items()}
+        # Private numerical caches are served selectively, never dumped into
+        # the initial browser response or the portable aggregate report.
+        return {k: json_safe(v) for k, v in value.items() if not k.startswith('_')}
     if isinstance(value, (list, tuple)):
         return [json_safe(v) for v in value]
     if isinstance(value, (float, np.floating)):
@@ -339,6 +341,8 @@ def compute_erds(data_uv, events, sample_valid=None, *, channels=None, protocol=
                     or not np.isfinite(rebound_bp[active]).all()):
                 raise ValueError('nonfinite_power')
             trials[condition].append(dict(key=trial_key, block=int(key[1]),
+                condition=condition, run=key[0], trial=int(key[2]), attempt=int(key[3]),
+                prep_sample=prep, end_sample=end,
                 onset_sample=onset, offset_sample=offset, reference=reference,
                 spectral_reference=spectral_reference, power=bp,
                 task_power=bp[:, :, task].mean(axis=2), rebound_power=rebound_bp,
@@ -360,6 +364,7 @@ def compute_erds(data_uv, events, sample_valid=None, *, channels=None, protocol=
                 retained.append(trial)
         trials[condition] = retained
     conditions = {}
+    trial_data = {}
     for condition, accepted in trials.items():
         if not accepted:
             conditions[condition] = dict(n=0, trials=[], unavailable_reason='Keine vollständigen gültigen Trials.')
@@ -370,6 +375,22 @@ def compute_erds(data_uv, events, sample_valid=None, *, channels=None, protocol=
         power = mean('power')
         spectrum = mean('spectrum')
         spectral_reference = mean('spectral_reference')
+        summaries = []
+        for ordinal, t in enumerate(accepted, 1):
+            summary = {k: t[k] for k in ('key', 'condition', 'run', 'block', 'trial', 'attempt',
+                       'prep_sample', 'onset_sample', 'offset_sample', 'end_sample',
+                       'reference', 'task_power', 'rebound_power')}
+            summary['ordinal'] = ordinal
+            summary['onset_s'] = t['onset_sample'] / FS
+            summary['normalization'] = '100 * (trial power / own preparation reference - 1)'
+            summaries.append(summary)
+            first = max(t['prep_sample'], t['onset_sample'] - 2 * FS)
+            last = min(t['end_sample'], t['onset_sample'] + 10 * FS)
+            waveform = data[:, first:last].copy()
+            waveform[~active] = np.nan
+            waveform[:, ~valid[first:last]] = np.nan
+            trial_data[t['key']] = dict(t, summary=summary, waveform_uv=waveform,
+                waveform_times=(np.arange(first, last) - t['onset_sample']) / FS)
         conditions[condition] = dict(n=len(accepted), power=power, reference=reference,
             percent=percent(power, reference[:, :, None]),
             spectral_power=spectrum, spectral_reference=spectral_reference,
@@ -377,22 +398,23 @@ def compute_erds(data_uv, events, sample_valid=None, *, channels=None, protocol=
             task_power=mean('task_power'), rebound_power=mean('rebound_power'),
             task_percent=percent(mean('task_power'), reference),
             rebound_percent=percent(mean('rebound_power'), reference),
-            trials=[{k: t[k] for k in ('key', 'block', 'onset_sample', 'offset_sample', 'reference', 'task_power', 'rebound_power')} for t in accepted])
+            trials=summaries)
     if not any(c['n'] for c in conditions.values()):
         raise ValueError('Keine gültigen Hand-Trials: ' + '; '.join(sorted({e['reason'] for e in exclusions})))
     unused = set(qc['bad_trials']) - {t['key'] for group in trials.values() for t in group} - {e['key'] for e in exclusions}
     if unused:
         raise ValueError('Unbekannte bad_trials: ' + ', '.join(sorted(unused)))
-    return dict(schema_version=1, times=TIMES, frequencies=frequency[freq_mask],
+    return dict(schema_version=2, times=TIMES, frequencies=frequency[freq_mask],
         bands=[dict(id=k, low=lo, high=hi) for k, lo, hi in BANDS],
         channels=[dict(site=s, name=n, included=bool(a)) for s, n, a in zip(SITES, channels, active)],
-        conditions=conditions, exclusions=exclusions,
+        conditions=conditions, exclusions=exclusions, _trial_data=trial_data,
         metadata=dict(protocol_version=version, sampling_rate_hz=FS, window_seconds=1., hop_seconds=.1,
             frequency_grid_hz=1., hann_enbw_hz=1.5, reference='Vollständige Fenster in Vorbereitung, frühestens -2 s bis Cue',
             numerical_reference_floor='float64 epsilon × summed mean reference PSD per channel; unresolvable TF bins stay missing',
             task_window='Fenstermitten ab Cue + 0.5 s bis tatsächliches Aufgabenende - 0.5 s',
             rebound_window='Fenstermitten 0.5–2.5 s nach tatsächlichem task_offset',
             normalization='100 * (mean trial power / mean trial reference - 1)',
+            single_trial_normalization='100 * (trial power / own preparation reference - 1); not averaged to form the aggregate',
             rereference='as recorded; no additional rereferencing',
             preprocessing='1 s periodic Hann; remove window mean; one-sided PSD; fractional band edges; no padding',
             montage='fsaverage_1005', montage_confirmed=qc['montage_confirmed'], qc=qc,
@@ -402,6 +424,46 @@ def compute_erds(data_uv, events, sample_valid=None, *, channels=None, protocol=
         warnings=['Referenz kann Vorbereitungsaktivität enthalten; Erholung ist keine garantierte Ruhe.',
                   'Signalqualität visuell prüfen; keine automatische Muskel-/Augenartefaktfreiheit.',
                   'Standardpositionen – nicht individuell vermessen; keine Quellenlokalisation.'])
+
+
+def trial_detail(result, key, channel):
+    """One accepted trial, all band curves and only the requested sensor's TFR.
+
+    Normalizes against that trial's own preparation; the aggregate is untouched.
+    Separate left/right selections do not constitute paired simultaneous trials.
+    """
+    if key not in result.get('_trial_data', {}) or channel not in SITES:
+        raise ValueError('Unbekannter eingeschlossener Trial oder Kanal.')
+    t = result['_trial_data'][key]
+    ci = SITES.index(channel)
+    reference = t['reference']
+    return dict(n=1, key=key, condition=t['condition'], channel=channel, trials=[t['summary']],
+        reference=reference, power=t['power'], percent=percent(t['power'], reference[:, :, None]),
+        task_power=t['task_power'], task_percent=percent(t['task_power'], reference),
+        rebound_power=t['rebound_power'], rebound_percent=percent(t['rebound_power'], reference),
+        spectral_power=t['spectrum'][ci], spectral_reference=t['spectral_reference'][ci],
+        spectral_percent=percent(t['spectrum'][ci], t['spectral_reference'][ci, :, None]),
+        waveform_uv=t['waveform_uv'][ci], waveform_times=t['waveform_times'],
+        normalization=t['summary']['normalization'])
+
+
+def channel_trials(result, channel, band):
+    """Small channel/band slice for trial heatmaps and individual curve overlays."""
+    bands = {name: index for index, (name, _, _) in enumerate(BANDS)}
+    if channel not in SITES or band not in bands:
+        raise ValueError('Unbekannter Kanal oder Frequenzbereich.')
+    ci, bi = SITES.index(channel), bands[band]
+    rows = {condition: [] for condition in CONDITIONS}
+    for t in result.get('_trial_data', {}).values():
+        reference = t['reference'][ci, bi]
+        rows[t['condition']].append(dict(
+            **{k: t['summary'][k] for k in ('key', 'ordinal', 'block', 'trial', 'attempt', 'onset_s')},
+            reference=reference, power=t['power'][ci, bi],
+            percent=percent(t['power'][ci, bi], reference),
+            task_power=t['task_power'][ci, bi], task_percent=percent(t['task_power'][ci, bi], reference),
+            rebound_power=t['rebound_power'][ci, bi], rebound_percent=percent(t['rebound_power'][ci, bi], reference)))
+    return dict(channel=channel, band=band, conditions=rows,
+                normalization='Each row uses its own preparation reference; aggregate is computed separately')
 
 
 def export_erds(result, directory):
@@ -433,4 +495,15 @@ def export_erds(result, directory):
                         for ti, time in enumerate(report['times']):
                             writer.writerow([condition, channel['site'], band['id'], values['n'], values['reference'][ci][bi],
                                 time, values['power'][ci][bi][ti], values['percent'][ci][bi][ti]])
+    with (target / 'trials.csv').open('w', newline='', encoding='utf-8-sig') as handle:
+        writer = csv.writer(handle)
+        writer.writerow(['key', 'condition', 'block', 'trial', 'attempt', 'onset_s', 'channel', 'band',
+                         'reference_uV2', 'task_uV2', 'task_percent', 'rebound_uV2', 'rebound_percent'])
+        for t in result.get('_trial_data', {}).values():
+            for ci, site in enumerate(SITES):
+                for bi, (band, _, _) in enumerate(BANDS):
+                    writer.writerow(json_safe([t['key'], t['condition'], t['block'], t['trial'], t['attempt'],
+                        t['onset_sample'] / FS, site, band, t['reference'][ci, bi], t['task_power'][ci, bi],
+                        percent(t['task_power'][ci, bi], t['reference'][ci, bi]), t['rebound_power'][ci, bi],
+                        percent(t['rebound_power'][ci, bi], t['reference'][ci, bi])]))
     return target

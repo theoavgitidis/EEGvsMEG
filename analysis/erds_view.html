@@ -14,7 +14,7 @@
     select,input,button,.button{font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:7px 10px;min-height:36px}
     button,.button{cursor:pointer}button:disabled{opacity:.5;cursor:default}button:hover,.button:hover{border-color:var(--accent)}:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
     a{color:var(--accent)}.button{text-decoration:none;display:inline-block}.pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;min-width:0}
-    .pair>div{min-width:0}.plot{min-width:0;width:100%}.head{height:360px}.chart{height:315px}.note{font-size:13px;color:var(--muted)}.warning{border-left:4px solid #b17624;padding-left:12px}
+    .pair>div{min-width:0}.plot{min-width:0;width:100%}.barplot{height:260px}.overview{height:370px}#trial-controls select{max-width:100%;width:100%}[hidden]{display:none!important}.head{height:360px}.chart{height:315px}.note{font-size:13px;color:var(--muted)}.warning{border-left:4px solid #b17624;padding-left:12px}
     .slider{flex:1;min-width:240px!important}input[type=range]{width:100%;padding:0;accent-color:var(--accent)}input[type=number]{width:100px}
     .table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}td,th{padding:7px 10px;text-align:right;border-bottom:1px solid var(--border);white-space:nowrap}td:first-child,th:first-child{text-align:left}
     .active-row{background:color-mix(in srgb,var(--accent) 10%,transparent)}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.caption{min-height:24px}
@@ -28,7 +28,9 @@
   <p id="recording" class="muted"></p>
   <p class="note">Standardpositionen – nicht individuell vermessen. Kanalwerte auf der Kopfoberfläche; keine Quellenlokalisation.</p>
   <p id="mapping" class="note warning"></p>
+  <p id="selection-summary" class="panel" role="status"></p>
   <section class="panel controls" aria-label="Auswertung auswählen">
+    <label>Wiederholungen<select id="scope"><option value="mean">Alle Trials · Mittelwert</option><option value="single">Einzeltrials</option></select></label>
     <label>Aufgabe<select id="family"><option value="me">Ausführung</option><option value="mi">Vorstellung</option></select></label>
     <label>Frequenzband<select id="band"><option value="0">Mu · 8–13 Hz</option><option value="1">Beta · 13–30 Hz</option><option value="2">Mu · 8–12 Hz (Sensitivität)</option><option value="3">Beta · 13–28 Hz (Sensitivität)</option></select></label>
     <label>Zeitauswahl<select id="mode"><option value="task">Aufgabenmittel</option><option value="rebound">Nach Aufgabenende</option><option value="time">Zeitverlauf</option></select></label>
@@ -36,100 +38,24 @@
     <label>Elektrode<select id="channel"></select></label>
     <label>Farbminimum<input id="scale-min" type="number" value="-100" step="10"></label>
     <label>Farbmaximum<input id="scale-max" type="number" value="100" step="10"></label>
+    <button id="fit-scale">Farbbereich anpassen</button><button id="standard-scale">Standardskala</button>
   </section>
+  <section class="panel" id="trial-controls" hidden><h2>Einzeltrials auswählen</h2><p class="note">Links und rechts sind getrennte Wiederholungen aus unterschiedlichen Aufnahmezeitpunkten. Jeder Trial verwendet seine eigene Vorbereitung als Referenz.</p><div class="pair"><div><label for="trial-left">Linke Hand</label><select id="trial-left"></select><div class="toolbar"><button id="prev-left">Vorheriger Trial links</button><button id="next-left">Nächster Trial links</button></div></div><div><label for="trial-right">Rechte Hand</label><select id="trial-right"></select><div class="toolbar"><button id="prev-right">Vorheriger Trial rechts</button><button id="next-right">Nächster Trial rechts</button></div></div></div></section>
   <section class="panel">
     <div class="controls"><label class="slider">Fenstermitte relativ zum Aufgaben-Cue<input id="time" type="range" min="0" max="110" value="30" disabled></label><output id="time-label"></output><button id="play" disabled>Abspielen</button></div>
     <p id="window-note" class="note"></p>
     <div class="toolbar" aria-label="Kamera"><button data-camera="top">Von oben</button><button data-camera="front">Von vorn</button><button data-camera="left">Linke Seite</button><button data-camera="right">Rechte Seite</button><button id="png-head">Köpfe als PNG</button></div>
-    <div class="pair"><div><h2 id="title-left">Linke Hand</h2><div id="head-left" class="head plot" role="img" aria-label="Linke Hand: drehbarer Kopf mit Elektrodenwerten"></div><p id="clip-left" class="note caption"></p></div><div><h2 id="title-right">Rechte Hand</h2><div id="head-right" class="head plot" role="img" aria-label="Rechte Hand: drehbarer Kopf mit Elektrodenwerten"></div><p id="clip-right" class="note caption"></p></div></div>
-    <p class="note">Blau = ERD · Neutral = 0 % · Rot = ERS · Grau + × = ausgeschlossen/nicht verfügbar. Farben sind kein Signifikanztest.</p>
+    <div class="pair"><div><h2 id="title-left">Linke Hand</h2><div id="head-left" class="head plot" role="img" aria-label="Linke Hand: drehbarer Kopf mit Elektrodenwerten"></div><p id="clip-left" class="note caption"></p><div id="bars-left" class="barplot plot" role="img" aria-label="Numerische Elektrodenwerte linke Hand"></div></div><div><h2 id="title-right">Rechte Hand</h2><div id="head-right" class="head plot" role="img" aria-label="Rechte Hand: drehbarer Kopf mit Elektrodenwerten"></div><p id="clip-right" class="note caption"></p><div id="bars-right" class="barplot plot" role="img" aria-label="Numerische Elektrodenwerte rechte Hand"></div></div></div>
+    <p class="note" id="color-note"></p>
+    <p class="note">Beide Köpfe und Trialübersichten verwenden dieselben Farbgrenzen. „Farbbereich anpassen“ setzt sie für die aktuelle Auswahl; anschließend bleiben sie beim Trial- und Zeitwechsel fest. Farben sind kein Signifikanztest.</p>
   </section>
-  <section class="panel"><h2 id="curve-title">Zeitverläufe</h2><div class="toolbar"><button id="png-curve">Kurven als PNG</button></div><div id="curves" class="chart plot" role="img" aria-label="Bandpower-Zeitverläufe der ausgewählten Elektrode"></div><p class="note">Durchgezogen: linke Hand · gestrichelt: rechte Hand. Lücken bedeuten fehlende vollständige Fenster. Vertikale Linien markieren die tatsächlichen Aufgabenenden der gültigen Trials.</p></section>
-  <section class="panel"><h2 id="tf-title">Zeit-Frequenz-Karten</h2><div class="toolbar"><button id="png-tf">Zeit-Frequenz-Karten als PNG</button></div><div class="pair"><div id="tf-left" class="chart plot" role="img" aria-label="Zeit-Frequenz-Karte linke Hand"></div><div id="tf-right" class="chart plot" role="img" aria-label="Zeit-Frequenz-Karte rechte Hand"></div></div><p class="note">ERD/ERS in % mit eigener gemeinsamer Skala −100 bis +100 %. 1-Hz-Raster; Hann-Rauschbandbreite 1,5 Hz. Auch oberhalb 30 Hz explorativ; keine automatische Zustandsinterpretation. Farbüberläufe werden unten gezählt.</p></section>
-  <section class="panel"><h2>Werte der ausgewählten Zeitauswahl</h2><p class="note">Gleiche eingeschlossene Trials für alle gültigen Sensoren und Bänder. Referenzleistung in µV²; Änderung in %.</p><div class="table-wrap"><table><thead><tr><th>Kanal</th><th>Links: n</th><th>Referenz</th><th>Leistung</th><th>Änderung</th><th>Rechts: n</th><th>Referenz</th><th>Leistung</th><th>Änderung</th></tr></thead><tbody id="values"></tbody></table></div></section>
-  <section class="panel"><h2>Export und Nachvollziehbarkeit</h2><div class="toolbar"><a href="report.json" download class="button">Ergebnisse + Metadaten (JSON)</a><a href="summary.csv" download class="button">Aufgabe + Rebound (CSV)</a><button id="table-csv">Aktuelle Tabelle (CSV)</button></div><details><summary>Verarbeitung, Referenz und Ausschlüsse</summary><div id="warnings"></div><pre id="provenance"></pre></details></section>
+  <section class="panel"><h2 id="overview-title">Wiederholungen im Vergleich</h2><p class="note">Eine Zeile je gültigem Trial; eigene Vorbereitungsreferenz pro Zeile. Klick auf eine Zeile wählt den Einzeltrial. Die Kopfansicht „Alle Trials“ normalisiert die gemittelte Leistung separat.</p><div class="pair"><div id="overview-left" class="overview plot" role="img" aria-label="Trialübersicht linke Hand"></div><div id="overview-right" class="overview plot" role="img" aria-label="Trialübersicht rechte Hand"></div></div></section>
+  <section class="panel"><h2 id="curve-title">Zeitverläufe</h2><label><input id="individual-curves" type="checkbox"> Alle Einzelkurven im Hintergrund zeigen</label><div class="toolbar"><button id="png-curve">Kurven als PNG</button></div><div id="curves" class="chart plot" role="img" aria-label="Bandpower-Zeitverläufe der ausgewählten Elektrode"></div><p class="note">Durchgezogen: linke Hand · gestrichelt: rechte Hand. Lücken bedeuten fehlende vollständige Fenster. Vertikale Linien markieren die tatsächlichen Aufgabenenden der gültigen Trials.</p></section>
+  <section class="panel" id="waveform-panel" hidden><h2 id="waveform-title">EEG des Einzeltrials</h2><div id="waveform" class="chart plot" role="img" aria-label="EEG-Spannung der ausgewählten Einzeltrials"></div><p class="note">Gewählte Datenvariante in µV, ohne zusätzliche Filter oder Zentrierung. Auffällige gemeinsame Signalanteile können unter anderem mit Referenz oder Artefakten zusammenhängen; daraus folgt keine eindeutige Ursache.</p></section>
+  <section class="panel"><h2 id="tf-title">Zeit-Frequenz-Karten</h2><div class="toolbar"><button id="png-tf">Zeit-Frequenz-Karten als PNG</button></div><div class="pair"><div id="tf-left" class="chart plot" role="img" aria-label="Zeit-Frequenz-Karte linke Hand"></div><div id="tf-right" class="chart plot" role="img" aria-label="Zeit-Frequenz-Karte rechte Hand"></div></div><p class="note">ERD/ERS in % mit eigener gemeinsamer Skala −100 bis +100 %. Weiß entspricht 0 %, grau bedeutet fehlende Referenz/Fenster. 1-Hz-Raster; Hann-Rauschbandbreite 1,5 Hz. Auch oberhalb 30 Hz explorativ; keine automatische Zustandsinterpretation. Farbüberläufe werden unten gezählt.</p></section>
+  <section class="panel"><h2>Werte der ausgewählten Trials und Zeitauswahl</h2><p class="note">Alle gültigen Sensoren und Bänder verwenden dieselbe Trialauswahl. Referenzleistung in µV²; Änderung in %.</p><div class="table-wrap"><table><thead><tr><th>Kanal</th><th>Links: n</th><th>Referenz</th><th>Leistung</th><th>Änderung</th><th>Rechts: n</th><th>Referenz</th><th>Leistung</th><th>Änderung</th></tr></thead><tbody id="values"></tbody></table></div></section>
+  <section class="panel"><h2>Export und Nachvollziehbarkeit</h2><div class="toolbar"><a href="report.json" download class="button">Gesamtergebnisse + Metadaten (JSON)</a><a href="summary.csv" download class="button">Aufgabe + Rebound (CSV)</a><button id="selection-json">Aktuelle Auswahl (JSON)</button><button id="table-csv">Aktuelle Tabelle (CSV)</button></div><details><summary>Verarbeitung, Referenz und Ausschlüsse</summary><div id="warnings"></div><pre id="provenance"></pre></details></section>
   <p id="status" role="status">Auswertung wird geladen …</p>
 </main>
-<script>
-'use strict';
-const $=id=>document.getElementById(id);
-const state={data:null,channel:1,camera:{eye:{x:0,y:0,z:2.2},up:{x:0,y:1,z:0}},timer:null,revision:0,rendering:Promise.resolve(),scales:{percent:[-100,100],power:[0,100]}};
-const config={responsive:true,displaylogo:false,scrollZoom:false};
-const diverging=[[0,'#2166ac'],[.5,'#f7f7f7'],[1,'#b2182b']];
-const sequential=[[0,'#f7fbff'],[.5,'#6baed6'],[1,'#08306b']];
-const fmt=v=>v===null||v===undefined?'—':(Math.abs(Number(v))<.005?0:Number(v)).toFixed(2);
-function theme(){const s=getComputedStyle(document.documentElement);return Object.fromEntries(['surface','text','muted','grid'].map(k=>[k,s.getPropertyValue('--'+k).trim()]));}
-function layout(title=''){const t=theme();return {title:{text:title,font:{size:14}},paper_bgcolor:t.surface,plot_bgcolor:t.surface,font:{color:t.text,size:12},margin:{l:55,r:25,t:35,b:45},uirevision:'erds',xaxis:{gridcolor:t.grid},yaxis:{gridcolor:t.grid}};}
-function condition(side){return state.data.conditions[$('family').value+'_hand_'+side];}
-function value(c,ci,bi,metric){if(!c?.n)return null;return $('mode').value==='time'?c[metric][ci][bi][+$('time').value]:c[$('mode').value+'_'+metric][ci][bi];}
-function scale(){const a=Number($('scale-min').value),b=Number($('scale-max').value);if(!Number.isFinite(a)||!Number.isFinite(b)||a>=b||($('metric').value==='percent'&&!(a<0&&b>0))||($('metric').value==='power'&&a<0))throw Error('Farbskala: Minimum < Maximum; Prozent muss 0 einschließen, Leistung muss ≥ 0 sein.');return [a,b];}
-function splitScale(lo,hi){const middle=(0-lo)/(hi-lo);return [[0,diverging[0][1]],[middle,diverging[1][1]],[1,diverging[2][1]]];}
-function phaseShapes(c){const result=[{type:'line',x0:0,x1:0,y0:0,y1:1,yref:'paper',line:{color:theme().muted,dash:'dot',width:1}}];if(c?.n){for(const offset of new Set(c.trials.map(t=>(t.offset_sample-t.onset_sample)/state.data.metadata.sampling_rate_hz)))result.push({type:'line',x0:offset,x1:offset,y0:0,y1:1,yref:'paper',line:{color:theme().muted,dash:'dash',width:1}});}return result;}
-async function head(side,lo,hi){
- const d=state.data,g=d.geometry,c=condition(side),bi=+$('band').value,metric=$('metric').value;
- const vals=d.channels.map((_,ci)=>value(c,ci,bi,metric)),good=[],missing=[];
- vals.forEach((v,i)=>(v===null||v===undefined?missing:good).push(i));
- const vertex=g.vertices,tri=g.triangles,coords=g.display_mm;
- const traces=[state.mesh || (state.mesh={type:'mesh3d',x:vertex.map(p=>p[0]),y:vertex.map(p=>p[1]),z:vertex.map(p=>p[2]),i:tri.map(t=>t[0]),j:tri.map(t=>t[1]),k:tri.map(t=>t[2]),color:theme().muted,opacity:.18,hoverinfo:'skip',showscale:false,flatshading:false})];
- function sensors(indices,invalid){return {type:'scatter3d',mode:'markers+text',x:indices.map(i=>coords[i][0]),y:indices.map(i=>coords[i][1]),z:indices.map(i=>coords[i][2]),text:indices.map(i=>d.channels[i].site+(invalid?' ×':'')),textposition:'top center',textfont:{color:theme().text,size:12},meta:{sensors:true,indices},customdata:indices.map(i=>[i,d.channels[i].name||'nicht vorhanden',d.channels[i].site,fmt(value(c,i,bi,'percent')),fmt(value(c,i,bi,'power')),fmt(c?.n?c.reference[i][bi]:null),invalid?0:c.n]),hovertemplate:'%{customdata[2]} · %{customdata[1]}<br>ERD/ERS: %{customdata[3]} %<br>Leistung: %{customdata[4]} µV²<br>Referenz: %{customdata[5]} µV²<br>Gültige Trials: %{customdata[6]}<extra></extra>',marker:{size:7,symbol:invalid?'x':'circle',line:{color:theme().text,width:1},color:invalid?'#888888':indices.map(i=>vals[i]),cmin:lo,cmax:hi,colorscale:metric==='percent'?splitScale(lo,hi):sequential,showscale:!invalid,colorbar:{title:{text:metric==='percent'?'ERD/ERS %':'µV²'},len:.7,thickness:12}},showlegend:false};}
- traces.push(sensors(good,false),sensors(missing,true));
- // Anatomical labels are orientation aids, not measured additional channels.
- traces.push({type:'scatter3d',mode:'text',x:[-100,100,0],y:[0,0,115],z:[10,10,5],text:['L','R','Nase / vorn'],hoverinfo:'skip',showlegend:false,textfont:{color:theme().muted}});
- const l=layout();l.margin={l:0,r:20,t:0,b:0};l.scene={camera:state.camera,aspectmode:'data',xaxis:{visible:false},yaxis:{visible:false},zaxis:{visible:false}};l.showlegend=false;
- const graph=$('head-'+side);
- if(graph.data){
-   const updates={};for(const field of ['x','y','z','text','textfont','customdata','marker','meta'])updates[field]=[traces[1][field],traces[2][field]];
-   await Plotly.update(graph,updates,{paper_bgcolor:theme().surface,'font.color':theme().text},[1,2]);
- }else await Plotly.newPlot(graph,traces,l,config);
- $('title-'+side).textContent=(side==='left'?'Linke':'Rechte')+' Hand · '+(c?.n||0)+' gültige Trials';
- const clipped=vals.filter(v=>v!==null&&v!==undefined&&(v<lo||v>hi)).length;
- $('clip-'+side).textContent=(c?.n?'':'Keine gültigen Trials. ')+clipped+' Werte außerhalb der Farbskala; '+missing.length+' nicht verfügbar.';
-}
-async function charts(){
- const d=state.data,ci=state.channel,bi=+$('band').value,metric=$('metric').value;
- const traces=['left','right'].map((side,i)=>{const c=condition(side);return {type:'scatter',mode:'lines',name:i?'Rechte Hand':'Linke Hand',x:d.times,y:c?.n?c[metric][ci][bi]:d.times.map(()=>null),connectgaps:false,line:{color:i?'#c77b14':'#287cba',dash:i?'dash':'solid'},hovertemplate:'%{x:.2f} s: %{y:.2f}<extra>%{fullData.name}</extra>'};});
- const l=layout();l.xaxis={...l.xaxis,title:{text:'Zeit relativ zum Aufgaben-Cue (s)'},range:[-2,10]};l.yaxis={...l.yaxis,title:{text:metric==='percent'?'ERD/ERS (%)':'Bandpower (µV²)'}};l.legend={orientation:'h',y:1.15};l.shapes=[...phaseShapes(condition('left')),...phaseShapes(condition('right'))];
- if($('mode').value==='time'){const time=d.times[+$('time').value];l.shapes.push({type:'line',x0:time,x1:time,y0:0,y1:1,yref:'paper',line:{color:theme().text,width:2}});}
- await Plotly.react($('curves'),traces,l,config);
- $('curve-title').textContent=d.channels[ci].site+' · '+$('band').selectedOptions[0].text+' · '+$('metric').selectedOptions[0].text;
- let clipped=0;
- for(const side of ['left','right']){const c=condition(side),z=c?.n?c.spectral_percent[ci]:d.frequencies.map(()=>d.times.map(()=>null));clipped+=z.flat().filter(v=>v!==null&&(v< -100||v>100)).length;const tf=layout(side==='left'?'Linke Hand':'Rechte Hand');tf.xaxis={...tf.xaxis,title:{text:'Zeit zum Aufgaben-Cue (s)'},range:[-2,10]};tf.yaxis={...tf.yaxis,title:{text:'Frequenz (Hz)'},range:[6,40]};tf.shapes=phaseShapes(c);if($('mode').value==='time'){const t=d.times[+$('time').value];tf.shapes.push({type:'line',x0:t,x1:t,y0:0,y1:1,yref:'paper',line:{color:theme().text,width:2}});}await Plotly.react($('tf-'+side),[{type:'heatmap',x:d.times,y:d.frequencies,z,zmin:-100,zmax:100,colorscale:diverging,hoverongaps:false,colorbar:{title:{text:'%'}},hovertemplate:'%{x:.2f} s · %{y} Hz<br>%{z:.2f} %<extra></extra>'}],tf,config);}
- $('tf-title').textContent=d.channels[ci].site+' · Zeit-Frequenz-Karten · '+clipped+' Werte außerhalb ±100 %';
-}
-function table(){const bi=+$('band').value,body=$('values');body.replaceChildren();state.data.channels.forEach((channel,ci)=>{const row=document.createElement('tr');if(ci===state.channel)row.className='active-row';const values=[channel.site];for(const side of ['left','right']){const c=condition(side);values.push(String(value(c,ci,bi,'power')===null?0:c?.n||0),fmt(c?.n?c.reference[ci][bi]:null),fmt(value(c,ci,bi,'power')),fmt(value(c,ci,bi,'percent')));}values.forEach(v=>{const cell=document.createElement('td');cell.textContent=v;row.append(cell);});row.addEventListener('click',()=>{$('channel').value=String(ci);state.channel=ci;render();});body.append(row);});}
-function render(){
- const revision=++state.revision;
- state.rendering=state.rendering.then(async()=>{if(revision!==state.revision)return;const [lo,hi]=scale();state.scales[$('metric').value]=[lo,hi];const timed=$('mode').value==='time';$('time').disabled=!timed;$('play').disabled=!timed;if(!timed)stop();const t=state.data.times[+$('time').value];$('time-label').textContent=timed?t.toFixed(1)+' s · Fenster '+(t-.5).toFixed(1)+' bis '+(t+.5).toFixed(1)+' s':'Zeitschieber nur im Zeitverlauf';$('window-note').textContent=$('mode').value==='task'?state.data.metadata.task_window:$('mode').value==='rebound'?state.data.metadata.rebound_window:'1-s-Fenster, 100-ms-Schritte. Nicht unabhängig mit 100 ms aufgelöst; keine Zeitstreckung.';await head('left',lo,hi);await head('right',lo,hi);await charts();table();$('status').textContent='Bereit · '+state.data.metadata.signal_description+' · '+state.data.metadata.statistics;}).catch(error=>{$('status').textContent='Fehler: '+error.message;});
- return state.rendering;
-}
-function stop(){clearInterval(state.timer);state.timer=null;$('play').textContent='Abspielen';}
-async function savePNG(id){
- stop();await state.rendering;
- const band=state.data.bands[+$('band').value],suffix=$('family').value+'-'+band.id+'-'+$('mode').value+'-'+$('metric').value+'-'+state.data.channels[state.channel].site;
- const graph=$(id),old=structuredClone({title:graph.layout.title,margin:graph.layout.margin});
- const title=state.data.metadata.signal.toUpperCase()+' · '+$('family').value.toUpperCase()+' · '+band.low+'–'+band.high+' Hz · '+$('mode').selectedOptions[0].text+' · '+(id.includes('left')?'links':id.includes('right')?'rechts':state.data.channels[state.channel].site);
- const detail='Ref.: Vorbereitung · n links/rechts: '+(condition('left').n||0)+'/'+(condition('right').n||0)+' · Standardpositionen'+($('mode').value==='time'?' · t='+state.data.times[+$('time').value].toFixed(1)+' s':'');
- try{await Plotly.relayout(graph,{'title.text':title+'<br><sup>'+detail+'</sup>','margin.t':65});await Plotly.downloadImage(graph,{format:'png',filename:'erds-'+id+'-'+suffix,scale:2});}
- finally{await Plotly.relayout(graph,old);}
-}
-async function start(){
- const response=await fetch('data');if(!response.ok)throw Error('Auswertung nicht verfügbar.');state.data=await response.json();
- const d=state.data;$('recording').textContent=d.title+' · '+d.metadata.signal_description;$('mapping').textContent=d.metadata.montage_confirmed?'Zuordnung EEG 1–8 zu Unicorn-Positionen ausdrücklich bestätigt. Individuelle Positionen bleiben unvermessen.':'Zuordnung EEG 1–8 zu Unicorn-Positionen noch unbestätigt. Vor wissenschaftlicher Interpretation die reale Belegung prüfen.';
- d.channels.forEach((c,i)=>{const option=document.createElement('option');option.value=i;option.text=c.site+(c.included?'':' (ausgeschlossen/fehlt)');$('channel').append(option);});$('channel').value=state.channel;
- for(const warning of d.warnings){const p=document.createElement('p');p.className='note';p.textContent=warning;$('warnings').append(p);}
- $('provenance').textContent=JSON.stringify({metadata:d.metadata,exclusions:d.exclusions,trials:Object.fromEntries(Object.entries(d.conditions).map(([k,v])=>[k,v.trials]))},null,2);
- const absolute=[];for(const c of Object.values(d.conditions)){if(c.n)for(const key of ['power','task_power','rebound_power'])absolute.push(...c[key].flat(3).filter(v=>v!==null));}state.scales.power=[0,Math.max(1,...absolute)*1.05];
- for(const id of ['family','band','mode','scale-min','scale-max'])$(id).addEventListener('change',render);
- $('channel').addEventListener('change',()=>{state.channel=+$('channel').value;render();});
- $('metric').addEventListener('change',()=>{[$('scale-min').value,$('scale-max').value]=state.scales[$('metric').value];render();});
- $('time').max=d.times.length-1;$('time').addEventListener('input',render);
- $('play').addEventListener('click',()=>{if(state.timer)return stop();$('play').textContent='Pause';state.timer=setInterval(()=>{if(+$('time').value>=d.times.length-1)return stop();$('time').value=+$('time').value+1;render();},300);});
- document.querySelectorAll('[data-camera]').forEach(button=>button.addEventListener('click',()=>{const eyes={top:{x:0,y:0,z:2.2},front:{x:0,y:2.2,z:.3},left:{x:-2.2,y:0,z:.3},right:{x:2.2,y:0,z:.3}};state.camera={eye:eyes[button.dataset.camera],up:button.dataset.camera==='top'?{x:0,y:1,z:0}:{x:0,y:0,z:1}};for(const side of ['left','right'])Plotly.relayout($('head-'+side),{'scene.camera':state.camera});}));
- $('png-head').addEventListener('click',async()=>{await savePNG('head-left');await savePNG('head-right');});$('png-curve').addEventListener('click',()=>savePNG('curves'));$('png-tf').addEventListener('click',async()=>{await savePNG('tf-left');await savePNG('tf-right');});
- $('table-csv').addEventListener('click',()=>{const rows=[['signal','family','band','mode','cue_time_s','channel','n_left','reference_left_uV2','power_left_uV2','percent_left','n_right','reference_right_uV2','power_right_uV2','percent_right']];for(const row of $('values').rows)rows.push([d.metadata.signal,$('family').value,d.bands[+$('band').value].id,$('mode').value,$('mode').value==='time'?d.times[+$('time').value]:'',...Array.from(row.cells).map(c=>c.textContent)]);const csv=rows.map(r=>r.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(',')).join('\r\n');const url=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='erds-auswahl.csv';a.click();URL.revokeObjectURL(url);});
- await render();
- for(const side of ['left','right']){$('head-'+side).on('plotly_click',event=>{const point=event.points.find(p=>p.data.meta?.sensors);if(point){state.channel=point.customdata[0];$('channel').value=state.channel;render();}});$('head-'+side).on('plotly_relayout',event=>{if(event['scene.camera']){state.camera=event['scene.camera'];const other=side==='left'?'right':'left';const graph=$('head-'+other);if(JSON.stringify(graph.layout.scene.camera)!==JSON.stringify(state.camera))Plotly.relayout(graph,{'scene.camera':state.camera});}});}
- matchMedia('(prefers-color-scheme: dark)').addEventListener('change',async()=>{state.mesh.color=theme().muted;for(const side of ['left','right'])await Plotly.restyle($('head-'+side),{'color':theme().muted},[0]);render();});
-}
-start().catch(error=>{$('status').textContent='Fehler: '+error.message;});
-</script></body></html>
+<script src="erds_view.js"></script>
+</body></html>

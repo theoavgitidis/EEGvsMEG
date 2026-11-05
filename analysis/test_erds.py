@@ -8,8 +8,9 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from analysis.erds_data import (FS, TIMES, SITES, CONDITIONS, band_weights, compute_erds,
-                                export_erds, head_geometry, json_safe, load_erds, window_psd)
+from analysis.erds_data import (FS, TIMES, SITES, CONDITIONS, band_weights, channel_trials,
+                                compute_erds, export_erds, head_geometry, json_safe,
+                                load_erds, trial_detail, window_psd)
 
 
 def synthetic_session():
@@ -100,10 +101,61 @@ class ERDSNumericalTest(unittest.TestCase):
         mu = np.sin(2 * np.pi * 10 * t)
         self.data[1, cue - 2 * FS:cue] += 10 * mu[cue - 2 * FS:cue]
         self.data[1, cue:cue + 4 * FS] += 10 * mu[cue:cue + 4 * FS]
-        c = compute_erds(self.data, self.events)['conditions']['me_hand_right']
+        result = compute_erds(self.data, self.events)
+        c = result['conditions']['me_hand_right']
         self.assertAlmostEqual(c['reference'][1, 0], 125)
         self.assertAlmostEqual(c['task_power'][1, 0], 62.5)
         self.assertAlmostEqual(c['task_percent'][1, 0], -50)
+        first = trial_detail(result, 'Motorik/1/2/1', 'C3')
+        second = trial_detail(result, 'Motorik/2/2/1', 'C3')
+        self.assertAlmostEqual(first['reference'][1, 0], 50)
+        self.assertAlmostEqual(first['task_percent'][1, 0], -75)
+        self.assertAlmostEqual(second['reference'][1, 0], 200)
+        self.assertAlmostEqual(second['task_percent'][1, 0], -43.75)
+        self.assertNotAlmostEqual(c['task_percent'][1, 0],
+                                 (first['task_percent'][1, 0] + second['task_percent'][1, 0]) / 2)
+        rows = channel_trials(result, 'C3', 'mu')['conditions']['me_hand_right']
+        self.assertEqual([r['key'] for r in rows], [first['key'], second['key']])
+        np.testing.assert_allclose(rows[1]['percent'], second['percent'][1, 0], equal_nan=True)
+        self.assertEqual(rows[1]['task_percent'], second['task_percent'][1, 0])
+
+    def test_trial_identity_waveform_tfr_and_private_cache_serialization(self):
+        result = compute_erds(self.data, self.events)
+        detail = trial_detail(result, 'Motorik/2/2/1', 'C3')
+        summary = detail['trials'][0]
+        self.assertEqual((summary['block'], summary['trial'], summary['attempt'], summary['ordinal']), (2, 2, 1, 2))
+        self.assertEqual(summary['onset_s'], 72)
+        self.assertEqual(detail['n'], 1)
+        self.assertAlmostEqual(detail['rebound_percent'][1, 1], 300)
+        self.assertEqual(detail['spectral_percent'].shape, (35, len(TIMES)))
+        np.testing.assert_allclose(detail['spectral_percent'][4, TIMES == 2], -75)
+        np.testing.assert_array_equal(detail['waveform_uv'], self.data[1, 70 * FS:82 * FS])
+        self.assertEqual(detail['waveform_times'][0], -2)
+        self.assertEqual(detail['waveform_times'][-1], 10 - 1 / FS)
+        portable = json_safe(result)
+        self.assertNotIn('_trial_data', portable)
+        self.assertEqual(portable['conditions']['me_hand_right']['trials'][1]['key'], detail['key'])
+        json.dumps(portable, allow_nan=False)
+        with self.assertRaises(ValueError):
+            trial_detail(result, 'Motorik/9/9/1', 'C3')
+        with self.assertRaises(ValueError):
+            trial_detail(result, detail['key'], 'unknown')
+        with self.assertRaises(ValueError):
+            channel_trials(result, 'C3', 'unknown')
+
+    def test_single_trial_exclusions_channels_and_late_gaps_are_preserved(self):
+        valid = np.ones(self.data.shape[1], bool)
+        valid[11 * FS] = False
+        result = compute_erds(self.data, self.events, valid,
+                              qc=dict(bad_trials=['Motorik/1/2/1'], bad_channels=['PO8']))
+        with self.assertRaises(ValueError):
+            trial_detail(result, 'Motorik/1/2/1', 'C3')
+        detail = trial_detail(result, 'Motorik/1/1/1', 'C3')
+        self.assertTrue(np.isnan(detail['power'][:, :, TIMES == 9]).all())
+        self.assertTrue(np.isnan(detail['waveform_uv'][np.isclose(detail['waveform_times'], 9)]).all())
+        self.assertTrue(np.isnan(detail['task_percent'][7]).all())
+        self.assertTrue(np.isnan(trial_detail(result, detail['key'], 'PO8')['waveform_uv']).all())
+        self.assertEqual(len(channel_trials(result, 'C3', 'mu')['conditions']['me_hand_right']), 1)
 
     def test_late_invalidation_and_missing_markers_exclude_whole_attempt(self):
         invalid = self.events.iloc[4].to_dict()
@@ -263,6 +315,12 @@ class ERDSFilesTest(unittest.TestCase):
         restored = json.loads((target / 'report.json').read_text())
         self.assertEqual(restored['metadata']['signal'], 'oscar')
         self.assertIn('inputs', restored['metadata'])
+        self.assertNotIn('_trial_data', restored)
+        with (target / 'trials.csv').open(encoding='utf-8-sig') as handle:
+            trials = list(csv.DictReader(handle))
+        self.assertEqual(len(trials), sum(c['n'] for c in result['conditions'].values()) * 8 * 4)
+        row = next(r for r in trials if r['key'] == 'Motorik/1/2/1' and r['channel'] == 'C3' and r['band'] == 'mu')
+        self.assertAlmostEqual(float(row['task_percent']), -75)
         with (target / 'summary.csv').open(encoding='utf-8-sig') as handle:
             row = next(csv.DictReader(handle))
         self.assertIn('reference_uV2', row)

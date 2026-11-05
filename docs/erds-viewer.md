@@ -62,6 +62,19 @@ weiterhin zurückgewiesen.
 - Zwei drehbare Köpfe vergleichen linke und rechte Hand. Ausführung/Vorstellung,
   Frequenzband und Messgröße gelten gemeinsam. Kameras sind gekoppelt; feste
   Ansichten zeigen oben, vorn sowie beide Seiten. L/R bezeichnet die Person.
+- **Alle Trials · Mittelwert** ist die Startansicht: alle akzeptierten Wiederholungen
+  der gewählten Bedingung über alle Blöcke. Anzahl und Aufgabe stehen oberhalb
+  der Köpfe. **Einzeltrials** zeigt links und rechts unabhängig ausgewählte Trials;
+  die Auswahl nennt Block, Trial, Attempt und Cue-Zeitpunkt innerhalb der Aufnahme.
+  Vor/Zurück wechselt die Wiederholung je Seite. Diese Auswahl stellt keine
+  zeitgleiche oder statistisch gepaarte Messung beider Hände dar.
+- Die **Trialübersicht** zeigt für den gewählten Kanal und das Band eine Zeile
+  je akzeptierter Wiederholung. Ein Klick öffnet den betreffenden Einzeltrial.
+  Im Gesamtmittel lassen sich zusätzlich alle Einzelkurven einblenden. In der
+  Einzelansicht erscheinen Kopf, Tabelle, Bandkurve, Zeit-Frequenz-Karte und
+  ungefilterte EEG-Spannung derselben Auswahl gemeinsam; das Gesamtmittel wird
+  in der Bandkurve zum Vergleich gepunktet dargestellt. „Ungefiltert“ bedeutet
+  ohne zusätzliche Viewer-Filter; bei OSCAR ist es weiterhin das OSCAR-Signal.
 - **Aufgabenmittel** verwendet nur vollständige 1-s-Fenster in der Aufgabe.
   **Nach Aufgabenende** verwendet Fenstermitten 0,5–2,5 s nach dem tatsächlichen
   `task_offset`; deren Signalunterstützung liegt 0–3 s nach dem Marker.
@@ -71,11 +84,24 @@ weiterhin zurückgewiesen.
 - **Blau = negative ERD**, neutral = 0 %, **Rot = positive ERS**. Feste gemeinsame
   Farbgrenzen bleiben bei Zeit-/Bedingungswechsel erhalten; Überläufe werden
   gezählt. Die absolute Bandpower in µV² hat eine eigene sequenzielle Skala.
+- **Farbbereich anpassen** bestimmt gemeinsame Grenzen aus den aktuellen
+  Elektrodenwerten beider Köpfe, mit 5 % Rand und neutralem Nullpunkt. Die Grenzen
+  bleiben anschließend auch beim Trial- oder Zeitwechsel fest; erneutes Anpassen
+  erfolgt ausdrücklich per Knopfdruck. Manuelle Grenzen und **Standardskala** sind
+  ebenfalls verfügbar. Es gibt keine separate automatische Skalierung je Kopf
+  oder Elektrode. Unter jedem Kopf stehen Zahlenbalken, Wertebereich und C3−C4-
+  Differenz (in Prozentpunkten beziehungsweise µV²). Ähnliche Werte dürfen ähnlich
+  aussehen: Eine engere Skala oder Farbänderung erzeugt keinen räumlichen Effekt.
+  Beide Balkendiagramme verwenden dieselben Zahlenachsen und zeigen auch Werte
+  außerhalb der Farbgrenzen. Prozent-Zeitkurven haben automatisch mindestens
+  einen Prozentpunkt Achsenspanne, damit Rundungsrauschen um 0 nicht vergrößert
+  wird; die Messwerte bleiben erhalten und die Diagramme sind weiterhin zoombar.
 - Ein Klick auf einen Messpunkt oder eine Tabellenzeile wählt den Kanal für
   Zeitkurven und Zeit-Frequenz-Karten. Tooltip und Tabelle zeigen Referenz,
   Leistung, Änderung und gültige Trialzahl. Grau/× bedeutet ausgeschlossen oder
   nicht verfügbar, **nicht 0 %**. Die Zeit-Frequenz-Karten bleiben bei Prozentwerten
   und verwenden eine gemeinsame separate Skala von −100 bis +100 %.
+  Auch ein Klick auf einen Zahlenbalken wechselt den Kanal.
 - Die Köpfe bleiben neutral; nur die acht gleich großen Messpunkte sind gefärbt.
   Die Ansicht enthält keine Flächeninterpolation und keine Quellenlokalisation.
   Die Standardpositionen sind keine individuell vermessene Anatomie. C3 liegt
@@ -118,6 +144,26 @@ Nicht zuerst die Spannungen mitteln und nicht die Einzeltrial-Prozentwerte
 mitteln. Referenz- und Aufgabenleistung der Einzeltrials stehen zur Kontrolle im
 JSON-Bericht. Eine halbe Schwingungsamplitude bedeutet ein Viertel Leistung
 (−75 %), doppelte Amplitude vierfache Leistung (+300 %).
+
+Für **Einzeltrials**, Trialübersichten und eingeblendete Einzelkurven gilt dagegen:
+
+```text
+Einzeltrial-ERD/ERS (%) = 100 × (Leistung dieses Trials / eigene Referenzleistung − 1)
+```
+
+Die Vorbereitung und die vollständigen Fenster werden identisch zum Gesamtmittel
+ausgewählt. Das Mittel dieser Einzeltrial-Prozentwerte ist im Allgemeinen **nicht**
+der oben definierte Gesamtwert. Bei n=1 gibt es keine Mittelung über Wiederholungen;
+eine kurze Referenz oder ein Artefakt kann einen großen Ausschlag verursachen.
+Die Einzelansicht dient der deskriptiven Kontrolle und begründet allein keine
+robuste ERD/ERS oder Signifikanz. Die Spannungsansicht zeigt die gewählte
+Datenvariante in µV ohne Zentrierung; fehlende Samples bleiben Lücken.
+
+Gleichartige Farben können durch ähnliche relative Leistungsänderungen in vielen
+Kanälen entstehen. Zusätzlich sind bei engen Unterschieden die Zahlen aussagekräftiger
+als die begrenzte Farbabstufung. Gemeinsame Signalanteile können etwa mit Referenz,
+Bewegung oder anderen Artefakten zusammenhängen; die Kopfansicht unterscheidet diese
+Ursachen nicht. Sie ändert weder Filter noch Referenzierung, um Kontraste zu erzeugen.
 
 100-ms-Schritte sind **keine unabhängige 100-ms-Auflösung**: Jeder Wert enthält
 1 s Signal. Das Frequenzraster ist 1 Hz; die Hann-Rauschbandbreite beträgt 1,5 Hz.
@@ -189,8 +235,19 @@ Der Export legt ausschließlich einen neuen Ordner an: `report.json` mit allen
 aggregierten Band-/Zeit-Frequenz-Werten, Einzeltrial-Zusammenfassungen,
 Konfiguration, QC und Quellenprüfsummen; `summary.csv` für Aufgabe/Rebound;
 `bandpower.csv` für die Zeitverläufe. Keine Originaldatei wird überschrieben.
-Im Browser sind JSON, Zusammenfassungs-CSV, aktuelle Tabelle und PNG-Abbildungen
-verfügbar. Abbildungen zusammen mit dem JSON-Bericht aufbewahren: Er enthält
+Zusätzlich enthält `trials.csv` Referenz-, Aufgaben- und Reboundwerte je gültigem
+Trial/Kanal/Band mit Block-, Trial-, Attempt-ID und Aufnahmezeitpunkt.
+Im Browser sind Gesamtbericht, Zusammenfassungs-CSV, aktuelle Tabelle,
+**Aktuelle Auswahl (JSON)** und PNG-Abbildungen verfügbar. Der Auswahl-JSON enthält
+beide ausgewählten Trials oder Mittelwerte, ihre Kurven und Referenzen,
+Band, Zeitauswahl, Farbgrenzen und Verarbeitungsmetadaten; bei Einzeltrials auch
+die EEG-Spannungen und Zeit-Frequenz-Werte des ausgewählten Kanals. Die aktuelle
+Tabellen-CSV enthält diese Auswahlparameter als JSON-Spalte. Der Gesamtbericht
+bleibt unabhängig vom gerade geöffneten Trial. Einzeltrial-Details werden bei
+Bedarf vom lokalen Server nachgeladen; der Browser benötigt weiter den laufenden
+Python-Prozess.
+Abbildungen zusammen mit dem passenden Auswahl-JSON und Gesamtbericht aufbewahren:
+Diese enthalten
 vollständige Referenz-, Montage-, Datenvarianten- und Ausschlussinformationen.
 Browserdownloads werden vom Browser verwaltet und ändern keine Quelldateien.
 

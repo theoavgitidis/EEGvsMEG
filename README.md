@@ -87,7 +87,11 @@ Beispiel für eine vorhandene Aufnahme auf macOS, nach Einrichtung der dokumenti
 Für Protokoll-2.0-Handaufgaben öffnet `--view erds` zwei drehbare Köpfe mit farbigen
 Elektroden, Mu-/Beta-Zeitverläufen und Zeit-Frequenz-Karten. OSCAR ist in diesem
 Modus verbindlicher Standard; Rohdaten benötigen `--signal raw`. Keine räumliche
-Interpolation oder Quellenlokalisation. Mit `--no-show --erds-export NEUER_ORDNER`
+Interpolation oder Quellenlokalisation. Die Ansicht wechselt zwischen Gesamtmitteln
+und auswählbaren Einzeltrials mit Block-/Trial-/Attempt-ID und eigener Referenz.
+Trialübersichten, Zahlenbalken und eine gemeinsam anpassbare, anschließend feste
+Farbskala machen Unterschiede und ähnliche Kanalwerte nachvollziehbar.
+Mit `--no-show --erds-export NEUER_ORDNER`
 lassen sich Werte und Verarbeitungsmetadaten ohne Browser exportieren. Die
 Ansicht ist deskriptiv; reale Kanalbelegung und Artefakte müssen geprüft werden.
 Berechnung, QC-Datei und Grenzen: [ERD/ERS-Anleitung](docs/erds-viewer.md).
