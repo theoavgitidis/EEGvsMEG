@@ -11,6 +11,7 @@ import numpy as np
 import view_eeg
 from analysis import view_eeg as alternative
 from acquisition.oscar_worker import HEADER
+from analysis.recording_files import read_session_metadata
 
 
 class SignalImportTest(unittest.TestCase):
@@ -56,6 +57,35 @@ class SignalImportTest(unittest.TestCase):
         for loader in (view_eeg.load_recording, alternative.load_recording):
             with self.assertRaisesRegex(ValueError, "length"):
                 loader(self.raw, "uV")
+
+    def test_windows_metadata_and_utf8_bom_work_in_both_viewers(self):
+        path = Path(str(self.raw) + '.session.json')
+        metadata = {'processing_mode': 'oscar', 'device_description': 'Gerät geprüft – µV'}
+        text = json.dumps(metadata, ensure_ascii=False)
+        for encoding in ('cp1252', 'utf-8-sig'):
+            source = text.encode(encoding)
+            path.write_bytes(source)
+            with self.subTest(encoding=encoding):
+                if encoding == 'cp1252':
+                    with self.assertWarnsRegex(UnicodeWarning, 'Windows-1252'):
+                        self.assertEqual(read_session_metadata(path), metadata)
+                else:
+                    self.assertEqual(read_session_metadata(path), metadata)
+                for loader in (view_eeg.load_recording, alternative.load_recording):
+                    with self.subTest(loader=loader.__module__):
+                        corrected = loader(self.raw, 'uV')
+                        self.assertEqual(corrected.n_times, 1000)
+                        self.assertIn('OSCAR', corrected.info['description'])
+                self.assertEqual(path.read_bytes(), source)
+
+    def test_metadata_reader_does_not_repair_invalid_json_or_replace_bad_bytes(self):
+        path = Path(str(self.raw) + '.session.json')
+        path.write_bytes(b'{"device_description": "truncated"')
+        with self.assertRaises(json.JSONDecodeError):
+            read_session_metadata(path)
+        path.write_bytes(b'{"device_description": "\x81"}')
+        with self.assertRaises(UnicodeDecodeError):
+            read_session_metadata(path)
 
     def test_ml_loader_uses_shared_selection_and_provenance(self):
         # No model weights or torch needed to verify the data importer.

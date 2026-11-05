@@ -1,6 +1,5 @@
 """Validated trial windows shared by the CBraMod benchmark and its tests."""
 import hashlib
-import json
 from pathlib import Path
 
 import numpy as np
@@ -8,7 +7,7 @@ import pandas as pd
 from scipy.signal import butter, resample_poly, sosfiltfilt, welch
 
 from analysis.ml_feasibility import features
-from analysis.recording_files import resolve_recording
+from analysis.recording_files import eeg_unit_scale, read_session_metadata, resolve_recording
 from analysis.session_conditions import CURRENT, LEGACY, protocol_for_events
 
 CHANNELS = [f"EEG {i}" for i in range(1, 9)]
@@ -89,9 +88,9 @@ def load_recording(path, signal="auto"):
     selected = resolve_recording(path, signal)
     path = selected.data
     meta_path, event_path = selected.session, selected.events
-    meta = json.loads(meta_path.read_text(errors="replace"))
+    meta = read_session_metadata(meta_path)
     eeg_channels = {c["name"]: c for c in meta["device"]["channels"]}
-    if any(not eeg_channels[c]["enabled"] or eeg_channels[c]["unit"] not in ("µV", "μV", "uV") for c in CHANNELS):
+    if any(not eeg_channels[c]["enabled"] or eeg_unit_scale(eeg_channels[c]["unit"]) != 1e-6 for c in CHANNELS):
         raise ValueError("All eight enabled EEG channels must be confirmed in microvolts.")
     frame = pd.read_csv(path)
     selected.validate_length(len(frame))

@@ -145,6 +145,20 @@ class ERDSNumericalTest(unittest.TestCase):
         self.assertEqual(result['conditions']['me_hand_left']['n'], 1)
         self.assertIn('pause_overlaps_attempt', {e['reason'] for e in result['exclusions']})
 
+    def test_full_session_baselines_and_breaks_are_not_task_conditions(self):
+        context = []
+        for condition in ('baseline', 'block_break', 'run_break'):
+            row = self.events.iloc[0].to_dict()
+            row.update(condition=condition, label='phase_start', phase=condition,
+                       trial=0, block=0, attempt=0, samples_received=0)
+            context.append(row)
+        events = pd.concat([pd.DataFrame(context), self.events], ignore_index=True)
+        result = compute_erds(self.data, events)
+        self.assertEqual([v['n'] for v in result['conditions'].values()], [2, 2, 2, 2])
+        events.loc[0, 'protocol_version'] = 'eeg-session-1.0'
+        with self.assertRaisesRegex(ValueError, 'conflicting'):
+            compute_erds(self.data, events)
+
     def test_offsets_are_actual_not_fixed_four_seconds(self):
         # Extend the annotated task by 100 ms, move rebound modulation with it.
         rows = (self.events.condition == 'me_hand_right') & (self.events.label == 'task_offset')
@@ -198,6 +212,41 @@ class ERDSFilesTest(unittest.TestCase):
         for path, data in original.items():
             if path.suffix != '.json':
                 self.assertEqual(path.read_bytes(), data)
+
+    def test_legacy_windows_metadata_preserves_units_and_source_bytes(self):
+        path = Path(str(self.path) + '.session.json')
+        metadata = json.loads(path.read_text())
+        metadata['device_description'] = 'Gerät geprüft – ältere Aufnahme'
+        for channel in metadata['device']['channels']:
+            channel['unit'] = 'µV'
+        source = json.dumps(metadata, ensure_ascii=False).encode('cp1252')
+        path.write_bytes(source)
+        for signal in ('raw', 'oscar'):
+            with self.subTest(signal=signal), self.assertWarnsRegex(UnicodeWarning, 'Windows-1252'):
+                result = load_erds(self.path, 'uV', signal=signal)
+            self.assertEqual(result['conditions']['me_hand_right']['n'], 2)
+            self.assertAlmostEqual(result['conditions']['me_hand_right']['task_percent'][1, 0], -75)
+        self.assertEqual(path.read_bytes(), source)
+
+    def test_mixed_windows_encoding_unit_is_explicit_and_preserved_in_provenance(self):
+        path = Path(str(self.path) + '.session.json')
+        metadata = json.loads(path.read_text())
+        metadata['device_description'] = 'Gerät'
+        for channel in metadata['device']['channels']:
+            channel['unit'] = 'ÂµV'
+        source = json.dumps(metadata, ensure_ascii=False).encode('cp1252')
+        path.write_bytes(source)
+        with self.assertWarnsRegex(UnicodeWarning, 'Kodierungsfehler'):
+            result = load_erds(self.path, 'uV', signal='raw')
+        self.assertEqual(result['metadata']['recorded_channel_units']['EEG 1'], 'ÂµV')
+        self.assertTrue(any('ÂµV' in note for note in result['warnings']))
+        self.assertAlmostEqual(result['conditions']['me_hand_right']['reference'][1, 0], 50)
+        self.assertEqual(path.read_bytes(), source)
+        for channel in metadata['device']['channels']:
+            channel['unit'] = 'unknown'
+        path.write_text(json.dumps(metadata))
+        with self.assertRaisesRegex(ValueError, 'Einheit'):
+            load_erds(self.path, 'uV', signal='raw')
 
     def test_unit_counter_validation_qc_and_non_overwriting_export(self):
         with self.assertRaisesRegex(ValueError, 'OSCAR'):

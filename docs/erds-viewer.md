@@ -47,6 +47,16 @@ bereitgestellt; Beenden mit **Strg+C** im Terminal. Es werden keine Messdaten
 an externe Server geschickt. Die bisherigen Zeitkurven-/Wasserfall-Modi behalten
 ihre bestehende Signalwahl.
 
+Sitzungsmetadaten werden als UTF-8 (auch mit BOM) gelesen. Ältere Windows-Aufnahmen
+können `.session.json` in Windows-1252 enthalten. In diesem Fall wird die Datei
+mit einem ausdrücklichen Hinweis in dieser Kodierung gelesen; Originaldatei,
+Umlaute und µV-Einheiten bleiben erhalten. Fehlerhaftes JSON oder nicht dekodierbare
+Bytes werden nicht durch Zeichenersetzung repariert.
+Die nachgewiesene alte Mischkodierung der Einheit `ÂµV` wird ausdrücklich mit
+Warnung als µV interpretiert. `recorded_channel_units` und die Hinweise im
+ERD/ERS-Bericht bewahren die Originalschreibweise; unbekannte Einheiten werden
+weiterhin zurückgewiesen.
+
 ## Bedienung und Bedeutung
 
 - Zwei drehbare Köpfe vergleichen linke und rechte Hand. Ausführung/Vorstellung,

@@ -104,6 +104,12 @@ Die CSV enthält keine Einheit; MNE erwartet Volt. Deshalb verlangt das Skript
 die ausdrückliche Angabe `--unit`. Die Beispiele nehmen Mikrovolt an; das ist
 eine Annahme, keine aus der CSV verifizierte Einheit.
 
+Ältere Windows-`.session.json` mit Umlauten oder µV in Windows-1252 werden mit
+einem entsprechenden Hinweis gelesen; UTF-8 einschließlich BOM wird ebenfalls
+unterstützt. Die Originaldateien werden nicht konvertiert oder verändert.
+Der bekannte ältere Kodierungsfehler `ÂµV` wird mit ausdrücklichem Hinweis als µV
+interpretiert; andere unbekannte Einheiten werden nicht geraten.
+
 | Anzeige in `config` | Argument | Umrechnung zu Volt |
 |---|---|---|
 | `µV`, `μV`, `uV` | `--unit uV` | Wert × 0,000001 |

@@ -2,6 +2,39 @@
 from dataclasses import dataclass
 import json
 from pathlib import Path
+import warnings
+
+
+def read_session_metadata(path):
+    """Read UTF-8/BOM or legacy Windows-1252 JSON without replacing characters.
+
+    Older Windows C++ recordings wrote device descriptions/units in the local
+    code page. Fall back only on a Unicode decoding error, never on JSON errors.
+    Source bytes and scientific metadata values remain unchanged.
+    """
+    path = Path(path)
+    data = path.read_bytes()
+    try:
+        text = data.decode('utf-8-sig')
+    except UnicodeDecodeError:
+        text = data.decode('cp1252')
+        warnings.warn(f'{path.name}: ältere Windows-1252-Sitzungsmetadaten gelesen; '
+                      'Originaldatei bleibt unverändert.', UnicodeWarning)
+    return json.loads(text)
+
+
+def eeg_unit_scale(unit):
+    """Volts per recorded unit; recognize one evidenced legacy mojibake form.
+
+    Some Windows JSON mixes ANSI descriptions with a UTF-8 micro sign. Reading
+    the whole document as CP1252 yields exactly 'ÂµV'. Interpret only this known
+    spelling with a warning; unknown/missing units remain unknown.
+    """
+    if unit == 'ÂµV':
+        warnings.warn("Metadateneinheit 'ÂµV' als µV gelesen (bekannter Windows-Kodierungsfehler); "
+                      'Originalmetadaten bleiben unverändert.', UnicodeWarning)
+        return 1e-6
+    return {'uV': 1e-6, 'µV': 1e-6, 'μV': 1e-6, 'mV': 1e-3, 'V': 1.}.get(unit)
 
 
 @dataclass(frozen=True)
@@ -29,7 +62,7 @@ def resolve_recording(path, signal="auto"):
     events = Path(str(raw) + ".events.csv")
     session = Path(str(raw) + ".session.json")
     processing = Path(str(raw) + ".processing.json")
-    session_meta = json.loads(session.read_text(encoding="utf-8")) if session.exists() else {}
+    session_meta = read_session_metadata(session) if session.exists() else {}
     meta = json.loads(processing.read_text(encoding="utf-8")) if processing.exists() else {}
     if signal == "auto":
         signal = "oscar" if (explicit_oscar or session_meta.get("processing_mode") == "oscar"

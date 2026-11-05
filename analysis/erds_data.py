@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 from scipy.signal.windows import hann
 
-from .recording_files import resolve_recording
+from .recording_files import eeg_unit_scale, read_session_metadata, resolve_recording
 from .session_conditions import CURRENT, protocol_for_events
 
 
@@ -142,7 +142,7 @@ def load_erds(path, unit, signal='oscar', qc_path=None):
     selected = resolve_recording(path, 'oscar' if signal == 'auto' else signal)
     if selected.signal == 'oscar' and unit != 'uV':
         raise ValueError('OSCAR-Ausgabe benötigt --unit uV.')
-    metadata = json.loads(selected.session.read_text(encoding='utf-8-sig'))
+    metadata = read_session_metadata(selected.session)
     if metadata.get('sampling_rate_hz') != FS:
         raise ValueError('ERD/ERS benötigt bestätigte 250 Hz aus den Sitzungsmetadaten.')
     frame = pd.read_csv(selected.data)
@@ -157,7 +157,7 @@ def load_erds(path, unit, signal='oscar', qc_path=None):
             raise ValueError(f'Doppelte Zuordnung für {site}.')
         name = candidates[0] if candidates else None
         if name and (name not in device or not device[name].get('enabled')
-                     or UNITS.get(device[name].get('unit')) != UNITS[unit]):
+                     or eeg_unit_scale(device[name].get('unit')) != UNITS[unit]):
             raise ValueError(f'Einheit/aktivierter Kanal nicht bestätigt: {name}.')
         channels.append(name)
     data = np.full((8, len(frame)), np.nan)
@@ -166,6 +166,9 @@ def load_erds(path, unit, signal='oscar', qc_path=None):
             data[i] = frame[name].to_numpy(dtype=float) * UNITS[unit] * 1e6
     valid = np.ones(len(frame), dtype=bool)
     notes = []
+    recorded_units = {name: device[name].get('unit') for name in channels if name}
+    if 'ÂµV' in recorded_units.values():
+        notes.append("Metadateneinheit 'ÂµV' ausdrücklich als µV interpretiert; Originalschreibweise im Bericht erhalten.")
     if 'Validation Indicator' in frame:
         valid &= frame['Validation Indicator'].to_numpy() == 1
     else:
@@ -189,6 +192,7 @@ def load_erds(path, unit, signal='oscar', qc_path=None):
     result['metadata'].update(signal=selected.signal, signal_description=selected.label,
                               participant_id=metadata.get('participant_id'), session_id=metadata.get('session_id'),
                               source_unit=unit, processing=selected.metadata,
+                              recorded_channel_units=recorded_units,
                               inputs={str(p.resolve()): _sha256(p) for p in sources},
                               software={'mne': mne.__version__, 'numpy': np.__version__})
     result['warnings'].extend(notes)
@@ -209,7 +213,12 @@ def compute_erds(data_uv, events, sample_valid=None, *, channels=None, protocol=
     if not required <= set(events.columns):
         raise ValueError('Vollständige strukturierte Sitzungsmarker erforderlich.')
     automatic = events[events.source == 'automatic'].copy()
-    version, _ = protocol_for_events(automatic, protocol)
+    # Baseline/break events carry condition names too, but are not task classes.
+    # Retain their protocol versions so conflicts anywhere in the file still fail.
+    protocol_events = automatic.copy()
+    nontrial = pd.to_numeric(protocol_events.trial, errors='raise') == 0
+    protocol_events.loc[nontrial, 'condition'] = ''
+    version, _ = protocol_for_events(protocol_events, protocol)
     if version != CURRENT:
         raise ValueError('ERD/ERS-Handbedingungen benötigen eeg-session-2.0; alte Armaufgaben bleiben separat.')
     qc = _validate_qc(qc or {})
