@@ -93,6 +93,9 @@ Trialübersichten, Zahlenbalken und eine gemeinsam anpassbare, anschließend fes
 Farbskala machen Unterschiede und ähnliche Kanalwerte nachvollziehbar.
 Der Zeitschieber und „Abspielen“ öffnen direkt den Zeitverlauf, auch aus einer
 Mittelwertansicht; Werte und Zeitmarkierungen bleiben synchron.
+Die verwendete Vorbereitungsreferenz ist markiert; Referenz- und Aufgabenleistung
+lassen sich direkt in µV² vergleichen. Die separate 60-s-Ruhebaseline dient hier
+nicht als Normalisierungsreferenz.
 Mit `--no-show --erds-export NEUER_ORDNER`
 lassen sich Werte und Verarbeitungsmetadaten ohne Browser exportieren. Die
 Ansicht ist deskriptiv; reale Kanalbelegung und Artefakte müssen geprüft werden.

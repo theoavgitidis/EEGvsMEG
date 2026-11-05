@@ -384,6 +384,59 @@ class ERDSUITest(ERDSServerTest):
         self.assertEqual(p.locator('#time').input_value(), '0')
         self.assertFalse(self.errors)
 
+    def test_visible_baseline_levels_actual_windows_and_single_trial_reference(self):
+        data, events = synthetic_session()
+        cue = 72 * 250
+        time = np.arange(cue - 500, cue + 1000) / 250
+        data[1, cue - 500:cue + 1000] += 10 * np.sin(2 * np.pi * 10 * time)
+        result = compute_erds(data, events, qc=dict(bad_channels=['PO8']))
+        result['metadata'].update(signal='oscar', signal_description='OSCAR · synthetische Prüfung')
+        server = create_erds_server(result)
+        thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
+        try:
+            p = self.page; p.goto(server.url); self.ready()
+            self.assertIn('Referenz: 125.00 µV²', p.locator('#reference-right').inner_text())
+            self.assertIn('Aufgabe: 62.50 µV² (-50.00 %)', p.locator('#reference-right').inner_text())
+            self.assertIn('PSD-Fenstermitten -1.50 bis -0.50 s', p.locator('#reference-window-right').inner_text())
+            self.assertIn('11 überlappende', p.locator('#reference-window-right').inner_text())
+            shapes = p.locator('#curves').evaluate('(e)=>e.layout.shapes')
+            source = [s for s in shapes if s.get('name') == 'baseline-source']
+            self.assertEqual([(s['x0'],s['x1']) for s in source], [(-2,0)])
+            self.assertEqual([s['y0'] for s in shapes if s.get('name') == 'baseline-zero'], [0])
+            # Heatmap values keep their quantitative colors; only the baseline
+            # outline is drawn on top, without tinting cells inside it.
+            source = p.locator('#tf-right').evaluate('(e)=>e.layout.shapes.find(s=>s.name==="baseline-source")')
+            self.assertEqual(source['fillcolor'].replace(' ', ''), 'rgba(0,0,0,0)')
+            p.evaluate("() => Plotly.relayout(document.getElementById('curves'), {'xaxis.range':[1,4]})")
+            p.locator('#reference-range').click(); self.ready()
+            self.assertEqual(p.locator('#curves').evaluate('(e)=>e.layout.xaxis.range'), [-2,10])
+            p.locator('#reference-power').click(); self.ready()
+            self.assertEqual(p.locator('#metric').input_value(), 'power')
+            levels = p.locator('#curves').evaluate('(e)=>e.layout.shapes.filter(s=>s.name?.startsWith("baseline-level-")).map(s=>s.y0)')
+            np.testing.assert_allclose(levels, [50,125])
+            p.locator('#scope').select_option('single'); self.ready()
+            p.locator('#next-right').click(); self.ready()
+            self.assertIn('Referenz: 200.00 µV²', p.locator('#reference-right').inner_text())
+            self.assertIn('Aufgabe: 112.50 µV² (-43.75 %)', p.locator('#reference-right').inner_text())
+            self.assertAlmostEqual(p.locator('#curves').evaluate('(e)=>e.layout.shapes.find(s=>s.name==="baseline-level-right").y0'), 200)
+            p.locator('#time').focus(); p.locator('#time').press('Home'); self.ready()
+            self.assertAlmostEqual(p.locator('#head-right').evaluate('(e)=>e.data[1].meta.values[1]'), 200)
+            self.assertAlmostEqual(p.locator('#curves').evaluate('(e)=>e.layout.shapes.find(s=>s.name==="baseline-level-right").y0'), 200)
+            with p.expect_download() as downloaded:
+                p.locator('#selection-json').click()
+            exported = json.loads(Path(downloaded.value.path()).read_text())
+            self.assertIn('trial_preparation', exported['selection']['reference_type'])
+            self.assertEqual(exported['selection']['reference_windows']['right'][0]['n_windows'], 11)
+            p.locator('#curves').screenshot(path='/private/tmp/erds-baseline-curves-qa.png')
+            p.locator('section[aria-label="Baseline und Referenzleistung"]').screenshot(path='/private/tmp/erds-baseline-panel-qa.png')
+            p.screenshot(path='/private/tmp/erds-baseline-qa.png', full_page=True)
+            p.locator('#channel').select_option('7'); self.ready()
+            self.assertIn('nicht verfügbar', p.locator('#reference-right').inner_text())
+            self.assertEqual(p.locator('#curves').evaluate('(e)=>e.layout.shapes.filter(s=>s.name?.startsWith("baseline-level-")).length'), 0)
+            self.assertFalse(self.errors)
+        finally:
+            server.shutdown(); server.server_close(); thread.join(3)
+
 
 if __name__ == '__main__':
     unittest.main()

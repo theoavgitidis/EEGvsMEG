@@ -78,6 +78,23 @@ weiterhin zurückgewiesen.
 - **Aufgabenmittel** verwendet nur vollständige 1-s-Fenster in der Aufgabe.
   **Nach Aufgabenende** verwendet Fenstermitten 0,5–2,5 s nach dem tatsächlichen
   `task_offset`; deren Signalunterstützung liegt 0–3 s nach dem Marker.
+- **Baseline / Referenz** ist im Verlauf sichtbar: Eine graue Fläche in Bandkurven
+  und EEG-Spuren markiert den Signalzeitraum der tatsächlich verwendeten
+  Referenzfenster. In Zeit-Frequenz- und Trialkarten wird dieser Bereich nur
+  umrandet, damit die Farben der Messwerte erhalten bleiben. Bei Mittelwerten
+  beziehungsweise überlagerten Bedingungen zeigt die Markierung die Vereinigung
+  der jeweiligen Trialintervalle. Die Referenzanzeige nennt zusätzlich die
+  PSD-Fenstermitten und die Zahl der überlappenden Fenster je Trial.
+  Nominal: Signal von −2 bis 0 s, Fenstermitten von −1,5 bis −0,5 s.
+  Leicht abweichende Vorbereitungsmarker werden berücksichtigt.
+- Oberhalb der Kurven stehen **Referenz-, Aufgaben- und Reboundleistung in µV²**
+  für den ausgewählten Kanal und die jeweilige linke/rechte Auswahl, einschließlich
+  Prozentänderung und Trialzahl. Die horizontale Strich-Punkt-Linie zeigt bei
+  Prozentwerten das Referenzmittel 0 %, bei absoluter Bandpower je eine Referenz
+  für links (blau) und rechts (orange). **Leistung mit Referenz (µV²)** öffnet
+  diesen absoluten Vergleich; **Referenz + Verlauf zeigen** holt den Bereich
+  nach einem Zoom wieder ins Bild. Einzelne Werte innerhalb der Referenz dürfen
+  schwanken und werden nicht auf 0 % gesetzt.
 - **Zeitverlauf** zeigt cuebezogene Fenstermitten mit einem Zeitschieber und
   optionalem Abspielen. Der Regler ist auch in **Aufgabenmittel** und **Nach
   Aufgabenende** bedienbar: Schieben oder Abspielen wechselt unmittelbar zu
@@ -141,6 +158,10 @@ Modus nicht vorgesehen; abweichende Einstellungen werden zurückgewiesen.
 
 Die Referenz verwendet vollständige Fenster innerhalb der Vorbereitung vor dem
 Cue, frühestens −2 s; nominal liegen deren Mittelpunkte bei −1,5 bis −0,5 s.
+Diese aufgabennahe Referenz ist von den separaten 60-s-Ruhebaselines der Sitzung
+zu unterscheiden. Die Ruhebaselines werden in diesem Viewer nicht zur
+Normalisierung herangezogen. Vorbereitung kann Erwartungsaktivität enthalten;
+die sichtbare Markierung begründet keine physiologisch neutrale Ruhephase.
 Aufgabenmittel entstehen aus vollständigen Aufgabenfenstern, nominal mit
 Mittelpunkten 0,5–3,5 s. Zuerst wird Leistung je Trial berechnet, dann über Trials
 gemittelt und schließlich normalisiert:
@@ -246,6 +267,10 @@ Konfiguration, QC und Quellenprüfsummen; `summary.csv` für Aufgabe/Rebound;
 `bandpower.csv` für die Zeitverläufe. Keine Originaldatei wird überschrieben.
 Zusätzlich enthält `trials.csv` Referenz-, Aufgaben- und Reboundwerte je gültigem
 Trial/Kanal/Band mit Block-, Trial-, Attempt-ID und Aufnahmezeitpunkt.
+`reference_windows` im JSON nennt pro Trial den erlaubten Referenzzeitraum,
+die tatsächlich verwendeten Fenstermitten, deren Signalzeitraum und Fensterzahl.
+`trials.csv` enthält Signalgrenzen und Fenstermitten ebenfalls. Alle Zeiten sind
+cuebezogen; Originalmarker und Berechnungswerte bleiben erhalten.
 Im Browser sind Gesamtbericht, Zusammenfassungs-CSV, aktuelle Tabelle,
 **Aktuelle Auswahl (JSON)** und PNG-Abbildungen verfügbar. Der Auswahl-JSON enthält
 beide ausgewählten Trials oder Mittelwerte, ihre Kurven und Referenzen,

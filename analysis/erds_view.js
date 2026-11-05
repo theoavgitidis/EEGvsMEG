@@ -82,18 +82,54 @@ function colorFor(value, lo, hi) {
   const rgb = hex => [1, 3, 5].map(j => parseInt(hex.slice(j, j + 2), 16));
   return 'rgb(' + rgb(a[1]).map((v, j) => Math.round(v + f * (rgb(b[1])[j] - v))).join(',') + ')';
 }
-function phaseShapes(c, cursor = true) {
+function referenceBounds(c) {
+  const windows = (c?.trials || []).map(t => t.reference_windows).filter(Boolean);
+  if (!windows.length) return null;
+  return {support: [Math.min(...windows.map(w => w.support_s[0])), Math.max(...windows.map(w => w.support_s[1]))],
+    centers: [Math.min(...windows.map(w => w.centers_s[0])), Math.max(...windows.map(w => w.centers_s.at(-1)))],
+    counts: [Math.min(...windows.map(w => w.n_windows)), Math.max(...windows.map(w => w.n_windows))]};
+}
+function referenceShapes(c, heatmap = false) {
+  const bounds = referenceBounds(c);
+  return bounds ? [{type: 'rect', name: 'baseline-source', x0: bounds.support[0], x1: bounds.support[1],
+    y0: 0, y1: 1, xref: 'x', yref: 'paper',
+    fillcolor: heatmap ? 'rgba(0,0,0,0)' : theme().grid, opacity: heatmap ? 1 : .7,
+    line: {color: theme().muted, width: heatmap ? 1.5 : 0, dash: 'dot'}, layer: heatmap ? 'above' : 'below'}] : [];
+}
+function phaseShapes(c, heatmap = false) {
   const line = (x, dash, width = 1) => ({type: 'line', x0: x, x1: x, y0: 0, y1: 1, yref: 'paper', line: {color: theme().muted, dash, width}});
-  const result = [line(0, 'dot')];
+  const result = [...referenceShapes(c, heatmap), line(0, 'dot')];
   for (const offset of new Set((c?.trials || []).map(t => (t.offset_sample - t.onset_sample) / state.data.metadata.sampling_rate_hz))) {
     result.push(line(offset, 'dash'));
   }
-  if (cursor && $('mode').value === 'time') result.push(line(state.data.times[+$('time').value], 'solid', 2));
+  if ($('mode').value === 'time') result.push(line(state.data.times[+$('time').value], 'solid', 2));
   return result;
 }
-function comparisonShapes() {
+function referenceLevels() {
+  const ci = state.channel, bi = +$('band').value;
+  const levels = SIDES.filter(side => condition(side)?.n && available(condition(side).reference[ci][bi]));
+  const line = (name, y, color) => ({type: 'line', name, x0: 0, x1: 1, xref: 'paper', y0: y, y1: y, yref: 'y',
+    line: {color, width: 1.5, dash: 'dashdot'}});
+  return $('metric').value === 'percent' ? levels.length ? [line('baseline-zero', 0, theme().muted)] : [] :
+    levels.map(side => line('baseline-level-' + side, condition(side).reference[ci][bi], side === 'left' ? '#287cba' : '#c77b14'));
+}
+function comparisonShapes(bandPower = false) {
   // Coincident cue, offset and cursor lines should appear only once.
-  return [...new Map(SIDES.flatMap(side => phaseShapes(condition(side))).map(shape => [JSON.stringify(shape), shape])).values()];
+  const lines = SIDES.flatMap(side => phaseShapes(condition(side)).filter(shape => shape.name !== 'baseline-source'));
+  const trials = SIDES.flatMap(side => condition(side)?.trials || []);
+  return [...referenceShapes({trials}), ...new Map(lines.map(shape => [JSON.stringify(shape), shape])).values(),
+    ...(bandPower ? referenceLevels() : [])];
+}
+function referencePanel() {
+  const ci = state.channel, bi = +$('band').value;
+  $('reference-title').textContent = `${channelName()} · ${$('band').selectedOptions[0].text} · Baseline / Referenz`;
+  for (const side of SIDES) {
+    const c = condition(side), bounds = referenceBounds(c), ref = c?.n ? c.reference[ci][bi] : null;
+    $('reference-' + side).textContent = available(ref) ?
+      `Referenz: ${fmt(ref)} µV² · Aufgabe: ${fmt(c.task_power[ci][bi])} µV² (${fmt(c.task_percent[ci][bi])} %) · nach Aufgabenende: ${fmt(c.rebound_power[ci][bi])} µV² (${fmt(c.rebound_percent[ci][bi])} %) · n = ${c.n} Trial${c.n === 1 ? '' : 's'}.` : 'Referenz dieses Kanals nicht verfügbar.';
+    $('reference-window-' + side).textContent = bounds ?
+      `Signalzeitraum ${fmt(bounds.support[0])} bis ${fmt(bounds.support[1])} s; PSD-Fenstermitten ${fmt(bounds.centers[0])} bis ${fmt(bounds.centers[1])} s zum Cue. ${bounds.counts[0] === bounds.counts[1] ? bounds.counts[0] : bounds.counts.join('–')} überlappende 1-s-Fenster je Trial. Bei mehreren Trials sind die Zeitgrenzen als Vereinigung angegeben.` : 'Keine gültigen Referenzfenster.';
+  }
 }
 function populateTrialSelectors() {
   for (const side of SIDES) {
@@ -191,7 +227,7 @@ async function head(side, lo, hi) {
 async function overview(side, lo, hi) {
   const key = conditionKey(side), rows = state.channelTrials[key] || [], metric = $('metric').value;
   const l = layout(taskLabel(side)); l.margin.l = 145; l.plot_bgcolor = theme().grid;
-  l.shapes = phaseShapes(aggregate(side));
+  l.shapes = phaseShapes(aggregate(side), true);
   l.xaxis = {...l.xaxis, title: {text: 'Zeit zum Aufgaben-Cue (s)'}, range: [-2, 10]};
   l.yaxis = {...l.yaxis, autorange: 'reversed', tickmode: 'array', tickvals: rows.map((_, i) => i),
     ticktext: rows.map(t => `B${t.block} · T${t.trial} · A${t.attempt}`), dtick: 1};
@@ -227,7 +263,7 @@ async function charts() {
     const span = Math.max(1, high - low) * 1.15;
     l.yaxis.range = [center - span / 2, center + span / 2]; l.yaxis.autorange = false;
   }
-  l.legend = {orientation: 'h', y: 1.2}; l.shapes = comparisonShapes();
+  l.legend = {orientation: 'h', y: 1.2}; l.shapes = comparisonShapes(true);
   await Plotly.react($('curves'), traces, l, config);
   $('curve-title').textContent = `${channelName()} · ${$('band').selectedOptions[0].text} · ${single() ? 'Einzeltrials (eigene Referenz), Gesamtmittel gepunktet' : 'Gesamtmittel'}`;
   let clipped = 0;
@@ -237,7 +273,7 @@ async function charts() {
     const tf = layout(`${taskLabel(side)} · ${single() ? c?.n ? 'Trial ' + c.trials[0].trial : 'keine Daten' : 'Gesamtmittel'}`);
     tf.plot_bgcolor = theme().grid;
     tf.xaxis = {...tf.xaxis, title: {text: 'Zeit zum Aufgaben-Cue (s)'}, range: [-2, 10]};
-    tf.yaxis = {...tf.yaxis, title: {text: 'Frequenz (Hz)'}, range: [6, 40]}; tf.shapes = phaseShapes(c);
+    tf.yaxis = {...tf.yaxis, title: {text: 'Frequenz (Hz)'}, range: [6, 40]}; tf.shapes = phaseShapes(c, true);
     await Plotly.react($('tf-' + side), [{type: 'heatmap', x: d.times, y: d.frequencies, z, zmin: -100, zmax: 100,
       colorscale: DIVERGING, hoverongaps: false, colorbar: {title: {text: '%'}}, hovertemplate: '%{x:.2f} s · %{y} Hz<br>%{z:.2f} %<extra></extra>'}], tf, config);
   }
@@ -275,10 +311,10 @@ function staticSelectionKey(lo, hi) {
 async function updateTimeMarkers() {
   // A new time does not change the curves or TF/trial power matrices. Relayout
   // their cursors instead of rebuilding all plots and losing the current zoom.
-  await Plotly.relayout($('curves'), {shapes: comparisonShapes()});
+  await Plotly.relayout($('curves'), {shapes: comparisonShapes(true)});
   for (const side of SIDES) {
-    await Plotly.relayout($('tf-' + side), {shapes: phaseShapes(condition(side))});
-    await Plotly.relayout($('overview-' + side), {shapes: phaseShapes(aggregate(side))});
+    await Plotly.relayout($('tf-' + side), {shapes: phaseShapes(condition(side), true)});
+    await Plotly.relayout($('overview-' + side), {shapes: phaseShapes(aggregate(side), true)});
   }
   if (single()) await Plotly.relayout($('waveform'), {shapes: comparisonShapes()});
 }
@@ -309,7 +345,7 @@ function render() {
     }
     if (full) await charts(); else await updateTimeMarkers();
     if (revision !== state.revision) return;
-    table(); state.staticKey = key;
+    table(); referencePanel(); state.staticKey = key;
     $('overview-title').textContent = `${channelName()} · ${$('band').selectedOptions[0].text} · alle Wiederholungen einzeln`;
     $('status').textContent = 'Bereit · ' + state.data.metadata.signal_description + ' · ' + state.data.metadata.statistics;
   }).catch(error => { state.staticKey = null; stop(); $('status').textContent = 'Fehler: ' + error.message; });
@@ -344,6 +380,8 @@ function selectionMetadata() {
     family: $('family').value, band: band(), channel: channelName(), mode: $('mode').value,
     metric: $('metric').value, cue_time_s: $('mode').value === 'time' ? state.data.times[+$('time').value] : null,
     reference: m.reference, window_seconds: m.window_seconds, hop_seconds: m.hop_seconds,
+    reference_type: m.reference_type,
+    reference_windows: Object.fromEntries(SIDES.map(side => [side, (condition(side)?.trials || []).map(t => ({key: t.key, ...t.reference_windows}))])),
     task_window: m.task_window, rebound_window: m.rebound_window, montage: m.montage,
     montage_source: state.data.geometry.source, montage_confirmed: m.montage_confirmed,
     n_left: condition('left').n, n_right: condition('right').n,
@@ -369,6 +407,11 @@ async function savePNG(id) {
 }
 function chooseTrial(side, key) {
   stop(); state.selected[conditionKey(side)] = key; $('scope').value = 'single'; populateTrialSelectors(); render();
+}
+async function showReference() {
+  stop(); await state.rendering;
+  const ids = ['curves', 'tf-left', 'tf-right', 'overview-left', 'overview-right', ...(single() ? ['waveform'] : [])];
+  for (const id of ids) await Plotly.relayout($(id), {'xaxis.range': [-2, 10], 'xaxis.autorange': false});
 }
 async function start() {
   state.data = await getJSON('data'); const d = state.data;
@@ -409,6 +452,12 @@ async function start() {
     if (['Home', 'End', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'PageUp', 'PageDown'].includes(event.key)) stop();
   });
   $('play').addEventListener('click', play);
+  $('reference-range').addEventListener('click', showReference);
+  $('reference-power').addEventListener('click', async () => {
+    stop(); $('metric').value = 'power';
+    [$('scale-min').value, $('scale-max').value] = state.scales.power;
+    await render(); await showReference();
+  });
   document.querySelectorAll('[data-camera]').forEach(button => button.addEventListener('click', () => {
     const eyes = {top: {x: 0, y: 0, z: 2.2}, front: {x: 0, y: 2.2, z: .3}, left: {x: -2.2, y: 0, z: .3}, right: {x: 2.2, y: 0, z: .3}};
     state.camera = {eye: eyes[button.dataset.camera], up: button.dataset.camera === 'top' ? {x: 0, y: 1, z: 0} : {x: 0, y: 0, z: 1}};

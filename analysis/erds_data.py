@@ -344,6 +344,10 @@ def compute_erds(data_uv, events, sample_valid=None, *, channels=None, protocol=
                 condition=condition, run=key[0], trial=int(key[2]), attempt=int(key[3]),
                 prep_sample=prep, end_sample=end,
                 onset_sample=onset, offset_sample=offset, reference=reference,
+                reference_windows=dict(eligible_interval_s=[(max(prep, onset - 2 * FS) - onset) / FS, 0.],
+                    centers_s=TIMES[ref].copy(),
+                    support_s=[float(TIMES[ref][0] - .5), float(TIMES[ref][-1] + .5)],
+                    n_windows=int(ref.sum())),
                 spectral_reference=spectral_reference, power=bp,
                 task_power=bp[:, :, task].mean(axis=2), rebound_power=rebound_bp,
                 spectrum=density[:, :, freq_mask].transpose(0, 2, 1)))
@@ -379,7 +383,7 @@ def compute_erds(data_uv, events, sample_valid=None, *, channels=None, protocol=
         for ordinal, t in enumerate(accepted, 1):
             summary = {k: t[k] for k in ('key', 'condition', 'run', 'block', 'trial', 'attempt',
                        'prep_sample', 'onset_sample', 'offset_sample', 'end_sample',
-                       'reference', 'task_power', 'rebound_power')}
+                       'reference', 'reference_windows', 'task_power', 'rebound_power')}
             summary['ordinal'] = ordinal
             summary['onset_s'] = t['onset_sample'] / FS
             summary['normalization'] = '100 * (trial power / own preparation reference - 1)'
@@ -410,6 +414,7 @@ def compute_erds(data_uv, events, sample_valid=None, *, channels=None, protocol=
         conditions=conditions, exclusions=exclusions, _trial_data=trial_data,
         metadata=dict(protocol_version=version, sampling_rate_hz=FS, window_seconds=1., hop_seconds=.1,
             frequency_grid_hz=1., hann_enbw_hz=1.5, reference='Vollständige Fenster in Vorbereitung, frühestens -2 s bis Cue',
+            reference_type='trial_preparation; not the separate 60 s session resting baseline',
             numerical_reference_floor='float64 epsilon × summed mean reference PSD per channel; unresolvable TF bins stay missing',
             task_window='Fenstermitten ab Cue + 0.5 s bis tatsächliches Aufgabenende - 0.5 s',
             rebound_window='Fenstermitten 0.5–2.5 s nach tatsächlichem task_offset',
@@ -498,12 +503,15 @@ def export_erds(result, directory):
     with (target / 'trials.csv').open('w', newline='', encoding='utf-8-sig') as handle:
         writer = csv.writer(handle)
         writer.writerow(['key', 'condition', 'block', 'trial', 'attempt', 'onset_s', 'channel', 'band',
-                         'reference_uV2', 'task_uV2', 'task_percent', 'rebound_uV2', 'rebound_percent'])
+                         'reference_uV2', 'task_uV2', 'task_percent', 'rebound_uV2', 'rebound_percent',
+                         'reference_support_start_s', 'reference_support_end_s', 'reference_centers_s'])
         for t in result.get('_trial_data', {}).values():
             for ci, site in enumerate(SITES):
                 for bi, (band, _, _) in enumerate(BANDS):
                     writer.writerow(json_safe([t['key'], t['condition'], t['block'], t['trial'], t['attempt'],
                         t['onset_sample'] / FS, site, band, t['reference'][ci, bi], t['task_power'][ci, bi],
                         percent(t['task_power'][ci, bi], t['reference'][ci, bi]), t['rebound_power'][ci, bi],
-                        percent(t['rebound_power'][ci, bi], t['reference'][ci, bi])]))
+                        percent(t['rebound_power'][ci, bi], t['reference'][ci, bi]),
+                        *t['reference_windows']['support_s'],
+                        json.dumps(t['reference_windows']['centers_s'].tolist())]))
     return target

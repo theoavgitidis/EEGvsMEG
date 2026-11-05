@@ -143,6 +143,27 @@ class ERDSNumericalTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             channel_trials(result, 'C3', 'unknown')
 
+    def test_reference_window_provenance_matches_actual_preparation_and_preserves_variation(self):
+        # Preparation starts 100 ms late. The first nominal -1.5 s window is
+        # therefore unavailable; actual reference support is -1.9 to 0 s.
+        row = (self.events.run == 'Motorik') & (self.events.block == 1) & (self.events.trial == 1) & (self.events.label == 'trial_start')
+        self.events.loc[row, 'samples_received'] += 25
+        time = np.arange(2 * FS) / FS
+        self.data[1, :2 * FS] += np.linspace(-4, 4, 2 * FS) * np.sin(2 * np.pi * 10 * time)
+        original = self.data.copy()
+        result = compute_erds(self.data, self.events)
+        detail = trial_detail(result, 'Motorik/1/1/1', 'C3')
+        windows = detail['trials'][0]['reference_windows']
+        np.testing.assert_allclose(windows['eligible_interval_s'], [-1.9, 0])
+        np.testing.assert_allclose(windows['support_s'], [-1.9, 0])
+        np.testing.assert_allclose(windows['centers_s'], TIMES[1:11])
+        self.assertEqual(windows['n_windows'], 10)
+        indices = np.isin(TIMES, windows['centers_s'])
+        self.assertGreater(np.ptp(detail['percent'][1, 0, indices]), 10)
+        self.assertAlmostEqual(detail['percent'][1, 0, indices].mean(), 0)
+        self.assertAlmostEqual(detail['power'][1, 0, indices].mean(), detail['reference'][1, 0])
+        np.testing.assert_array_equal(self.data, original)
+
     def test_single_trial_exclusions_channels_and_late_gaps_are_preserved(self):
         valid = np.ones(self.data.shape[1], bool)
         valid[11 * FS] = False
@@ -321,6 +342,9 @@ class ERDSFilesTest(unittest.TestCase):
         self.assertEqual(len(trials), sum(c['n'] for c in result['conditions'].values()) * 8 * 4)
         row = next(r for r in trials if r['key'] == 'Motorik/1/2/1' and r['channel'] == 'C3' and r['band'] == 'mu')
         self.assertAlmostEqual(float(row['task_percent']), -75)
+        self.assertEqual(float(row['reference_support_start_s']), -2)
+        self.assertEqual(float(row['reference_support_end_s']), 0)
+        self.assertEqual(len(json.loads(row['reference_centers_s'])), 11)
         with (target / 'summary.csv').open(encoding='utf-8-sig') as handle:
             row = next(csv.DictReader(handle))
         self.assertIn('reference_uV2', row)

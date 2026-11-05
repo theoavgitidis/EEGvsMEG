@@ -20,7 +20,11 @@ und Einzeltrials; Block, Trial, Attempt und Aufnahmezeitpunkt stehen bei der Aus
 Einzeltrials verwenden jeweils ihre eigene Vorbereitungsreferenz. Zahlenbalken und
 „Farbbereich anpassen“ ergänzen die Elektrodenfarben; beide Köpfe behalten dieselben
 Farbgrenzen auch beim Trial-/Zeitwechsel. Schieben oder „Abspielen“ öffnet direkt
-den Zeitverlauf, auch aus Aufgabenmittel oder Rebound. Bedienung, QC und vollständige Parameter:
+den Zeitverlauf, auch aus Aufgabenmittel oder Rebound. Die verwendete
+Vorbereitungsreferenz ist markiert und mit ihrer Leistung in µV² sichtbar;
+„Leistung mit Referenz (µV²)“ zeigt die zugehörigen horizontalen Referenzlinien.
+Die separaten 60-s-Ruhebaselines werden hier nicht zur Normalisierung verwendet.
+Bedienung, QC und vollständige Parameter:
 [ERD/ERS-Anleitung](../../docs/erds-viewer.md).
 
 ## Ablauf und Dateiablage
