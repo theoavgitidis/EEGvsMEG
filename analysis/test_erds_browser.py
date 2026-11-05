@@ -329,6 +329,61 @@ class ERDSUITest(ERDSServerTest):
         finally:
             server.shutdown(); server.server_close(); thread.join(3)
 
+    def test_slider_keyboard_and_drag_enter_time_view_and_sync_values(self):
+        p = self.page
+        slider = p.locator('#time')
+        self.assertTrue(slider.is_enabled(), 'Time navigation must be usable from the default task average.')
+        p.evaluate("() => {window.originalTF=document.getElementById('tf-right').data[0].z; window.originalCurve=document.getElementById('curves').data[1].y;}")
+        p.evaluate("() => Plotly.relayout(document.getElementById('curves'), {'xaxis.range':[-.5,4.5], 'yaxis.range':[-90,30]})")
+        slider.focus(); slider.press('Home'); self.ready()
+        self.assertEqual(p.locator('#mode').input_value(), 'time')
+        self.assertIn('-1.5 s', p.locator('#time-label').inner_text())
+        self.assertAlmostEqual(p.locator('#head-right').evaluate('(e)=>e.data[1].meta.values[1]'), 0, places=8)
+        box = slider.bounding_box()
+        p.mouse.move(box['x'] + 8, box['y'] + box['height'] / 2)
+        p.mouse.down()
+        p.mouse.move(box['x'] + box['width'] * .34, box['y'] + box['height'] / 2, steps=14)
+        p.mouse.up(); self.ready()
+        index = int(slider.input_value())
+        self.assertGreater(index, 25); self.assertLess(index, 46)
+        self.assertAlmostEqual(p.locator('#head-right').evaluate('(e)=>e.data[1].meta.values[1]'), -75)
+        self.assertEqual(p.locator('#values tr').nth(1).locator('td').nth(8).inner_text(), '-75.00')
+        time = p.evaluate('() => state.data.times[+$("time").value]')
+        for graph in ('curves', 'tf-left', 'tf-right', 'overview-left', 'overview-right'):
+            self.assertEqual(p.locator('#' + graph).evaluate('(e)=>e.layout.shapes.filter(s=>s.line.dash==="solid").map(s=>s.x0)'), [time])
+        self.assertTrue(p.locator('#tf-right').evaluate('(e)=>e.data[0].z===window.originalTF'))
+        self.assertTrue(p.locator('#curves').evaluate('(e)=>e.data[1].y===window.originalCurve'))
+        self.assertEqual(p.locator('#curves').evaluate('(e)=>e.layout.xaxis.range'), [-.5,4.5])
+        self.assertEqual(p.locator('#curves').evaluate('(e)=>e.layout.yaxis.range'), [-90,30])
+        p.locator('#scope').select_option('single'); self.ready()
+        p.locator('#mode').select_option('rebound'); self.ready()
+        slider.focus(); slider.press('End'); self.ready()
+        self.assertEqual(p.locator('#mode').input_value(), 'time')
+        self.assertIn('9.5 s', p.locator('#time-label').inner_text())
+        self.assertEqual(p.locator('#waveform').evaluate('(e)=>e.layout.shapes.filter(s=>s.line.dash==="solid").map(s=>s.x0)'), [9.5])
+        self.assertFalse(self.errors)
+
+    def test_playback_can_start_in_summary_pause_and_restart_at_end(self):
+        p = self.page
+        self.assertTrue(p.locator('#play').is_enabled())
+        p.locator('#play').click()
+        p.wait_for_function('() => +$("time").value > 30')
+        p.locator('#play').click(); self.ready()
+        self.assertEqual(p.locator('#mode').input_value(), 'time')
+        self.assertEqual(p.locator('#play').inner_text(), 'Abspielen')
+        p.evaluate('() => new Promise(resolve => setTimeout(resolve, 500))')
+        self.assertIsNone(p.evaluate('() => state.timer'))
+        p.locator('#time').fill('109'); self.ready()
+        p.locator('#play').click()
+        p.wait_for_function('() => +$("time").value===110 && state.timer===null')
+        self.ready()
+        p.locator('#play').click()
+        p.wait_for_function('() => +$("time").value<5 && state.timer!==null')
+        p.locator('#time').focus(); p.locator('#time').press('Home'); self.ready()
+        self.assertIsNone(p.evaluate('() => state.timer'))
+        self.assertEqual(p.locator('#time').input_value(), '0')
+        self.assertFalse(self.errors)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -6,7 +6,7 @@ const SEQUENTIAL = [[0, '#f7fbff'], [.5, '#6baed6'], [1, '#08306b']];
 const config = {responsive: true, displaylogo: false, scrollZoom: false};
 const state = {
   data: null, channel: 1, camera: {eye: {x: 0, y: 0, z: 2.2}, up: {x: 0, y: 1, z: 0}},
-  timer: null, revision: 0, rendering: Promise.resolve(), cache: new Map(),
+  timer: null, revision: 0, rendering: Promise.resolve(), cache: new Map(), staticKey: null,
   selected: {}, details: {}, channelTrials: {}, scales: {percent: [-100, 100], power: [0, 100]},
 };
 const fmt = v => v === null || v === undefined ? '—' : (Math.abs(v) < .005 ? 0 : Number(v)).toFixed(2);
@@ -90,6 +90,10 @@ function phaseShapes(c, cursor = true) {
   }
   if (cursor && $('mode').value === 'time') result.push(line(state.data.times[+$('time').value], 'solid', 2));
   return result;
+}
+function comparisonShapes() {
+  // Coincident cue, offset and cursor lines should appear only once.
+  return [...new Map(SIDES.flatMap(side => phaseShapes(condition(side))).map(shape => [JSON.stringify(shape), shape])).values()];
 }
 function populateTrialSelectors() {
   for (const side of SIDES) {
@@ -187,6 +191,7 @@ async function head(side, lo, hi) {
 async function overview(side, lo, hi) {
   const key = conditionKey(side), rows = state.channelTrials[key] || [], metric = $('metric').value;
   const l = layout(taskLabel(side)); l.margin.l = 145; l.plot_bgcolor = theme().grid;
+  l.shapes = phaseShapes(aggregate(side));
   l.xaxis = {...l.xaxis, title: {text: 'Zeit zum Aufgaben-Cue (s)'}, range: [-2, 10]};
   l.yaxis = {...l.yaxis, autorange: 'reversed', tickmode: 'array', tickvals: rows.map((_, i) => i),
     ticktext: rows.map(t => `B${t.block} · T${t.trial} · A${t.attempt}`), dtick: 1};
@@ -222,7 +227,7 @@ async function charts() {
     const span = Math.max(1, high - low) * 1.15;
     l.yaxis.range = [center - span / 2, center + span / 2]; l.yaxis.autorange = false;
   }
-  l.legend = {orientation: 'h', y: 1.2}; l.shapes = SIDES.flatMap(side => phaseShapes(condition(side)));
+  l.legend = {orientation: 'h', y: 1.2}; l.shapes = comparisonShapes();
   await Plotly.react($('curves'), traces, l, config);
   $('curve-title').textContent = `${channelName()} · ${$('band').selectedOptions[0].text} · ${single() ? 'Einzeltrials (eigene Referenz), Gesamtmittel gepunktet' : 'Gesamtmittel'}`;
   let clipped = 0;
@@ -239,7 +244,7 @@ async function charts() {
   $('tf-title').textContent = `${channelName()} · Zeit-Frequenz-Karten · ${single() ? 'Einzeltrials' : 'Gesamtmittel'} · ${clipped} Werte außerhalb ±100 %`;
   if (single()) {
     const w = layout(); w.xaxis.title = {text: 'Zeit relativ zum Aufgaben-Cue (s)'}; w.yaxis.title = {text: 'EEG (µV, nicht zentriert)'};
-    w.legend = {orientation: 'h', y: 1.2}; w.shapes = SIDES.flatMap(side => phaseShapes(condition(side)));
+    w.legend = {orientation: 'h', y: 1.2}; w.shapes = comparisonShapes();
     await Plotly.react($('waveform'), SIDES.map((side, i) => {
       const c = condition(side); return {type: 'scatter', mode: 'lines', x: c?.waveform_times || [], y: c?.waveform_uv || [],
         name: `${i ? 'Rechts' : 'Links'} · ${c?.n ? 'Trial ' + c.trials[0].trial : 'keine Daten'}`,
@@ -261,28 +266,77 @@ function table() {
     row.addEventListener('click', () => { state.channel = ci; $('channel').value = ci; render(); }); body.append(row);
   });
 }
+function staticSelectionKey(lo, hi) {
+  return JSON.stringify({scope: $('scope').value, family: $('family').value, band: $('band').value,
+    metric: $('metric').value, channel: state.channel, lo, hi, theme: theme(),
+    individuals: $('individual-curves').checked,
+    trials: SIDES.map(side => state.selected[conditionKey(side)])});
+}
+async function updateTimeMarkers() {
+  // A new time does not change the curves or TF/trial power matrices. Relayout
+  // their cursors instead of rebuilding all plots and losing the current zoom.
+  await Plotly.relayout($('curves'), {shapes: comparisonShapes()});
+  for (const side of SIDES) {
+    await Plotly.relayout($('tf-' + side), {shapes: phaseShapes(condition(side))});
+    await Plotly.relayout($('overview-' + side), {shapes: phaseShapes(aggregate(side))});
+  }
+  if (single()) await Plotly.relayout($('waveform'), {shapes: comparisonShapes()});
+}
 function render() {
   const revision = ++state.revision;
   state.rendering = state.rendering.then(async () => {
     if (revision !== state.revision) return;
     $('status').textContent = 'Auswahl wird geladen …';
-    await loadSelection();
-    if (revision !== state.revision) return;
     const [lo, hi] = scale(); state.scales[$('metric').value] = [lo, hi];
-    const timed = $('mode').value === 'time'; $('time').disabled = !timed; $('play').disabled = !timed;
+    const key = staticSelectionKey(lo, hi), full = state.staticKey !== key;
+    if (full) {
+      state.staticKey = null;
+      await loadSelection();
+      if (revision !== state.revision) return;
+    }
+    const timed = $('mode').value === 'time'; $('time').disabled = false; $('play').disabled = false;
     if (!timed) stop();
     const t = state.data.times[+$('time').value];
-    $('time-label').textContent = timed ? `${t.toFixed(1)} s · Fenster ${(t - .5).toFixed(1)} bis ${(t + .5).toFixed(1)} s` : 'Zeitschieber nur im Zeitverlauf';
+    $('time-label').textContent = timed ? `${t.toFixed(1)} s · Fenster ${(t - .5).toFixed(1)} bis ${(t + .5).toFixed(1)} s` : 'Schieben oder Abspielen öffnet den Zeitverlauf';
+    $('time').setAttribute('aria-valuetext', `${t.toFixed(1)} Sekunden zum Aufgaben-Cue; Fenster ${(t - .5).toFixed(1)} bis ${(t + .5).toFixed(1)} Sekunden`);
     $('window-note').textContent = $('mode').value === 'task' ? state.data.metadata.task_window : $('mode').value === 'rebound' ? state.data.metadata.rebound_window : '1-s-Fenster, 100-ms-Schritte; keine unabhängige 100-ms-Auflösung, keine Zeitstreckung.';
     updateSelectionText();
-    for (const side of SIDES) { await head(side, lo, hi); await overview(side, lo, hi); }
-    await charts(); table();
+    for (const side of SIDES) {
+      await head(side, lo, hi);
+      if (revision !== state.revision) return;
+      if (full) await overview(side, lo, hi);
+      if (revision !== state.revision) return;
+    }
+    if (full) await charts(); else await updateTimeMarkers();
+    if (revision !== state.revision) return;
+    table(); state.staticKey = key;
     $('overview-title').textContent = `${channelName()} · ${$('band').selectedOptions[0].text} · alle Wiederholungen einzeln`;
     $('status').textContent = 'Bereit · ' + state.data.metadata.signal_description + ' · ' + state.data.metadata.statistics;
-  }).catch(error => { $('status').textContent = 'Fehler: ' + error.message; });
+  }).catch(error => { state.staticKey = null; stop(); $('status').textContent = 'Fehler: ' + error.message; });
   return state.rendering;
 }
-function stop() { clearInterval(state.timer); state.timer = null; $('play').textContent = 'Abspielen'; }
+function stop() { clearTimeout(state.timer?.timeout); state.timer = null; $('play').textContent = 'Abspielen'; }
+function selectTime() {
+  stop(); $('mode').value = 'time'; return render();
+}
+async function play() {
+  if (state.timer) return stop();
+  $('mode').value = 'time';
+  if (+$('time').value >= state.data.times.length - 1) $('time').value = 0;
+  const playback = {timeout: null}; state.timer = playback; $('play').textContent = 'Pause';
+  async function frame() {
+    await render();
+    if (state.timer !== playback) return;
+    if (+$('time').value >= state.data.times.length - 1) return stop();
+    // Wait for the displayed frame before advancing. Slow WebGL must neither
+    // queue hundreds of stale frames nor skip every render during playback.
+    playback.timeout = setTimeout(() => {
+      if (state.timer !== playback) return;
+      $('time').value = +$('time').value + 1; frame();
+    }, 400);
+  }
+  await frame();
+}
 function selectionMetadata() {
   const m = state.data.metadata;
   return {scope: $('scope').value, signal: m.signal, source_unit: m.source_unit, protocol_version: m.protocol_version,
@@ -349,11 +403,12 @@ async function start() {
       if (index >= 0 && index < select.options.length) chooseTrial(side, select.options[index].value);
     });
   }
-  $('time').max = d.times.length - 1; $('time').addEventListener('input', render);
-  $('play').addEventListener('click', () => {
-    if (state.timer) return stop(); $('play').textContent = 'Pause';
-    state.timer = setInterval(() => { if (+$('time').value >= d.times.length - 1) return stop(); $('time').value = +$('time').value + 1; render(); }, 400);
+  $('time').max = d.times.length - 1; $('time').addEventListener('input', selectTime);
+  $('time').addEventListener('pointerdown', stop);
+  $('time').addEventListener('keydown', event => {
+    if (['Home', 'End', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'PageUp', 'PageDown'].includes(event.key)) stop();
   });
+  $('play').addEventListener('click', play);
   document.querySelectorAll('[data-camera]').forEach(button => button.addEventListener('click', () => {
     const eyes = {top: {x: 0, y: 0, z: 2.2}, front: {x: 0, y: 2.2, z: .3}, left: {x: -2.2, y: 0, z: .3}, right: {x: 2.2, y: 0, z: .3}};
     state.camera = {eye: eyes[button.dataset.camera], up: button.dataset.camera === 'top' ? {x: 0, y: 1, z: 0} : {x: 0, y: 0, z: 1}};

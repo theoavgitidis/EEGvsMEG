@@ -19,7 +19,8 @@ Viewer verwenden dieselbe Berechnung. „Wiederholungen“ wechselt zwischen Mit
 und Einzeltrials; Block, Trial, Attempt und Aufnahmezeitpunkt stehen bei der Auswahl.
 Einzeltrials verwenden jeweils ihre eigene Vorbereitungsreferenz. Zahlenbalken und
 „Farbbereich anpassen“ ergänzen die Elektrodenfarben; beide Köpfe behalten dieselben
-Farbgrenzen auch beim Trial-/Zeitwechsel. Bedienung, QC und vollständige Parameter:
+Farbgrenzen auch beim Trial-/Zeitwechsel. Schieben oder „Abspielen“ öffnet direkt
+den Zeitverlauf, auch aus Aufgabenmittel oder Rebound. Bedienung, QC und vollständige Parameter:
 [ERD/ERS-Anleitung](../../docs/erds-viewer.md).
 
 ## Ablauf und Dateiablage

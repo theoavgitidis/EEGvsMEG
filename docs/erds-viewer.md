@@ -79,8 +79,17 @@ weiterhin zurückgewiesen.
   **Nach Aufgabenende** verwendet Fenstermitten 0,5–2,5 s nach dem tatsächlichen
   `task_offset`; deren Signalunterstützung liegt 0–3 s nach dem Marker.
 - **Zeitverlauf** zeigt cuebezogene Fenstermitten mit einem Zeitschieber und
-  optionalem Abspielen. Es wird keine Zeit gestreckt. Unterschiedliche tatsächliche
-  Aufgabenenden werden in den Diagrammen als gestrichelte Linien angezeigt.
+  optionalem Abspielen. Der Regler ist auch in **Aufgabenmittel** und **Nach
+  Aufgabenende** bedienbar: Schieben oder Abspielen wechselt unmittelbar zu
+  **Zeitverlauf**. Pfeiltasten sowie Pos1/Ende funktionieren bei fokussiertem Regler.
+  Köpfe, Zahlenbalken, Tabelle und senkrechte Zeitmarkierungen folgen derselben
+  Fenstermitte; Kurven, Zeit-Frequenz- und Trialkarten behalten ihre Daten und den
+  gewählten Zoom beim Schieben. Die Grenzen der Farbskala bleiben fest.
+  Abspielen ist eine verlangsamte Vorschau mit 100-ms-Schritten, keine
+  Echtzeitwiedergabe. Pause und manuelles Schieben stoppen die Wiedergabe; am Ende
+  hält sie an, ein erneuter Start beginnt wieder vorn. Es wird keine Zeit gestreckt.
+  Unterschiedliche tatsächliche Aufgabenenden werden in den Diagrammen als
+  gestrichelte Linien angezeigt.
 - **Blau = negative ERD**, neutral = 0 %, **Rot = positive ERS**. Feste gemeinsame
   Farbgrenzen bleiben bei Zeit-/Bedingungswechsel erhalten; Überläufe werden
   gezählt. Die absolute Bandpower in µV² hat eine eigene sequenzielle Skala.

@@ -91,6 +91,8 @@ Interpolation oder Quellenlokalisation. Die Ansicht wechselt zwischen Gesamtmitt
 und auswählbaren Einzeltrials mit Block-/Trial-/Attempt-ID und eigener Referenz.
 Trialübersichten, Zahlenbalken und eine gemeinsam anpassbare, anschließend feste
 Farbskala machen Unterschiede und ähnliche Kanalwerte nachvollziehbar.
+Der Zeitschieber und „Abspielen“ öffnen direkt den Zeitverlauf, auch aus einer
+Mittelwertansicht; Werte und Zeitmarkierungen bleiben synchron.
 Mit `--no-show --erds-export NEUER_ORDNER`
 lassen sich Werte und Verarbeitungsmetadaten ohne Browser exportieren. Die
 Ansicht ist deskriptiv; reale Kanalbelegung und Artefakte müssen geprüft werden.
