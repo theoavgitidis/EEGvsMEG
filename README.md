@@ -22,6 +22,7 @@ Stand: 28. Oktober 2026.
 | Windows-Build und technische Übersicht | [Terminal-README](gtec_Clib/terminal/README.md) |
 | CLI-Befehle und manuelle Aufnahme | [Verwendung](gtec_Clib/terminal/VERWENDUNG.md) |
 | Beide EEG-Viewer, Filter, Wasserfallansicht und Export | [MNE-Anleitung](gtec_Clib/terminal/MNE_ANLEITUNG.md) |
+| Hand-ERD/ERS, drehbare 3D-Köpfe, Qualitätsausschlüsse und Export | [ERD/ERS-Viewer](docs/erds-viewer.md) |
 | Dauerhafte Teilnehmer-IDs und Sitzungszuordnung | [ID-Schema](docs/participant-ids.md) |
 | Eigener Bewegungsklassifikator: Training, unabhängiger Test und kausaler Replay | [ML-Bewegungsklassifikation](docs/movement-classifier.md) |
 | Öffentliche Faustbewegungsdaten: Download, Labelprüfung und Trainingsimport | [PhysioNet-Datenaudit und Importer](docs/physionet-fist-data.md) |
@@ -83,6 +84,14 @@ Beispiel für eine vorhandene Aufnahme auf macOS, nach Einrichtung der dokumenti
 
 `--signal raw` wählt ausdrücklich Rohdaten; bei bestätigten OSCAR-Sitzungen verwendet der Standard die bereinigte Variante. Beide Viewer zeigen EEG mit sichtbaren µV-Skalen, Marker und Zeit-Frequenz-Ansichten. `--view waterfall` öffnet die interaktive Amplituden-/Bandpoweransicht; Installation, Bedienung, Filter, Einheiten und Export stehen in der MNE-Anleitung. Einzelne Frequenzbänder oder hohe Klassifikationswerte belegen keinen bestimmten mentalen Zustand und keine reine neuronale Erkennung.
 
+Für Protokoll-2.0-Handaufgaben öffnet `--view erds` zwei drehbare Köpfe mit farbigen
+Elektroden, Mu-/Beta-Zeitverläufen und Zeit-Frequenz-Karten. OSCAR ist in diesem
+Modus verbindlicher Standard; Rohdaten benötigen `--signal raw`. Keine räumliche
+Interpolation oder Quellenlokalisation. Mit `--no-show --erds-export NEUER_ORDNER`
+lassen sich Werte und Verarbeitungsmetadaten ohne Browser exportieren. Die
+Ansicht ist deskriptiv; reale Kanalbelegung und Artefakte müssen geprüft werden.
+Berechnung, QC-Datei und Grenzen: [ERD/ERS-Anleitung](docs/erds-viewer.md).
+
 ## Auswertung neuer Sitzungen
 
 Die Importer erhalten die neuen Bedingungen samt Protokollversion und schließen invalidierte/unvollständige Attempts aus. Alte Daten und Modelle bleiben Protokoll 1.0 zugeordnet. Vordefinierte Auswertungen für 2.0: `ME_HandSide`, `ME_FootSide`, `ME_FourClass`, `MI_HandSide`, `MI_FootSide`, `MI_FourClass`, `MI_Bilateral` und `Cognitive`. Ein gemeinsamer gemischter Imagery-Achtklassenwert wird nicht automatisch erzeugt.
@@ -121,6 +130,7 @@ python -m unittest analysis.test_session_protocol analysis.test_event_annotation
 python -m unittest analysis.test_movement_classifier
 python -m unittest analysis.test_physionet
 python -m unittest analysis.test_physionet_dataset
+python -m unittest analysis.test_erds analysis.test_erds_browser
 ```
 
 C++-Tests benötigen Clang++ oder MSVC `cl`; Viewer- und Annotationstests benötigen MNE, NumPy, pandas und Matplotlib; die HTTP-Tests der Wasserfallansicht benötigen zusätzlich Plotly. Optionale echte Browserprüfungen laufen mit `python -m unittest analysis.test_waterfall_ui analysis.test_waterfall_navigation`, wenn Playwright und ein installiertes Chrome verfügbar sind (`EEG_BROWSER_EXECUTABLE` kann den Browserpfad setzen). Die hardwarefreien Tests prüfen Protokoll 2.0 mit 168 Trials über 250 Zufallsseeds in beiden Laufreihenfolgen, einen vollständigen beschleunigten Sitzungsdurchlauf, Unterbrechungen, Fehler und die im Review korrigierten Timingfälle. Die Viewer-Regressionstests prüfen dichte Marker und Fenstergrößenänderungen, getrennte Kanalachsen, Skalierung und Abschneidehinweise, Navigation, unveränderte Daten sowie echte PNG-Ausgabe ohne Desktop und einen ungefilterten FIF-Speicher-/Ladetest. Die C++-Plan- und Laufzeittests bestanden außerdem mit Address-/UndefinedBehavior-Sanitizer auf macOS.

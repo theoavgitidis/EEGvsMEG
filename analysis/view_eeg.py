@@ -10,9 +10,11 @@ import mne
 if __package__:
     from .event_annotations import event_descriptions
     from .recording_files import resolve_recording
+    from .erds_cli import add_erds_arguments, run_erds
 else:
     from event_annotations import event_descriptions
     from recording_files import resolve_recording
+    from erds_cli import add_erds_arguments, run_erds
 
 
 def load_recording(path, unit, signal="auto"):
@@ -78,8 +80,8 @@ def main():
                         help="OSCAR-Sitzungen standardmäßig bereinigt; raw wählt Rohdaten")
     parser.add_argument("--unit", required=True, choices=["uV", "mV", "V"],
                         help="EEG-Einheit aus dem Recorder-Befehl config; nicht raten.")
-    parser.add_argument("--view", choices=["traces", "waterfall"], default="traces",
-                        help="Zeitkurven/Spektrogramm oder interaktive Amplituden-/Bandpower-Wasserfälle")
+    parser.add_argument("--view", choices=["traces", "waterfall", "erds"], default="traces",
+                        help="Zeitkurven, Wasserfall oder ERD/ERS mit 3D-Kopf (OSCAR-Standard)")
     parser.add_argument("--start", type=float, default=0, help="Start des Anzeigefensters in Sekunden")
     parser.add_argument("--duration", type=float, default=10, help="Länge des Anzeigefensters in Sekunden")
     parser.add_argument("--scale-uv", type=float,
@@ -92,10 +94,16 @@ def main():
                         help="Frequenzachse des Spektrogramms (Standard: log)")
     parser.add_argument("--spectrogram-max", type=float, default=100,
                         help="Spektrogramm-Obergrenze in Hz, begrenzt durch Nyquist (Standard: 100)")
+    add_erds_arguments(parser)
     args = parser.parse_args()
     if args.psd and args.view == "waterfall":
         parser.error("--psd und --view waterfall können nicht gemeinsam verwendet werden.")
     try:
+        if args.view == "erds":
+            run_erds(args)
+            return
+        if args.erds_qc or args.erds_export:
+            raise ValueError("--erds-qc/--erds-export benötigen --view erds.")
         raw = load_recording(args.csv, args.unit, args.signal)
         signal_label = (raw.info.get("description") + "; ") if raw.info.get("description") else ""
         print(f"Kanäle: {raw.ch_names}; Samples: {raw.n_times}; nominale Dauer: {raw.n_times / 250:.3f} s")

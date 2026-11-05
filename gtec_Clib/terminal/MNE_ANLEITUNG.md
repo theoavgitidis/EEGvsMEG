@@ -10,6 +10,14 @@ bleiben unverändert. Es funktioniert für neue Versuche unter `EEG/recordings`
 und frühere CSV-Dateien im Projektstamm. Es zeigt abgeschlossene Aufnahmen,
 keinen Live-Datenstrom.
 
+Für linke/rechte Faustbewegung und Vorstellung aus Protokoll 2.0 gibt es zusätzlich
+`--view erds`: zwei drehbare Köpfe mit farbigen Elektroden sowie gemeinsame
+Mu-/Beta-Kurven, Zeit-Frequenz-Karten und numerische Exporte. In diesem Modus ist
+OSCAR Standard ohne Rohdaten-Fallback; Rohdaten nur mit `--signal raw`. Die Köpfe
+zeigen Standardpositionen und Kanalwerte, keine lokalisierten Hirnquellen. Beide
+Viewer verwenden dieselbe Berechnung. Bedienung, QC und vollständige Parameter:
+[ERD/ERS-Anleitung](../../docs/erds-viewer.md).
+
 ## Ablauf und Dateiablage
 
 1. Die Aufnahme vollständig beenden und ihren Abschlusszustand mit `status` prüfen.

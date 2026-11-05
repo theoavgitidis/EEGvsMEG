@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from analysis.event_annotations import event_descriptions
 from analysis.recording_files import resolve_recording
+from analysis.erds_cli import add_erds_arguments, run_erds
 
 
 def load_recording(path, unit, signal="auto"):
@@ -61,8 +62,8 @@ def main():
                         help="Neue OSCAR-Sitzungen: bereinigte Daten; raw wählt ausdrücklich Rohdaten")
     parser.add_argument("--unit", required=True, choices=["uV", "mV", "V"],
                         help="EEG unit reported by the terminal's config command")
-    parser.add_argument("--view", choices=["traces", "waterfall"], default="traces",
-                        help="Display traces/spectrogram or interactive amplitude/bandpower waterfalls")
+    parser.add_argument("--view", choices=["traces", "waterfall", "erds"], default="traces",
+                        help="Zeitkurven, Wasserfall oder ERD/ERS mit 3D-Kopf (OSCAR-Standard)")
     parser.add_argument("--start", type=float, default=0, help="Display start in seconds")
     parser.add_argument("--duration", type=float, default=10, help="Display window in seconds")
     parser.add_argument("--highpass", type=float, help="Optional high-pass frequency in Hz")
@@ -76,8 +77,14 @@ def main():
     parser.add_argument("--save-fif", type=Path, help="Save imported EEG and labels (before optional filtering)")
     parser.add_argument("--snapshot", type=Path, help="Save browser view as a PNG")
     parser.add_argument("--no-show", action="store_true", help="Import/export without an interactive window")
+    add_erds_arguments(parser)
     args = parser.parse_args()
     try:
+        if args.view == "erds":
+            run_erds(args)
+            return
+        if args.erds_qc or args.erds_export:
+            raise ValueError("--erds-qc/--erds-export benötigen --view erds.")
         if args.view == "waterfall" and args.snapshot:
             raise ValueError("--snapshot is only available for --view traces; use the waterfall viewer's PNG buttons.")
         for output in (args.save_fif, args.snapshot):
