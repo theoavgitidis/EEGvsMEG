@@ -98,7 +98,12 @@ Der Zeitschieber und „Abspielen“ öffnen direkt den Zeitverlauf, auch aus ei
 Mittelwertansicht; Werte und Zeitmarkierungen bleiben synchron.
 Die verwendete Vorbereitungsreferenz ist markiert; Referenz- und Aufgabenleistung
 lassen sich direkt in µV² vergleichen. Die separate 60-s-Ruhebaseline dient hier
-nicht als Normalisierungsreferenz.
+nicht als Normalisierungsreferenz der Handaufgaben.
+Unter **Ansicht → Baseline** sind zusätzlich die Anfangs-/Endruhebaseline und die
+Vorbereitungen gültiger Hand-Trials einzeln untersuchbar: Kopf, C3-/C4-Kurven,
+EEG-Spannung, Zeit-Frequenz-Karte und Zeitschieber. Ein eigener Referenzwähler
+bestimmt den Bezug der Prozentwerte; Standard ist das eigene Abschnittsmittel.
+Diese deskriptiven Baseline-Schwankungen ändern die Hand-Trial-Normalisierung nicht.
 Mit `--no-show --erds-export NEUER_ORDNER`
 lassen sich Werte und Verarbeitungsmetadaten ohne Browser exportieren. Die
 Ansicht ist deskriptiv; reale Kanalbelegung und Artefakte müssen geprüft werden.

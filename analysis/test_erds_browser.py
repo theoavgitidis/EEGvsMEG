@@ -18,7 +18,7 @@ import numpy as np
 
 from analysis.erds_browser import create_erds_server
 from analysis.erds_data import compute_erds
-from analysis.test_erds import synthetic_session, write_session
+from analysis.test_erds import synthetic_baseline_session, synthetic_session, write_session
 
 
 class ERDSCLITest(unittest.TestCase):
@@ -118,6 +118,21 @@ class ERDSServerTest(unittest.TestCase):
         for resource in ('trial?key=unknown&channel=C3', 'trial?key=Motorik/2/2/1&channel=unknown',
                          'trial?key=Motorik/2/2/1', 'trial?key=Motorik/2/2/1&channel=C3&channel=C4',
                          'channel?channel=C3&band=unknown', 'channel?channel=C3&band=mu&other=1'):
+            self.assertEqual(self.request(resource)[0], 400, resource)
+
+    def test_baseline_endpoint_explicit_reference_and_strict_selection(self):
+        key = 'prepare/Motorik/1/1/1'
+        status, _, body = self.request(f'baseline?key={key}&reference={key}&channel=C3')
+        self.assertEqual(status, 200)
+        detail = json.loads(body, parse_constant=lambda x: self.fail(x))
+        self.assertEqual(detail['section']['kind'], 'prepare')
+        self.assertEqual(detail['section']['n_valid_windows'], 11)
+        self.assertAlmostEqual(detail['reference'][1][0], 50)
+        self.assertAlmostEqual(detail['mean_percent'][1][0], 0)
+        self.assertEqual(len(detail['waveform_uv']), 500)
+        for resource in (f'baseline?key={key}&channel=C3', f'baseline?key={key}&reference=unknown&channel=C3',
+                         f'baseline?key={key}&reference={key}&channel=C3&extra=1',
+                         f'baseline?key={key}&reference={key}&channel=C3&channel=C4'):
             self.assertEqual(self.request(resource)[0], 400, resource)
 
 
@@ -360,6 +375,96 @@ class ERDSUITest(ERDSServerTest):
             self.assertFalse(self.errors)
         finally:
             server.shutdown(); server.server_close(); thread.join(3)
+
+    def test_resting_and_preparation_baseline_selection_reference_slider_exports_and_return(self):
+        data, events = synthetic_baseline_session()
+        valid = np.ones(data.shape[1], bool); valid[-1000] = False
+        result = compute_erds(data, events, valid, qc={'bad_channels': ['PO8']})
+        result['metadata'].update(signal='oscar', source_unit='uV', signal_description='OSCAR · synthetische Prüfung')
+        server = create_erds_server(result)
+        thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
+        try:
+            p = self.page; p.goto(server.url); self.ready()
+            p.locator('#scope').select_option('baseline'); self.ready()
+            self.assertTrue(p.locator('#baseline-view').is_visible())
+            self.assertTrue(p.locator('#family').is_disabled())
+            self.assertFalse(p.locator('#motor-curves').is_visible())
+            self.assertEqual(p.locator('#baseline-section option').count(), 2)
+            rest = [s for s in result['baselines'] if s['kind'] == 'rest']
+            p.locator('#baseline-section').select_option(rest[1]['key']); self.ready()
+            self.assertAlmostEqual(p.locator('#baseline-head').evaluate('(e)=>e.data[1].meta.values[1]'), 0)
+            p.locator('#baseline-reference').select_option(rest[0]['key']); self.ready()
+            self.assertAlmostEqual(p.locator('#baseline-head').evaluate('(e)=>e.data[1].meta.values[1]'), 300)
+            self.assertEqual(p.locator('#baseline-values tr').nth(1).locator('td').nth(1).inner_text(), '50.00')
+            self.assertEqual(p.locator('#baseline-values tr').nth(1).locator('td').nth(2).inner_text(), '200.00')
+            self.assertEqual(p.locator('#baseline-head').evaluate('(e)=>e.data[2].text'), ['PO8 ×'])
+            self.assertEqual(p.locator('#baseline-c3').evaluate('(e)=>e.data.length'), 2)
+            self.assertEqual(p.locator('#baseline-c3').evaluate('(e)=>e.layout.yaxis.range'),
+                             p.locator('#baseline-c4').evaluate('(e)=>e.layout.yaxis.range'))
+            p.locator('#baseline-time').fill('100'); self.ready()
+            self.assertEqual(p.locator('#baseline-mode').input_value(), 'time')
+            self.assertIn('10.5 s', p.locator('#baseline-time-label').inner_text())
+            self.assertAlmostEqual(p.locator('#baseline-head').evaluate('(e)=>e.data[1].meta.values[3]'), -75)
+            for graph in ('baseline-c3', 'baseline-c4', 'baseline-waveform', 'baseline-tf'):
+                self.assertEqual(p.locator('#' + graph).evaluate('(e)=>e.layout.shapes.find(s=>s.name==="baseline-cursor").x0'), 10.5)
+            p.locator('#channel').select_option('3'); self.ready()
+            self.assertEqual(p.locator('#baseline-time').input_value(), '100')
+            self.assertIn('C4', p.locator('#baseline-tf-title').inner_text())
+            self.assertAlmostEqual(p.locator('#baseline-tf').evaluate('(e)=>e.data[0].z[4][100]'), -75)
+            p.locator('#baseline-play').click()
+            p.wait_for_function('() => +$("baseline-time").value > 100')
+            p.locator('#baseline-play').click(); self.ready()
+            self.assertEqual(p.locator('#baseline-play').inner_text(), 'Abspielen')
+            p.locator('#baseline-time').fill('551'); self.ready()  # overlaps invalid sample at 56 s
+            self.assertEqual(p.locator('#baseline-head').evaluate('(e)=>e.data[2].text.length'), 8)
+            self.assertEqual(p.locator('#baseline-values tr').nth(1).locator('td').nth(2).inner_text(), '—')
+            p.locator('#baseline-time').fill('100'); self.ready()
+            with p.expect_download() as downloaded:
+                p.locator('#baseline-json').click()
+            exported = json.loads(Path(downloaded.value.path()).read_text())
+            self.assertEqual(exported['selection']['reference_key'], rest[0]['key'])
+            self.assertEqual(exported['selection']['signal'], 'oscar')
+            self.assertEqual(exported['selection']['window_center_s'], 10.5)
+            self.assertEqual(exported['detail']['section']['n_missing_windows'], 10)
+            with p.expect_download() as downloaded:
+                p.locator('#baseline-csv').click()
+            row = next(csv.DictReader(io.StringIO(Path(downloaded.value.path()).read_text(encoding='utf-8-sig'))))
+            self.assertEqual(json.loads(row['selection_json'])['reference_key'], rest[0]['key'])
+            with p.expect_download() as downloaded:
+                p.locator('[data-baseline-png="baseline-c3"]').click()
+            self.assertEqual(Path(downloaded.value.path()).read_bytes()[:8], b'\x89PNG\r\n\x1a\n')
+            p.locator('#baseline-view').screenshot(path='/private/tmp/erds-resting-baseline-qa.png')
+            p.locator('#baseline-kind').select_option('prepare'); self.ready()
+            p.locator('#baseline-reference').select_option('self'); self.ready()
+            self.assertEqual(p.locator('#baseline-section option').count(), 8)
+            self.assertIn('Trial 1', p.locator('#baseline-description').inner_text())
+            self.assertEqual(p.locator('#baseline-time').get_attribute('max'), '10')
+            self.assertEqual(p.locator('#baseline-waveform').evaluate('(e)=>e.data[0].y.length'), 500)
+            p.locator('#metric').select_option('power'); self.ready()
+            self.assertAlmostEqual(p.locator('#baseline-head').evaluate('(e)=>e.data[1].meta.values[1]'), 50)
+            p.locator('#baseline-view').screenshot(path='/private/tmp/erds-preparation-baseline-qa.png')
+            p.set_viewport_size({'width': 600, 'height': 900})
+            p.wait_for_function('() => document.documentElement.scrollWidth <= 600')
+            p.screenshot(path='/private/tmp/erds-baseline-mobile-qa.png', full_page=True)
+            p.locator('#scope').select_option('mean'); self.ready()
+            p.locator('#metric').select_option('percent'); self.ready()
+            self.assertFalse(p.locator('#baseline-view').is_visible())
+            self.assertTrue(p.locator('#family').is_enabled())
+            self.assertAlmostEqual(p.locator('#curves').evaluate('(e)=>e.data[1].y[35]'), -75)
+            self.assertFalse(self.errors)
+        finally:
+            server.shutdown(); server.server_close(); thread.join(3)
+
+    def test_missing_resting_baseline_is_explicit_and_preparations_remain_available(self):
+        p = self.page
+        p.locator('#scope').select_option('baseline'); self.ready()
+        self.assertTrue(p.locator('#baseline-empty').is_visible())
+        self.assertEqual(p.locator('#baseline-section option').count(), 0)
+        self.assertFalse(p.locator('#baseline-content').is_visible())
+        p.locator('#baseline-kind').select_option('prepare'); self.ready()
+        self.assertTrue(p.locator('#baseline-content').is_visible())
+        self.assertEqual(p.locator('#baseline-section option').count(), 8)
+        self.assertFalse(self.errors)
 
     def test_rendered_head_has_c3_blue_and_no_extra_colorbar_sensor(self):
         from PIL import Image

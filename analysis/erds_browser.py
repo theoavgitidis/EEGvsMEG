@@ -8,7 +8,7 @@ import secrets
 from urllib.parse import parse_qs, urlsplit
 import webbrowser
 
-from .erds_data import channel_trials, head_geometry, json_safe, trial_detail
+from .erds_data import baseline_detail, channel_trials, head_geometry, json_safe, trial_detail
 
 
 def create_erds_server(result, *, title='Handbewegungen · ERD/ERS', port=0):
@@ -20,6 +20,7 @@ def create_erds_server(result, *, title='Handbewegungen · ERD/ERS', port=0):
     javascript = get_plotlyjs().encode('utf-8')
     html = Path(__file__).with_name('erds_view.html').read_bytes()
     viewer_js = Path(__file__).with_name('erds_view.js').read_bytes()
+    baseline_js = Path(__file__).with_name('erds_baseline.js').read_bytes()
     summary = io.StringIO(newline='')
     writer = csv.writer(summary)
     writer.writerow(['condition', 'channel', 'band', 'n', 'reference_uV2',
@@ -35,6 +36,7 @@ def create_erds_server(result, *, title='Handbewegungen · ERD/ERS', port=0):
     resources = {'': (html, 'text/html; charset=utf-8'),
                  'plotly.min.js': (javascript, 'text/javascript; charset=utf-8'),
                  'erds_view.js': (viewer_js, 'text/javascript; charset=utf-8'),
+                 'erds_baseline.js': (baseline_js, 'text/javascript; charset=utf-8'),
                  'data': (data, 'application/json; charset=utf-8'),
                  'report.json': (data, 'application/json; charset=utf-8'),
                  'summary.csv': (summary.getvalue().encode('utf-8-sig'), 'text/csv; charset=utf-8')}
@@ -48,15 +50,20 @@ def create_erds_server(result, *, title='Handbewegungen · ERD/ERS', port=0):
             key = url.path[len(prefix):] if url.path.startswith(prefix) else None
             content, kind = resources.get(key, (b'Not found', 'text/plain'))
             status = 200 if key in resources else 404
-            if key in ('channel', 'trial'):
+            if key in ('channel', 'trial', 'baseline'):
                 kind = 'application/json; charset=utf-8'
                 try:
                     query = parse_qs(url.query, keep_blank_values=True, strict_parsing=True)
-                    expected = {'channel', 'band'} if key == 'channel' else {'channel', 'key'}
+                    expected = ({'channel', 'band'} if key == 'channel' else
+                                {'channel', 'key', 'reference'} if key == 'baseline' else {'channel', 'key'})
                     if set(query) != expected or any(len(v) != 1 for v in query.values()):
                         raise ValueError('Ungültige oder doppelte Auswahlparameter.')
-                    selection = (channel_trials(result, query['channel'][0], query['band'][0]) if key == 'channel'
-                                 else trial_detail(result, query['key'][0], query['channel'][0]))
+                    if key == 'baseline':
+                        selection = baseline_detail(result, query['key'][0], query['reference'][0], query['channel'][0])
+                    elif key == 'channel':
+                        selection = channel_trials(result, query['channel'][0], query['band'][0])
+                    else:
+                        selection = trial_detail(result, query['key'][0], query['channel'][0])
                     content = json.dumps(json_safe(selection), ensure_ascii=False, allow_nan=False).encode('utf-8')
                     status = 200
                 except ValueError as error:

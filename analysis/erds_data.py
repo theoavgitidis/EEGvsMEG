@@ -408,10 +408,13 @@ def compute_erds(data_uv, events, sample_valid=None, *, channels=None, protocol=
     unused = set(qc['bad_trials']) - {t['key'] for group in trials.values() for t in group} - {e['key'] for e in exclusions}
     if unused:
         raise ValueError('Unbekannte bad_trials: ' + ', '.join(sorted(unused)))
+    baseline_data, baseline_exclusions = _baseline_sections(data, automatic, valid, active, pauses, trial_data)
     return dict(schema_version=2, times=TIMES, frequencies=frequency[freq_mask],
         bands=[dict(id=k, low=lo, high=hi) for k, lo, hi in BANDS],
         channels=[dict(site=s, name=n, included=bool(a)) for s, n, a in zip(SITES, channels, active)],
         conditions=conditions, exclusions=exclusions, _trial_data=trial_data,
+        baselines=[section['summary'] for section in baseline_data.values()],
+        baseline_exclusions=baseline_exclusions, _baseline_data=baseline_data,
         metadata=dict(protocol_version=version, sampling_rate_hz=FS, window_seconds=1., hop_seconds=.1,
             frequency_grid_hz=1., hann_enbw_hz=1.5, reference='Vollständige Fenster in Vorbereitung, frühestens -2 s bis Cue',
             reference_type='trial_preparation; not the separate 60 s session resting baseline',
@@ -429,6 +432,116 @@ def compute_erds(data_uv, events, sample_valid=None, *, channels=None, protocol=
         warnings=['Referenz kann Vorbereitungsaktivität enthalten; Erholung ist keine garantierte Ruhe.',
                   'Signalqualität visuell prüfen; keine automatische Muskel-/Augenartefaktfreiheit.',
                   'Standardpositionen – nicht individuell vermessen; keine Quellenlokalisation.'])
+
+
+def _baseline_sections(data, events, valid, active, pauses, trials):
+    """Recorded rest intervals and accepted preparation intervals; no invented rest.
+
+    Invalidated/incomplete resting attempts are excluded. Sample/QC gaps mask
+    every overlapping PSD window in all included channels; reference means use
+    the same retained window set, never interpolated samples.
+    """
+    sections, excluded = {}, []
+    bad = np.r_[0, np.cumsum(~valid)]
+    frequencies = np.fft.rfftfreq(WINDOW, 1 / FS)
+    mask = (frequencies >= 6) & (frequencies <= 40)
+    weights = np.array([band_weights(lo, hi) for _, lo, hi in BANDS])
+
+    def add(key, kind, label, start, end, starts=None, **identity):
+        starts = np.arange(start, end - WINDOW + 1, HOP) if starts is None else starts
+        good = bad[starts + WINDOW] == bad[starts]
+        if not good.any():
+            raise ValueError('no_valid_windows')
+        density = np.full((8, len(starts), len(frequencies)), np.nan)
+        indices = starts[good, None] + np.arange(WINDOW)
+        density[active[:, None] & good[None, :]] = window_psd(data[active][:, indices]).reshape(-1, len(frequencies))
+        mean_psd = density[:, good].mean(axis=1)
+        floor = np.finfo(float).eps * mean_psd.sum(axis=1)
+        power = np.einsum('ctf,bf->cbt', density, weights)
+        mean_power = power[:, :, good].mean(axis=2)
+        reference = np.where(mean_power > floor[:, None], mean_power, np.nan)
+        spectral_reference = np.where(mean_psd[:, mask] > floor[:, None], mean_psd[:, mask], np.nan)
+        waveform = data[:, start:end].copy()
+        waveform[~active] = np.nan
+        waveform[:, ~valid[start:end]] = np.nan
+        summary = dict(key=key, kind=kind, label=label, start_sample=int(start), end_sample=int(end),
+            start_s=start / FS, end_s=end / FS, duration_s=(end - start) / FS,
+            n_windows=len(starts), n_valid_windows=int(good.sum()), n_missing_windows=int((~good).sum()),
+            reference=reference, mean_power=mean_power, spectral_reference=spectral_reference,
+            reference_windows=dict(centers_s=(starts + WINDOW // 2 - start) / FS,
+                valid=good, support_s=[(starts[0] - start) / FS, (starts[-1] + WINDOW - start) / FS]),
+            **identity)
+        sections[key] = dict(summary=summary, times=(starts + WINDOW // 2 - start) / FS,
+            power=power, spectrum=density[:, :, mask].transpose(0, 2, 1),
+            waveform_uv=waveform, waveform_times=np.arange(end - start) / FS)
+
+    resting = events[events.label.isin(['baseline_start', 'baseline_end', 'baseline_invalidated'])]
+    candidates = []
+    for identity, group in resting.groupby(['run', 'block', 'trial', 'attempt'], sort=False):
+        key = 'rest/' + '/'.join(str(v) for v in identity)
+        try:
+            if 'baseline_invalidated' in set(group.label):
+                raise ValueError('invalidated')
+            if set(group.condition) != {'baseline'} or set(group.phase) != {'baseline'}:
+                raise ValueError('inconsistent_baseline_context')
+            if (any(float(v) != int(v) for v in identity[1:]) or int(identity[1]) != 0
+                    or int(identity[2]) != 0 or int(identity[3]) < 1):
+                raise ValueError('invalid_baseline_identity')
+            points = []
+            for name in ('baseline_start', 'baseline_end'):
+                rows = group[group.label == name]
+                if len(rows) != 1:
+                    raise ValueError('missing_or_duplicate_' + name)
+                value = float(rows.iloc[0].samples_received)
+                if not np.isfinite(value) or value != int(value):
+                    raise ValueError('invalid_marker_sample')
+                points.append(int(value))
+            start, end = points
+            if not 0 <= start < end <= data.shape[1] or abs((end - start) / FS - 60) > .3:
+                raise ValueError('invalid_baseline_bounds_or_duration')
+            if any(a < end and b > start for a, b in pauses):
+                raise ValueError('pause_overlaps_baseline')
+            candidates.append((key, identity, start, end))
+        except (ValueError, TypeError, OverflowError) as error:
+            excluded.append(dict(key=key, reason=str(error)))
+    for key, identity, start, end in sorted(candidates, key=lambda item: item[2]):
+        try:
+            if sum(other[1][:3] == identity[:3] for other in candidates) > 1:
+                raise ValueError('multiple_completed_baseline_attempts')
+            add(key, 'rest', f'{identity[0]} · Attempt {identity[3]}', start, end,
+                run=identity[0], attempt=int(identity[3]))
+        except ValueError as error:
+            excluded.append(dict(key=key, reason=str(error)))
+    for key, trial in trials.items():
+        centers = trial['onset_sample'] + np.rint(trial['reference_windows']['centers_s'] * FS).astype(int)
+        starts = centers - WINDOW // 2
+        hand = 'Linke' if trial['condition'].endswith('left') else 'Rechte'
+        mode = 'Ausführung' if trial['condition'].startswith('me_') else 'Vorstellung'
+        label = f"{hand} Faust · {mode} · Block {trial['block']} · Trial {trial['trial']} · Attempt {trial['attempt']}"
+        add('prepare/' + key, 'prepare', label, int(starts[0]), int(starts[-1] + WINDOW), starts,
+            trial_key=key, condition=trial['condition'], block=trial['block'], trial=trial['trial'], attempt=trial['attempt'])
+    return sections, excluded
+
+
+def baseline_detail(result, key, reference_key, channel):
+    """Explicit resting/preparation comparison; does not renormalize hand trials."""
+    sections = result.get('_baseline_data', {})
+    if key not in sections or reference_key not in sections or channel not in SITES:
+        raise ValueError('Unbekannter Baseline-Abschnitt, Referenzabschnitt oder Kanal.')
+    section, reference_section = sections[key], sections[reference_key]
+    summary, reference_summary = section['summary'], reference_section['summary']
+    reference = reference_summary['reference']
+    ci = SITES.index(channel)
+    spectral_reference = reference_summary['spectral_reference'][ci]
+    return dict(section=summary, reference_section=reference_summary, channel=channel,
+        times=section['times'], power=section['power'], reference=reference,
+        percent=percent(section['power'], reference[:, :, None]),
+        mean_power=summary['mean_power'], mean_percent=percent(summary['mean_power'], reference),
+        spectral_percent=percent(section['spectrum'][ci], spectral_reference[:, None]),
+        waveform_uv=section['waveform_uv'][ci], waveform_times=section['waveform_times'],
+        normalization='100 * (window power / mean valid-window power of explicitly selected reference section - 1)',
+        time_reference='Seconds since selected section start; no task cue',
+        interpretation='Descriptive relative power fluctuations; no event-related ERD/ERS established by resting fluctuations')
 
 
 def trial_detail(result, key, channel):
@@ -514,4 +627,19 @@ def export_erds(result, directory):
                         percent(t['rebound_power'][ci, bi], t['reference'][ci, bi]),
                         *t['reference_windows']['support_s'],
                         json.dumps(t['reference_windows']['centers_s'].tolist())]))
+    # Portable self-referenced baseline curves. Interactive comparisons export
+    # their explicitly selected reference separately in the browser selection.
+    with (target / 'baselines.csv').open('w', newline='', encoding='utf-8-sig') as handle:
+        writer = csv.writer(handle)
+        writer.writerow(['key', 'kind', 'channel', 'band', 'section_start_s', 'window_center_s',
+                         'reference_uV2', 'power_uV2', 'percent_of_own_section_mean', 'n_valid_windows'])
+        for key, section in result.get('_baseline_data', {}).items():
+            summary = section['summary']
+            for ci, site in enumerate(SITES):
+                for bi, (band, _, _) in enumerate(BANDS):
+                    reference = summary['reference'][ci, bi]
+                    for ti, time in enumerate(section['times']):
+                        power = section['power'][ci, bi, ti]
+                        writer.writerow(json_safe([key, summary['kind'], site, band, summary['start_s'],
+                            time, reference, power, percent(power, reference), summary['n_valid_windows']]))
     return target

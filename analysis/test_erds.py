@@ -8,7 +8,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from analysis.erds_data import (FS, TIMES, SITES, CONDITIONS, band_weights, channel_trials,
+from analysis.erds_data import (FS, TIMES, SITES, CONDITIONS, band_weights, baseline_detail, channel_trials,
                                 compute_erds, export_erds, head_geometry, json_safe,
                                 load_erds, trial_detail, window_psd)
 
@@ -58,6 +58,109 @@ def write_session(directory, *, oscar=True):
             mode='oscar', state='complete', sampling_rate_hz=250, raw_file=path.name,
             oscar_file=path.name + '.oscar.csv', oscar_samples=len(frame), oscar_delay_samples=83)), encoding='utf-8')
     return path
+
+
+def synthetic_baseline_session():
+    """Two complete resting baselines around the existing synthetic hand trials."""
+    data, events = synthetic_session()
+    time = np.arange(60 * FS) / FS
+    rest = np.tile(10 * np.sin(2 * np.pi * 10 * time) + 6 * np.sin(2 * np.pi * 20 * time), (8, 1))
+    end_rest = rest.copy()
+    end_rest[1] += 10 * np.sin(2 * np.pi * 10 * time)  # +300% Mu at C3
+    end_rest[3, :30 * FS] -= 5 * np.sin(2 * np.pi * 10 * time[:30 * FS])
+    events.samples_received += len(time)
+    rows = []
+    for run, start in [('Anfangsbaseline', 0), ('Endbaseline', len(time) + data.shape[1])]:
+        for label, sample in [('baseline_start', start), ('baseline_end', start + len(time))]:
+            rows.append(dict(source='automatic', run=run, block=0, trial=0, attempt=1, condition='baseline',
+                label=label, phase='baseline', samples_received=sample, protocol_version='eeg-session-2.0'))
+    return np.concatenate([rest, data, end_rest], axis=1), pd.concat([pd.DataFrame(rows), events], ignore_index=True)
+
+
+class ERDSBaselineTest(unittest.TestCase):
+    def test_rest_preparation_and_explicit_reference_leave_hand_results_unchanged(self):
+        data, events = synthetic_baseline_session()
+        original = data.copy()
+        result = compute_erds(data, events)
+        rest = [s for s in result['baselines'] if s['kind'] == 'rest']
+        prep = [s for s in result['baselines'] if s['kind'] == 'prepare']
+        self.assertEqual(len(rest), 2); self.assertEqual(len(prep), 8)
+        self.assertEqual([s['n_valid_windows'] for s in rest], [591, 591])
+        self.assertEqual([s['n_windows'] for s in prep], [11] * 8)
+        detail = baseline_detail(result, rest[1]['key'], rest[0]['key'], 'C3')
+        self.assertAlmostEqual(detail['mean_power'][1, 0], 200)
+        self.assertAlmostEqual(detail['reference'][1, 0], 50)
+        self.assertAlmostEqual(detail['mean_percent'][1, 0], 300)
+        np.testing.assert_allclose(detail['spectral_percent'][4, :], 300, atol=1e-8)
+        self.assertTrue(np.isnan(detail['spectral_percent'][0]).all())  # no synthetic 6-Hz power
+        self.assertEqual(len(detail['waveform_uv']), 60 * FS)
+        self.assertEqual(detail['times'][0], .5); self.assertEqual(detail['times'][-1], 59.5)
+        self_ref = baseline_detail(result, rest[1]['key'], rest[1]['key'], 'C3')
+        self.assertAlmostEqual(self_ref['mean_percent'][1, 0], 0)
+        for section in prep:
+            t = result['_trial_data'][section['trial_key']]
+            np.testing.assert_allclose(section['reference'], t['reference'])
+        self.assertAlmostEqual(result['conditions']['me_hand_right']['task_percent'][1, 0], -75)
+        np.testing.assert_array_equal(data, original)
+        portable = json_safe(result)
+        self.assertNotIn('_baseline_data', portable)
+        self.assertIn('reference_windows', portable['baselines'][0])
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / 'export'
+            export_erds(result, target)
+            with (target / 'baselines.csv').open(encoding='utf-8-sig') as handle:
+                rows = list(csv.DictReader(handle))
+            row = next(r for r in rows if r['key'] == rest[1]['key'] and r['channel'] == 'C3' and r['band'] == 'mu')
+            self.assertAlmostEqual(float(row['power_uV2']), 200)
+            self.assertAlmostEqual(float(row['reference_uV2']), 200)
+            self.assertAlmostEqual(float(row['percent_of_own_section_mean']), 0)
+            self.assertEqual(float(row['section_start_s']), rest[1]['start_s'])
+        for key, ref, channel in [('unknown', rest[0]['key'], 'C3'), (rest[0]['key'], 'unknown', 'C3'),
+                                  (rest[0]['key'], rest[0]['key'], 'unknown')]:
+            with self.assertRaisesRegex(ValueError, 'Baseline'):
+                baseline_detail(result, key, ref, channel)
+
+    def test_baseline_gaps_qc_invalidated_incomplete_and_ambiguous_attempts(self):
+        data, events = synthetic_baseline_session()
+        valid = np.ones(data.shape[1], bool); valid[1000] = False
+        result = compute_erds(data, events, valid, qc={'bad_channels': ['PO8']})
+        first = result['baselines'][0]
+        self.assertEqual(first['n_missing_windows'], 10)
+        detail = baseline_detail(result, first['key'], first['key'], 'PO8')
+        self.assertTrue(np.isnan(detail['waveform_uv']).all())
+        self.assertTrue(np.isnan(detail['power'][7]).all())
+        detail = baseline_detail(result, first['key'], first['key'], 'C3')
+        self.assertEqual(np.isnan(detail['power'][1, 0]).sum(), 10)
+        self.assertTrue(np.isnan(detail['waveform_uv'][1000]))
+        self.assertAlmostEqual(detail['reference'][1, 0], 50)
+        result = compute_erds(data, events, qc={'bad_intervals_s': [[0, 60]]})
+        self.assertEqual(len([s for s in result['baselines'] if s['kind'] == 'rest']), 1)
+        self.assertIn('no_valid_windows', [e['reason'] for e in result['baseline_exclusions']])
+        start = events[events.run == 'Anfangsbaseline'].copy()
+        invalid = start.iloc[[0]].copy(); invalid['label'] = 'baseline_invalidated'
+        interrupted = pd.concat([events, invalid], ignore_index=True)
+        result = compute_erds(data, interrupted)
+        self.assertIn('invalidated', [e['reason'] for e in result['baseline_exclusions']])
+        # Restarted baseline attempt survives; the old invalidated attempt does not.
+        restarted = start.copy(); restarted.attempt = 2
+        result = compute_erds(data, pd.concat([interrupted, restarted], ignore_index=True))
+        self.assertEqual([s['attempt'] for s in result['baselines'] if s['kind'] == 'rest'], [2, 1])
+        ambiguous = compute_erds(data, pd.concat([events, restarted], ignore_index=True))
+        self.assertEqual(sum(s['kind'] == 'rest' for s in ambiguous['baselines']), 1)
+        self.assertIn('multiple_completed_baseline_attempts', [e['reason'] for e in ambiguous['baseline_exclusions']])
+        incomplete = events[~((events.run == 'Anfangsbaseline') & (events.label == 'baseline_end'))]
+        result = compute_erds(data, incomplete)
+        self.assertIn('missing_or_duplicate_baseline_end', [e['reason'] for e in result['baseline_exclusions']])
+        # Invalidated hand trials must not reappear as selectable preparations.
+        invalid = events[events.condition == 'me_hand_left'].iloc[[0]].copy(); invalid['label'] = 'trial_invalidated'
+        result = compute_erds(data, pd.concat([events, invalid], ignore_index=True))
+        self.assertEqual(sum(s['kind'] == 'prepare' for s in result['baselines']), 7)
+        data[:, :60 * FS] = 0
+        result = compute_erds(data, events)
+        first = next(s for s in result['baselines'] if s['kind'] == 'rest')
+        detail = baseline_detail(result, first['key'], first['key'], 'C3')
+        self.assertEqual(detail['mean_power'][1, 0], 0)
+        self.assertTrue(np.isnan(detail['mean_percent'][1, 0]))
 
 
 class ERDSNumericalTest(unittest.TestCase):

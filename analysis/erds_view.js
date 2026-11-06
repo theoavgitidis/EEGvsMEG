@@ -173,9 +173,8 @@ function updateSelectionText() {
   $('selection-summary').textContent = `${single() ? 'EINZELTRIALS' : 'MITTELWERTE'} · ${taskLabel('left')}: ${selectionLabel('left')} | ${taskLabel('right')}: ${selectionLabel('right')} · ${$('band').selectedOptions[0].text} · ${$('mode').selectedOptions[0].text}. ` +
     (single() ? 'Referenz: eigene Vorbereitung jedes Trials.' : 'Alle gültigen Wiederholungen je Bedingung, über alle Blöcke. Keine einzelne Wiederholung.');
 }
-async function head(side, lo, hi) {
-  const d = state.data, g = d.geometry, c = condition(side), bi = +$('band').value, metric = $('metric').value;
-  const vals = d.channels.map((_, ci) => value(c, ci, bi, metric)), good = [], missing = [];
+async function sensorHead(graph, vals, changes, powers, references, count, countLabel, lo, hi, percentLabel = 'ERD/ERS') {
+  const d = state.data, g = d.geometry, metric = $('metric').value, good = [], missing = [];
   vals.forEach((v, i) => (available(v) ? good : missing).push(i));
   const vertices = g.vertices, triangles = g.triangles, coords = g.display_mm;
   if (!state.mesh) state.mesh = {type: 'mesh3d', x: vertices.map(p => p[0]), y: vertices.map(p => p[1]), z: vertices.map(p => p[2]),
@@ -186,9 +185,9 @@ async function head(side, lo, hi) {
       type: 'scatter3d', mode: 'markers+text', x: indices.map(i => coords[i][0]), y: indices.map(i => coords[i][1]), z: indices.map(i => coords[i][2]),
       text: indices.map(i => d.channels[i].site + (invalid ? ' ×' : '')), textposition: 'top center', textfont: {color: theme().text, size: 12},
       meta: {sensors: true, indices, values: indices.map(i => vals[i])},
-      customdata: indices.map(i => [i, d.channels[i].name || 'nicht vorhanden', d.channels[i].site, fmt(value(c, i, bi, 'percent')),
-        fmt(value(c, i, bi, 'power')), fmt(c?.n ? c.reference[i][bi] : null), invalid ? 0 : c.n]),
-      hovertemplate: '%{customdata[2]} · %{customdata[1]}<br>ERD/ERS: %{customdata[3]} %<br>Leistung: %{customdata[4]} µV²<br>Referenz: %{customdata[5]} µV²<br>Trials: %{customdata[6]}<extra></extra>',
+      customdata: indices.map(i => [i, d.channels[i].name || 'nicht vorhanden', d.channels[i].site, fmt(changes[i]),
+        fmt(powers[i]), fmt(references[i]), invalid ? 0 : count]),
+      hovertemplate: `%{customdata[2]} · %{customdata[1]}<br>${percentLabel}: %{customdata[3]} %<br>Leistung: %{customdata[4]} µV²<br>Referenz: %{customdata[5]} µV²<br>${countLabel}: %{customdata[6]}<extra></extra>`,
       marker: {size: 9, symbol: invalid ? 'x' : 'circle', line: {color: theme().text, width: 1}, color: indices.map(i => colorFor(vals[i], lo, hi))},
       showlegend: false,
     };
@@ -197,13 +196,12 @@ async function head(side, lo, hi) {
   // sensor RGB colors; it is not a ninth electrode or a surface interpolation.
   const legend = {type: 'scatter3d', mode: 'markers', x: [coords[2][0], coords[2][0]], y: [coords[2][1], coords[2][1]], z: [coords[2][2], coords[2][2]], hoverinfo: 'skip', showlegend: false,
     marker: {size: 1, opacity: 0, color: [lo, hi], cmin: lo, cmax: hi, colorscale: colorscale(lo, hi), showscale: true,
-      colorbar: {title: {text: metric === 'percent' ? 'ERD/ERS %' : 'µV²'}, len: .7, thickness: 12}}};
+      colorbar: {title: {text: metric === 'percent' ? percentLabel + ' %' : 'µV²'}, len: .7, thickness: 12}}};
   const traces = [state.mesh, sensors(good, false), sensors(missing, true), legend,
     {type: 'scatter3d', mode: 'text', x: [-100, 100, 0], y: [0, 0, 115], z: [10, 10, 5],
       text: ['L', 'R', 'Nase / vorn'], hoverinfo: 'skip', showlegend: false, textfont: {color: theme().muted}}];
   const l = layout(); l.margin = {l: 0, r: 20, t: 0, b: 0};
   l.scene = {camera: state.camera, aspectmode: 'data', xaxis: {visible: false}, yaxis: {visible: false}, zaxis: {visible: false}};
-  const graph = $('head-' + side);
   if (!graph.data) await Plotly.newPlot(graph, traces, l, config);
   else {
     const updates = {};
@@ -211,10 +209,18 @@ async function head(side, lo, hi) {
     await Plotly.update(graph, updates, {paper_bgcolor: theme().surface, 'font.color': theme().text}, [1, 2]);
     await Plotly.restyle(graph, {marker: legend.marker}, [3]);
   }
+}
+async function head(side, lo, hi) {
+  const d = state.data, c = condition(side), bi = +$('band').value, metric = $('metric').value;
+  const vals = d.channels.map((_, ci) => value(c, ci, bi, metric));
+  await sensorHead($('head-' + side), vals,
+    d.channels.map((_, ci) => value(c, ci, bi, 'percent')),
+    d.channels.map((_, ci) => value(c, ci, bi, 'power')),
+    d.channels.map((_, ci) => c?.n ? c.reference[ci][bi] : null), c?.n || 0, 'Trials', lo, hi);
   $('title-' + side).textContent = `${taskLabel(side)} · ${selectionLabel(side)}`;
   const finite = vals.filter(available), clipped = finite.filter(v => v < lo || v > hi).length;
   $('clip-' + side).textContent = finite.length ?
-    `Werte ${fmt(Math.min(...finite))} bis ${fmt(Math.max(...finite))} ${unit()} · C3−C4: ${available(vals[1]) && available(vals[3]) ? fmt(vals[1] - vals[3]) : '—'} ${metric === 'percent' ? 'Prozentpunkte' : 'µV²'} · ${clipped} Werte außerhalb der Farbskala; ${missing.length} nicht verfügbar.` : 'Keine Werte verfügbar.';
+    `Werte ${fmt(Math.min(...finite))} bis ${fmt(Math.max(...finite))} ${unit()} · C3−C4: ${available(vals[1]) && available(vals[3]) ? fmt(vals[1] - vals[3]) : '—'} ${metric === 'percent' ? 'Prozentpunkte' : 'µV²'} · ${clipped} Werte außerhalb der Farbskala; ${vals.filter(v => !available(v)).length} nicht verfügbar.` : 'Keine Werte verfügbar.';
   const bar = layout(); bar.margin = {l: 45, r: 80, t: 15, b: 45};
   // Both numeric charts share limits, including real values beyond the color
   // scale. Starting from that scale also avoids axes in femto-percent when
@@ -344,6 +350,11 @@ function render() {
     if (revision !== state.revision) return;
     $('status').textContent = 'Auswahl wird geladen …';
     const [lo, hi] = scale(); state.scales[$('metric').value] = [lo, hi];
+    if ($('scope').value === 'baseline') {
+      state.staticKey = null;
+      await baselineViewer.render(lo, hi, revision);
+      return;
+    }
     const key = staticSelectionKey(lo, hi), full = state.staticKey !== key;
     if (full) {
       state.staticKey = null;
@@ -368,7 +379,7 @@ function render() {
     table(); referencePanel(); state.staticKey = key;
     for (const view of MOTOR_VIEWS) $(view.overviewTitle).textContent = `${view.site} · ${$('band').selectedOptions[0].text} · alle Wiederholungen einzeln`;
     $('status').textContent = 'Bereit · ' + state.data.metadata.signal_description + ' · ' + state.data.metadata.statistics;
-  }).catch(error => { state.staticKey = null; stop(); $('status').textContent = 'Fehler: ' + error.message; });
+  }).catch(error => { state.staticKey = null; stop(); baselineViewer.stop(); $('status').textContent = 'Fehler: ' + error.message; });
   return state.rendering;
 }
 function stop() { clearTimeout(state.timer?.timeout); state.timer = null; $('play').textContent = 'Abspielen'; }
@@ -442,6 +453,7 @@ async function start() {
   $('mapping').textContent = d.metadata.montage_confirmed ? 'Kanalbelegung bestätigt; Positionen bleiben unvermessen.' : 'Reale Zuordnung EEG 1–8 vor wissenschaftlicher Interpretation prüfen.';
   d.channels.forEach((c, i) => { const option = document.createElement('option'); option.value = i; option.textContent = c.site + (c.included ? '' : ' (ausgeschlossen/fehlt)'); $('channel').append(option); });
   $('channel').value = state.channel; populateTrialSelectors();
+  baselineViewer.start();
   for (const warning of d.warnings) { const p = document.createElement('p'); p.className = 'note'; p.textContent = warning; $('warnings').append(p); }
   $('provenance').textContent = JSON.stringify({metadata: d.metadata, exclusions: d.exclusions}, null, 2);
   let absoluteMax = 1;
@@ -451,12 +463,13 @@ async function start() {
   state.scales.power = [0, absoluteMax * 1.05];
   for (const id of ['band', 'mode', 'scale-min', 'scale-max', 'individual-curves']) $(id).addEventListener('change', () => { stop(); render(); });
   $('family').addEventListener('change', () => { stop(); populateTrialSelectors(); render(); });
-  $('scope').addEventListener('change', () => { stop(); populateTrialSelectors(); render(); });
+  $('scope').addEventListener('change', () => { stop(); baselineViewer.stop(); baselineViewer.activate(); populateTrialSelectors(); render(); });
   $('channel').addEventListener('change', () => { state.channel = +$('channel').value; render(); });
   $('metric').addEventListener('change', () => { [$('scale-min').value, $('scale-max').value] = state.scales[$('metric').value]; render(); });
   $('fit-scale').addEventListener('click', async () => {
     stop(); await state.rendering;
-    const vals = SIDES.flatMap(side => d.channels.map((_, ci) => value(condition(side), ci, +$('band').value, $('metric').value))).filter(available);
+    const vals = ($('scope').value === 'baseline' ? baselineViewer.values() :
+      SIDES.flatMap(side => d.channels.map((_, ci) => value(condition(side), ci, +$('band').value, $('metric').value)))).filter(available);
     if (!vals.length) return;
     const magnitude = Math.max(.01, ...vals.map(Math.abs)), lo = $('metric').value === 'power' ? 0 : Math.min(-magnitude * .01, ...vals), hi = Math.max(magnitude * .01, ...vals);
     $('scale-min').value = (lo < 0 ? lo * 1.05 : 0).toPrecision(5); $('scale-max').value = (hi * 1.05).toPrecision(5); render();

@@ -23,7 +23,12 @@ Farbgrenzen auch beim Trial-/Zeitwechsel. Schieben oder „Abspielen“ öffnet 
 den Zeitverlauf, auch aus Aufgabenmittel oder Rebound. Die verwendete
 Vorbereitungsreferenz ist markiert und mit ihrer Leistung in µV² sichtbar;
 „Leistung mit Referenz (µV²)“ zeigt die zugehörigen horizontalen Referenzlinien.
-Die separaten 60-s-Ruhebaselines werden hier nicht zur Normalisierung verwendet.
+Die separaten 60-s-Ruhebaselines werden nicht zur Normalisierung der Handaufgaben verwendet.
+**Ansicht → Baseline** öffnet eine eigene Untersuchung von Anfangs-/Endruhebaseline
+oder der Vorbereitung einzelner gültiger Trials. Abschnitt und Referenz sind
+getrennt wählbar; Standard ist das eigene Abschnittsmittel. Kopf, Bandkurven,
+Spannung, Zeit-Frequenz-Karte und Zeitschieber zeigen diese Auswahl. Prozentwerte
+beschreiben dort relative Leistungsschwankungen; ein Aufgabenereignis wird nicht angenommen.
 Trialübersichten und Bandkurven stehen als fester Vergleich nebeneinander:
 links C3, rechts C4, jeweils mit beiden Handbedingungen und gemeinsamen Skalen.
 Der Kanalwähler betrifft EEG-Spannung, Referenzanzeige und Zeit-Frequenz-Karten;

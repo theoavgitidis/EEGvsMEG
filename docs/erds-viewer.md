@@ -151,6 +151,53 @@ in der QC-Datei dokumentierbar. Die Koordinaten stammen aus `fsaverage_1005`,
 Kopf und Sensoren werden in dasselbe MNE-Kopfkoordinatensystem transformiert.
 Eine kleine Projektion auf die Oberfläche dient ausschließlich der Sichtbarkeit.
 
+## Baseline als eigene Ansicht
+
+Unter **Ansicht → Baseline** stehen zwei Arten zur Verfügung:
+
+- **Ruhebaseline · Anfang / Ende:** vollständig markierte 60-s-Abschnitte aus
+  `baseline_start`/`baseline_end`. Abschnitt und Attempt stehen in der Auswahl.
+  Invalidierte, unvollständige, mehrdeutige oder von Pausen überlappte Attempts
+  werden ausgeschlossen. Fehlende Ruhebaselines erzeugen einen sichtbaren Hinweis;
+  Vorbereitung und Pausen werden nicht als Ersatzruhe angenommen.
+- **Trial-Vorbereitung:** die tatsächlich verwendeten Referenzfenster jedes
+  akzeptierten Hand-Trials mit Block, Trial, Attempt und Aufnahmezeitpunkt.
+  Invalidierte oder ausgeschlossene Trials erscheinen auch hier nicht erneut.
+
+**Untersuchter Abschnitt** und **Referenzabschnitt** sind getrennt auswählbar.
+Standard: **Eigenes Abschnittsmittel**. Dann beschreibt 0 % das mittlere
+Leistungsniveau dieses Abschnitts, und der Verlauf darf davon abweichen. Eine
+andere Referenz, etwa die Anfangsbaseline für die Endbaseline, wird ausschließlich
+ausdrücklich gewählt. Für jedes eingeschlossene EEG und Frequenzband gilt:
+
+```text
+Änderung (%) = 100 × (Fensterleistung / mittlere gültige Leistung des Referenzabschnitts − 1)
+```
+
+Dies ist eine deskriptive Leistungsänderung; ohne Aufgabenereignis ist eine
+Ruhefluktuation kein nachgewiesenes ereignisbezogenes ERD/ERS. Die Wahl der Referenz
+bestimmt die Interpretation und ersetzt keine Artefaktkontrolle; siehe
+[MNE: Baseline correction considerations](https://mne.tools/stable/auto_tutorials/time-freq/20_sensors_time_frequency.html#baseline-correction-considerations).
+Die Referenzierung der Handaufgaben bleibt unverändert.
+
+Ein drehbarer Kopf, Zahlenbalken und Tabelle zeigen alle acht Kanalwerte. C3-/C4-
+Bandkurven stehen nebeneinander mit gemeinsamen Y-Grenzen; ein ausdrücklich anderer
+Referenzabschnitt erscheint orange gestrichelt, jeweils ab seinem eigenen Beginn.
+Die X-Achse begrenzt sich auf den untersuchten Abschnitt. Der Kanalwähler steuert
+zusätzlich EEG-Spannung und Zeit-Frequenz-Karte. Letztere bleibt ausdrücklich in %
+mit eigener Skala ±100 %, auch bei absoluter Bandpower. **Abschnittsmittel** zeigt
+die mittlere Leistung der gültigen Fenster; **Zeitverlauf**, Schieben oder Abspielen
+zeigt die ausgewählte Fenstermitte ab Abschnittsbeginn. Es gibt keinen Aufgaben-Cue
+oder Reboundmarker in dieser Ansicht. Kamerasteuerung und Farbgrenzen sind sichtbar.
+
+Auch hier: 1-s-Hann-Fenster und 100-ms-Schritte. Kein Fenster überschreitet die
+Abschnittsgrenzen. Technische Samplefehler, nicht endliche Werte und QC-Intervalle
+maskieren alle betroffenen Fenster für sämtliche eingeschlossenen Elektroden.
+Die Referenz verwendet dieselbe gemeinsame Menge gültiger Fenster. Fensterzahl,
+Fehlstellen und Referenzzeitraum sind sichtbar; überlappende Fenster sind keine
+unabhängigen Wiederholungen. Null-/numerisch unauflösbare Referenzen bleiben als
+Prozentwerte fehlend, während absolute Leistung und Spannung weiterhin sichtbar sind.
+
 ## Berechnung und Grenzen
 
 Für jeden Trial und Kanal werden 250 Samples (1 s bei bestätigten 250 Hz) mit
@@ -168,7 +215,7 @@ Modus nicht vorgesehen; abweichende Einstellungen werden zurückgewiesen.
 Die Referenz verwendet vollständige Fenster innerhalb der Vorbereitung vor dem
 Cue, frühestens −2 s; nominal liegen deren Mittelpunkte bei −1,5 bis −0,5 s.
 Diese aufgabennahe Referenz ist von den separaten 60-s-Ruhebaselines der Sitzung
-zu unterscheiden. Die Ruhebaselines werden in diesem Viewer nicht zur
+zu unterscheiden. In der Handaufgabenansicht werden Ruhebaselines nicht zur
 Normalisierung herangezogen. Vorbereitung kann Erwartungsaktivität enthalten;
 die sichtbare Markierung begründet keine physiologisch neutrale Ruhephase.
 Aufgabenmittel entstehen aus vollständigen Aufgabenfenstern, nominal mit
@@ -274,6 +321,11 @@ Der Export legt ausschließlich einen neuen Ordner an: `report.json` mit allen
 aggregierten Band-/Zeit-Frequenz-Werten, Einzeltrial-Zusammenfassungen,
 Konfiguration, QC und Quellenprüfsummen; `summary.csv` für Aufgabe/Rebound;
 `bandpower.csv` für die Zeitverläufe. Keine Originaldatei wird überschrieben.
+`report.json` enthält zusätzlich Baseline-Abschnittsmetadaten und Baseline-Ausschlüsse.
+`baselines.csv` enthält die vollständigen Bandkurven der verfügbaren Ruhe-/
+Vorbereitungsabschnitte, deren eigene mittlere Referenzleistung, relative Änderung,
+Aufnahmebeginn und Fensterzahl. Fehlende Fenster bleiben leer. Diese CSV verwendet
+ausdrücklich die Eigenreferenz; andere interaktive Vergleiche stehen im Auswahl-JSON.
 Zusätzlich enthält `trials.csv` Referenz-, Aufgaben- und Reboundwerte je gültigem
 Trial/Kanal/Band mit Block-, Trial-, Attempt-ID und Aufnahmezeitpunkt.
 `reference_windows` im JSON nennt pro Trial den erlaubten Referenzzeitraum,
@@ -297,6 +349,12 @@ Abbildungen zusammen mit dem passenden Auswahl-JSON und Gesamtbericht aufbewahre
 Diese enthalten
 vollständige Referenz-, Montage-, Datenvarianten- und Ausschlussinformationen.
 Browserdownloads werden vom Browser verwaltet und ändern keine Quelldateien.
+In der Baseline-Ansicht exportiert **Baseline-Auswahl (JSON)** den untersuchten und
+den Referenzabschnitt einschließlich Kurven, Referenzwerten, EEG-Spannung und
+Zeit-Frequenz-Werten des gewählten Kanals. Baseline-Tabelle und PNG-Schaltflächen
+beziehen sich auf dieselbe Auswahl. Für Nachvollziehbarkeit PNG zusammen mit dem
+zugehörigen Auswahl-JSON aufbewahren. Die Baseline-Tabelle dokumentiert zusätzlich
+Referenz-ID/-Zeitraum, gültige Referenzfenster, Datenvariante, Band und Zeitwahl.
 
 Numerische Tests verwenden synthetische Signale. HTTP-Tests benötigen einen
 lokalen Port; optionale UI-Tests Playwright und installiertes Chrome (alternativ
