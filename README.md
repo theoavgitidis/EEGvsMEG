@@ -91,6 +91,9 @@ Interpolation oder Quellenlokalisation. Die Ansicht wechselt zwischen Gesamtmitt
 und auswählbaren Einzeltrials mit Block-/Trial-/Attempt-ID und eigener Referenz.
 Trialübersichten, Zahlenbalken und eine gemeinsam anpassbare, anschließend feste
 Farbskala machen Unterschiede und ähnliche Kanalwerte nachvollziehbar.
+Trialübersichten und Bandkurven zeigen C3 links und C4 rechts nebeneinander,
+jeweils mit beiden Handbedingungen und gemeinsamen Skalen. Die Elektrodenauswahl
+für EEG-Spannung, Referenzanzeige und Zeit-Frequenz-Karten bleibt separat bedienbar.
 Der Zeitschieber und „Abspielen“ öffnen direkt den Zeitverlauf, auch aus einer
 Mittelwertansicht; Werte und Zeitmarkierungen bleiben synchron.
 Die verwendete Vorbereitungsreferenz ist markiert; Referenz- und Aufgabenleistung

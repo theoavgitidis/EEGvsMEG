@@ -68,12 +68,20 @@ weiterhin zurückgewiesen.
   die Auswahl nennt Block, Trial, Attempt und Cue-Zeitpunkt innerhalb der Aufnahme.
   Vor/Zurück wechselt die Wiederholung je Seite. Diese Auswahl stellt keine
   zeitgleiche oder statistisch gepaarte Messung beider Hände dar.
-- Die **Trialübersicht** zeigt für den gewählten Kanal und das Band eine Zeile
-  je akzeptierter Wiederholung. Ein Klick öffnet den betreffenden Einzeltrial.
-  Im Gesamtmittel lassen sich zusätzlich alle Einzelkurven einblenden. In der
-  Einzelansicht erscheinen Kopf, Tabelle, Bandkurve, Zeit-Frequenz-Karte und
-  ungefilterte EEG-Spannung derselben Auswahl gemeinsam; das Gesamtmittel wird
-  in der Bandkurve zum Vergleich gepunktet dargestellt. „Ungefiltert“ bedeutet
+- **Trialübersichten und Bandkurven** zeigen fest **C3 links und C4 rechts**
+  nebeneinander; auf schmalen Bildschirmen stehen sie untereinander. Jede Elektrode
+  zeigt beide Handbedingungen: in der Trialübersicht als zwei Karten (linke Hand
+  oben, rechte Hand unten), in der Bandkurve als zwei Kurven. Eine Kartenzeile
+  entspricht einer akzeptierten Wiederholung. Beide Elektroden verwenden dieselben
+  Farbgrenzen beziehungsweise automatisch denselben numerischen Y-Bereich, auch
+  bei absoluter Bandpower. Ein Klick auf eine Kartenzeile öffnet den betreffenden
+  Einzeltrial und wählt dessen Elektrode für EEG-Spannung, Referenzanzeige und
+  Zeit-Frequenz-Karten. Die festen C3-/C4-Vergleiche bleiben beim Kanalwechsel erhalten.
+  Im Gesamtmittel lassen sich zusätzlich alle Einzelkurven in beiden Diagrammen
+  einblenden. In der Einzelansicht folgen beide Bandkurven derselben linken/rechten
+  Trialauswahl; das Gesamtmittel wird zum Vergleich gepunktet dargestellt.
+  Kopf, Tabelle, Zeit-Frequenz-Karte und ungefilterte EEG-Spannung zeigen ebenfalls
+  diese Trialauswahl. „Ungefiltert“ bedeutet
   ohne zusätzliche Viewer-Filter; bei OSCAR ist es weiterhin das OSCAR-Signal.
 - **Aufgabenmittel** verwendet nur vollständige 1-s-Fenster in der Aufgabe.
   **Nach Aufgabenende** verwendet Fenstermitten 0,5–2,5 s nach dem tatsächlichen
@@ -123,7 +131,8 @@ weiterhin zurückgewiesen.
   einen Prozentpunkt Achsenspanne, damit Rundungsrauschen um 0 nicht vergrößert
   wird; die Messwerte bleiben erhalten und die Diagramme sind weiterhin zoombar.
 - Ein Klick auf einen Messpunkt oder eine Tabellenzeile wählt den Kanal für
-  Zeitkurven und Zeit-Frequenz-Karten. Tooltip und Tabelle zeigen Referenz,
+  EEG-Spannung, Referenzanzeige und Zeit-Frequenz-Karten; die Bandkurven und
+  Trialübersichten bleiben fest bei C3/C4. Tooltip und Tabelle zeigen Referenz,
   Leistung, Änderung und gültige Trialzahl. Grau/× bedeutet ausgeschlossen oder
   nicht verfügbar, **nicht 0 %**. Die Zeit-Frequenz-Karten bleiben bei Prozentwerten
   und verwenden eine gemeinsame separate Skala von −100 bis +100 %.
@@ -272,7 +281,11 @@ die tatsächlich verwendeten Fenstermitten, deren Signalzeitraum und Fensterzahl
 `trials.csv` enthält Signalgrenzen und Fenstermitten ebenfalls. Alle Zeiten sind
 cuebezogen; Originalmarker und Berechnungswerte bleiben erhalten.
 Im Browser sind Gesamtbericht, Zusammenfassungs-CSV, aktuelle Tabelle,
-**Aktuelle Auswahl (JSON)** und PNG-Abbildungen verfügbar. Der Auswahl-JSON enthält
+**Aktuelle Auswahl (JSON)** und PNG-Abbildungen verfügbar. **C3-Kurven als PNG**
+und **C4-Kurven als PNG** exportieren das jeweilige Diagramm; Beschriftung und
+Dateiname nennen dessen feste Elektrode unabhängig vom Kanalwähler.
+Der Auswahl-JSON nennt die festen Vergleichskanäle unter
+`motor_comparison_channels` und enthält
 beide ausgewählten Trials oder Mittelwerte, ihre Kurven und Referenzen,
 Band, Zeitauswahl, Farbgrenzen und Verarbeitungsmetadaten; bei Einzeltrials auch
 die EEG-Spannungen und Zeit-Frequenz-Werte des ausgewählten Kanals. Die aktuelle

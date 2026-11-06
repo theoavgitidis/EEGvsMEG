@@ -171,7 +171,9 @@ class ERDSUITest(ERDSServerTest):
         p.evaluate("() => { const g=document.getElementById('head-right');const t=g.data[1];g.emit('plotly_click',{points:[{data:t,customdata:t.customdata[3]}]});}")
         self.ready()
         self.assertEqual(p.locator('#channel').input_value(), '3')
-        self.assertIn('C4', p.locator('#curve-title').inner_text())
+        self.assertTrue(p.locator('#curve-title').inner_text().startswith('C3 ·'))
+        self.assertTrue(p.locator('#curve-title-c4').inner_text().startswith('C4 ·'))
+        self.assertIn('C4', p.locator('#tf-title').inner_text())
         p.locator('#values tr').nth(1).click(); self.ready()
         self.assertEqual(p.locator('#channel').input_value(), '1')
         self.assertIn('ERD/ERS', p.locator('#curves').evaluate('(e)=>e.layout.yaxis.title.text'))
@@ -187,7 +189,8 @@ class ERDSUITest(ERDSServerTest):
         p.locator('#metric').select_option('power'); self.ready()
         self.assertGreater(float(p.locator('#scale-max').input_value()), 0)
         self.assertIn('keine ERD/ERS-Farbkodierung', p.locator('#color-note').inner_text())
-        self.assertTrue(p.locator('#curves').evaluate('(e)=>e.layout.yaxis.autorange'))
+        self.assertEqual(p.locator('#curves').evaluate('(e)=>e.layout.yaxis.range'),
+                         p.locator('#curves-c4').evaluate('(e)=>e.layout.yaxis.range'))
         p.locator('#metric').select_option('percent'); self.ready()
         self.assertEqual(p.locator('#scale-max').input_value(), '400')
         self.assertTrue(p.locator('#head-left').evaluate('(e)=>e.data[0].x===window.originalHeadMesh'))
@@ -209,8 +212,14 @@ class ERDSUITest(ERDSServerTest):
         report = json.loads(Path(downloaded.value.path()).read_text())
         self.assertEqual(report['metadata']['signal'], 'oscar')
         with p.expect_download() as downloaded:
-            p.get_by_role('button', name='Kurven als PNG', exact=True).click()
+            p.get_by_role('button', name='C3-Kurven als PNG', exact=True).click()
         self.assertEqual(Path(downloaded.value.path()).read_bytes()[:8], b'\x89PNG\r\n\x1a\n')
+        self.assertIn('-C3', downloaded.value.suggested_filename)
+        p.locator('#channel').select_option('1'); self.ready()
+        with p.expect_download() as downloaded:
+            p.get_by_role('button', name='C4-Kurven als PNG', exact=True).click()
+        self.assertEqual(Path(downloaded.value.path()).read_bytes()[:8], b'\x89PNG\r\n\x1a\n')
+        self.assertIn('-C4', downloaded.value.suggested_filename)
         p.screenshot(path='/private/tmp/erds-browser-qa.png', full_page=True)
         self.assertFalse(self.errors)
         p.set_viewport_size({'width': 600, 'height': 900})
@@ -241,7 +250,7 @@ class ERDSUITest(ERDSServerTest):
         self.assertGreaterEqual(p.locator('#curves').evaluate('(e)=>e.layout.yaxis.range[1]-e.layout.yaxis.range[0]'), 1)
         self.assertIn('C4', p.locator('#waveform-title').inner_text())
         # Clicking any trial row opens that side's trial; the other side is retained.
-        p.evaluate("() => document.getElementById('overview-left').emit('plotly_click', {points:[{customdata:'Motorik/2/1/1'}]})")
+        p.evaluate("() => document.getElementById('overview-c4-left').emit('plotly_click', {points:[{customdata:'Motorik/2/1/1'}]})")
         self.ready()
         self.assertEqual(p.locator('#trial-left').input_value(), 'Motorik/2/1/1')
         self.assertEqual(p.locator('#trial-right').input_value(), 'Motorik/2/2/1')
@@ -258,6 +267,7 @@ class ERDSUITest(ERDSServerTest):
         self.assertEqual(exported['selection']['trial_left'], 'Motorik/2/1/1')
         self.assertEqual(exported['selection']['trial_right'], 'Motorik/1/2/1')
         self.assertEqual(exported['selection']['channel'], 'C4')
+        self.assertEqual(exported['selection']['motor_comparison_channels'], ['C3', 'C4'])
         self.assertEqual(exported['right']['n'], 1)
         self.assertEqual(len(exported['times']), len(exported['right']['power'][1][0]))
         self.assertEqual(len(exported['frequencies']), len(exported['right']['spectral_percent']))
@@ -276,6 +286,7 @@ class ERDSUITest(ERDSServerTest):
         self.assertFalse(p.locator('#waveform-panel').is_visible())
         p.locator('#individual-curves').check(); self.ready()
         self.assertEqual(p.locator('#curves').evaluate('(e)=>e.data.length'), 6)
+        self.assertEqual(p.locator('#curves-c4').evaluate('(e)=>e.data.length'), 6)
         self.assertFalse(self.errors)
 
     def test_missing_electrode_is_gray_and_zero_is_neutral_on_asymmetric_scale(self):
@@ -289,6 +300,66 @@ class ERDSUITest(ERDSServerTest):
         p.locator('#scale-max').fill('400'); p.locator('#scale-max').press('Tab'); self.ready()
         self.assertEqual(p.locator('#head-right').evaluate('(e)=>e.data[1].marker.color[3]'), 'rgb(247,247,247)')
         self.assertFalse(self.errors)
+
+    def test_fixed_c3_c4_comparisons_keep_both_hands_and_channel_specific_values(self):
+        data, events = synthetic_session()
+        # A second, independent effect: only left-hand C4 loses 36% Mu power.
+        # This catches swapping either the electrode columns or hand conditions.
+        for row in events.to_dict('records'):
+            if row['label'] == 'cue_onset' and row['condition'].endswith('left'):
+                cue = row['samples_received']
+                times = np.arange(cue, cue + 1000) / 250
+                data[3, cue:cue + 1000] -= 2 * np.sin(2 * np.pi * 10 * times)
+        result = compute_erds(data, events)
+        result['metadata'].update(signal='oscar', signal_description='OSCAR · synthetische Prüfung')
+        server = create_erds_server(result)
+        thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
+        try:
+            p = self.page; p.goto(server.url); self.ready()
+            for site, ids, expected in (
+                    ('C3', ('overview-left', 'overview-right'), (0, -75)),
+                    ('C4', ('overview-c4-left', 'overview-c4-right'), (-36, 0))):
+                curve = 'curves' if site == 'C3' else 'curves-c4'
+                for i, graph in enumerate(ids):
+                    self.assertAlmostEqual(p.locator('#' + graph).evaluate('(e)=>e.data[0].z[0][35]'), expected[i], places=7)
+                    self.assertAlmostEqual(p.locator('#' + curve).evaluate(f'(e)=>e.data[{i}].y[35]'), expected[i], places=7)
+                self.assertIn('Links', p.locator('#' + curve).evaluate('(e)=>e.data[0].name'))
+                self.assertIn('Rechts', p.locator('#' + curve).evaluate('(e)=>e.data[1].name'))
+            self.assertEqual(p.locator('#curves').evaluate('(e)=>e.layout.yaxis.range'),
+                             p.locator('#curves-c4').evaluate('(e)=>e.layout.yaxis.range'))
+            limits = [p.locator('#' + graph).evaluate('(e)=>[e.data[0].zmin,e.data[0].zmax]')
+                      for graph in ('overview-left', 'overview-right', 'overview-c4-left', 'overview-c4-right')]
+            self.assertEqual(limits, [[-100, 100]] * 4)
+            for left, right in (('#overview-title', '#overview-title-c4'), ('#curves', '#curves-c4')):
+                a, b = p.locator(left).bounding_box(), p.locator(right).bounding_box()
+                self.assertLess(a['x'], b['x'])
+                self.assertAlmostEqual(a['y'], b['y'], delta=2)
+            p.locator('#channel').select_option('7'); self.ready()
+            self.assertTrue(p.locator('#curve-title').inner_text().startswith('C3 ·'))
+            self.assertTrue(p.locator('#curve-title-c4').inner_text().startswith('C4 ·'))
+            self.assertIn('PO8', p.locator('#tf-title').inner_text())
+            p.locator('#family').select_option('mi'); self.ready()
+            self.assertAlmostEqual(p.locator('#curves-c4').evaluate('(e)=>e.data[0].y[35]'), -36)
+            p.locator('#band').select_option('1'); self.ready()
+            self.assertIn('Beta · 13–30 Hz', p.locator('#curve-title-c4').inner_text())
+            self.assertAlmostEqual(p.locator('#curves').evaluate('(e)=>e.data[1].y[70]'), 300)
+            self.assertAlmostEqual(p.locator('#curves-c4').evaluate('(e)=>e.data[1].y[70]'), 0, places=7)
+            p.locator('#band').select_option('0'); self.ready()
+            p.evaluate("() => $('overview-c4-left').emit('plotly_click', {points:[{customdata:'Imagery/1/3/1'}]})")
+            self.ready()
+            self.assertEqual(p.locator('#scope').input_value(), 'single')
+            self.assertEqual(p.locator('#channel').input_value(), '3')
+            self.assertAlmostEqual(p.locator('#curves-c4').evaluate('(e)=>e.data[1].y[35]'), -36)
+            self.assertAlmostEqual(p.locator('#curves').evaluate('(e)=>e.data[3].y[35]'), -75)
+            p.locator('#motor-overviews').screenshot(path='/private/tmp/erds-c3-c4-overviews-qa.png')
+            p.locator('#motor-curves').screenshot(path='/private/tmp/erds-c3-c4-curves-qa.png')
+            p.set_viewport_size({'width': 600, 'height': 900})
+            p.wait_for_function('() => document.documentElement.scrollWidth <= 600')
+            self.assertLess(p.locator('#curve-title').bounding_box()['y'],
+                            p.locator('#curve-title-c4').bounding_box()['y'])
+            self.assertFalse(self.errors)
+        finally:
+            server.shutdown(); server.server_close(); thread.join(3)
 
     def test_rendered_head_has_c3_blue_and_no_extra_colorbar_sensor(self):
         from PIL import Image
@@ -349,7 +420,7 @@ class ERDSUITest(ERDSServerTest):
         self.assertAlmostEqual(p.locator('#head-right').evaluate('(e)=>e.data[1].meta.values[1]'), -75)
         self.assertEqual(p.locator('#values tr').nth(1).locator('td').nth(8).inner_text(), '-75.00')
         time = p.evaluate('() => state.data.times[+$("time").value]')
-        for graph in ('curves', 'tf-left', 'tf-right', 'overview-left', 'overview-right'):
+        for graph in ('curves', 'curves-c4', 'tf-left', 'tf-right', 'overview-left', 'overview-right', 'overview-c4-left', 'overview-c4-right'):
             self.assertEqual(p.locator('#' + graph).evaluate('(e)=>e.layout.shapes.filter(s=>s.line.dash==="solid").map(s=>s.x0)'), [time])
         self.assertTrue(p.locator('#tf-right').evaluate('(e)=>e.data[0].z===window.originalTF'))
         self.assertTrue(p.locator('#curves').evaluate('(e)=>e.data[1].y===window.originalCurve'))
@@ -414,6 +485,8 @@ class ERDSUITest(ERDSServerTest):
             self.assertEqual(p.locator('#metric').input_value(), 'power')
             levels = p.locator('#curves').evaluate('(e)=>e.layout.shapes.filter(s=>s.name?.startsWith("baseline-level-")).map(s=>s.y0)')
             np.testing.assert_allclose(levels, [50,125])
+            c4_levels = p.locator('#curves-c4').evaluate('(e)=>e.layout.shapes.filter(s=>s.name?.startsWith("baseline-level-")).map(s=>s.y0)')
+            np.testing.assert_allclose(c4_levels, [50,50])
             p.locator('#scope').select_option('single'); self.ready()
             p.locator('#next-right').click(); self.ready()
             self.assertIn('Referenz: 200.00 µV²', p.locator('#reference-right').inner_text())
@@ -432,7 +505,10 @@ class ERDSUITest(ERDSServerTest):
             p.screenshot(path='/private/tmp/erds-baseline-qa.png', full_page=True)
             p.locator('#channel').select_option('7'); self.ready()
             self.assertIn('nicht verfügbar', p.locator('#reference-right').inner_text())
-            self.assertEqual(p.locator('#curves').evaluate('(e)=>e.layout.shapes.filter(s=>s.name?.startsWith("baseline-level-")).length'), 0)
+            # The selected PO8 reference is missing; fixed C3/C4 comparisons
+            # keep their own valid reference levels rather than following PO8.
+            self.assertEqual(p.locator('#curves').evaluate('(e)=>e.layout.shapes.filter(s=>s.name?.startsWith("baseline-level-")).length'), 2)
+            self.assertEqual(p.locator('#curves-c4').evaluate('(e)=>e.layout.shapes.filter(s=>s.name?.startsWith("baseline-level-")).length'), 2)
             self.assertFalse(self.errors)
         finally:
             server.shutdown(); server.server_close(); thread.join(3)

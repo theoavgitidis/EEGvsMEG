@@ -1,6 +1,10 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const SIDES = ['left', 'right'];
+const MOTOR_VIEWS = [
+  {site: 'C3', curve: 'curves', curveTitle: 'curve-title', overview: 'overview', overviewTitle: 'overview-title'},
+  {site: 'C4', curve: 'curves-c4', curveTitle: 'curve-title-c4', overview: 'overview-c4', overviewTitle: 'overview-title-c4'},
+];
 const DIVERGING = [[0, '#2166ac'], [.5, '#f7f7f7'], [1, '#b2182b']];
 const SEQUENTIAL = [[0, '#f7fbff'], [.5, '#6baed6'], [1, '#08306b']];
 const config = {responsive: true, displaylogo: false, scrollZoom: false};
@@ -105,20 +109,20 @@ function phaseShapes(c, heatmap = false) {
   if ($('mode').value === 'time') result.push(line(state.data.times[+$('time').value], 'solid', 2));
   return result;
 }
-function referenceLevels() {
-  const ci = state.channel, bi = +$('band').value;
+function referenceLevels(ci = state.channel) {
+  const bi = +$('band').value;
   const levels = SIDES.filter(side => condition(side)?.n && available(condition(side).reference[ci][bi]));
   const line = (name, y, color) => ({type: 'line', name, x0: 0, x1: 1, xref: 'paper', y0: y, y1: y, yref: 'y',
     line: {color, width: 1.5, dash: 'dashdot'}});
   return $('metric').value === 'percent' ? levels.length ? [line('baseline-zero', 0, theme().muted)] : [] :
     levels.map(side => line('baseline-level-' + side, condition(side).reference[ci][bi], side === 'left' ? '#287cba' : '#c77b14'));
 }
-function comparisonShapes(bandPower = false) {
+function comparisonShapes(bandPower = false, ci = state.channel) {
   // Coincident cue, offset and cursor lines should appear only once.
   const lines = SIDES.flatMap(side => phaseShapes(condition(side)).filter(shape => shape.name !== 'baseline-source'));
   const trials = SIDES.flatMap(side => condition(side)?.trials || []);
   return [...referenceShapes({trials}), ...new Map(lines.map(shape => [JSON.stringify(shape), shape])).values(),
-    ...(bandPower ? referenceLevels() : [])];
+    ...(bandPower ? referenceLevels(ci) : [])];
 }
 function referencePanel() {
   const ci = state.channel, bi = +$('band').value;
@@ -149,8 +153,9 @@ function populateTrialSelectors() {
   }
 }
 async function loadSelection() {
-  const channel = channelName(), channelData = await getJSON('channel', {channel, band: band().id});
-  state.channelTrials = channelData.conditions;
+  const channel = channelName();
+  const channels = await Promise.all(MOTOR_VIEWS.map(view => getJSON('channel', {channel: view.site, band: band().id})));
+  MOTOR_VIEWS.forEach((view, i) => { state.channelTrials[view.site] = channels[i].conditions; });
   if (single()) {
     const selections = await Promise.all(SIDES.map(side => {
       const key = state.selected[conditionKey(side)];
@@ -224,25 +229,25 @@ async function head(side, lo, hi) {
     marker: {color: vals.map(v => colorFor(v, lo, hi))}, hovertemplate: '%{y}: %{x:.3f}<extra></extra>',
     customdata: d.channels.map((_, i) => i)}], bar, config);
 }
-async function overview(side, lo, hi) {
-  const key = conditionKey(side), rows = state.channelTrials[key] || [], metric = $('metric').value;
+async function overview(view, side, lo, hi) {
+  const key = conditionKey(side), rows = state.channelTrials[view.site]?.[key] || [], metric = $('metric').value;
   const l = layout(taskLabel(side)); l.margin.l = 145; l.plot_bgcolor = theme().grid;
   l.shapes = phaseShapes(aggregate(side), true);
   l.xaxis = {...l.xaxis, title: {text: 'Zeit zum Aufgaben-Cue (s)'}, range: [-2, 10]};
   l.yaxis = {...l.yaxis, autorange: 'reversed', tickmode: 'array', tickvals: rows.map((_, i) => i),
     ticktext: rows.map(t => `B${t.block} · T${t.trial} · A${t.attempt}`), dtick: 1};
-  await Plotly.react($('overview-' + side), [{type: 'heatmap', x: state.data.times, y: rows.map((_, i) => i),
+  await Plotly.react($(view.overview + '-' + side), [{type: 'heatmap', x: state.data.times, y: rows.map((_, i) => i),
     z: rows.map(t => t[metric]), customdata: rows.map(t => state.data.times.map(() => t.key)),
     zmin: lo, zmax: hi, colorscale: colorscale(lo, hi), hoverongaps: false,
     colorbar: {title: {text: unit()}}, hovertemplate: '%{customdata}<br>%{x:.2f} s · %{z:.2f}<extra></extra>'}], l, config);
 }
-async function charts() {
-  const d = state.data, ci = state.channel, bi = +$('band').value, metric = $('metric').value;
+function curveTraces(ci, site) {
+  const d = state.data, bi = +$('band').value, metric = $('metric').value;
   const traces = [];
   SIDES.forEach((side, i) => {
     const c = condition(side), color = i ? '#c77b14' : '#287cba';
     if ($('individual-curves').checked && !single()) {
-      for (const t of state.channelTrials[conditionKey(side)] || []) traces.push({type: 'scatter', mode: 'lines', x: d.times, y: t[metric],
+      for (const t of state.channelTrials[site]?.[conditionKey(side)] || []) traces.push({type: 'scatter', mode: 'lines', x: d.times, y: t[metric],
         line: {color, width: 1}, opacity: .22, showlegend: false, name: trialLabel(t), connectgaps: false,
         hovertemplate: '%{x:.2f} s · %{y:.2f}<extra>%{fullData.name}</extra>'});
     }
@@ -252,20 +257,32 @@ async function charts() {
       line: {color, dash: i ? 'dash' : 'solid', width: 2}, name: `${i ? 'Rechts' : 'Links'} · ${single() ? c?.n ? 'T' + c.trials[0].trial : 'kein Trial' : 'Mittelwert'}`,
       connectgaps: false, hovertemplate: '%{x:.2f} s: %{y:.2f}<extra>%{fullData.name}</extra>'});
   });
-  const l = layout(); l.xaxis = {...l.xaxis, title: {text: 'Zeit relativ zum Aufgaben-Cue (s)'}, range: [-2, 10]};
-  l.yaxis.title = {text: metric === 'percent' ? 'ERD/ERS (%)' : 'Bandpower (µV²)'};
-  l.yaxis.autorange = true;
-  if (metric === 'percent') {
-    const values = traces.flatMap(trace => trace.y).filter(available);
-    const low = Math.min(0, ...values), high = Math.max(0, ...values), center = (low + high) / 2;
-    // Keep the actual values, but do not magnify floating-point residuals of
-    // zero into apparent oscillations on a pico-percent axis.
-    const span = Math.max(1, high - low) * 1.15;
-    l.yaxis.range = [center - span / 2, center + span / 2]; l.yaxis.autorange = false;
+  return traces;
+}
+async function motorCurves() {
+  const metric = $('metric').value;
+  const views = MOTOR_VIEWS.map(view => {
+    const ci = state.data.channels.findIndex(channel => channel.site === view.site);
+    return {...view, ci, traces: curveTraces(ci, view.site)};
+  });
+  // One numeric range for both electrodes, including absolute reference levels.
+  // Never turn floating-point residuals around zero into a visible effect.
+  const values = views.flatMap(view => [...view.traces.flatMap(trace => trace.y),
+    ...referenceLevels(view.ci).map(shape => shape.y0)]).filter(available);
+  const low = Math.min(0, ...values), high = Math.max(0, ...values), center = (low + high) / 2;
+  const span = Math.max(metric === 'percent' ? 1 : Number.EPSILON, high - low) * 1.15;
+  const range = metric === 'percent' ? [center - span / 2, center + span / 2] : [0, high > 0 ? high * 1.15 : 1];
+  for (const view of views) {
+    const l = layout(); l.xaxis = {...l.xaxis, title: {text: 'Zeit relativ zum Aufgaben-Cue (s)'}, range: [-2, 10]};
+    l.yaxis = {...l.yaxis, title: {text: metric === 'percent' ? 'ERD/ERS (%)' : 'Bandpower (µV²)'}, range, autorange: false};
+    l.legend = {orientation: 'h', y: 1.2}; l.shapes = comparisonShapes(true, view.ci);
+    await Plotly.react($(view.curve), view.traces, l, config);
+    $(view.curveTitle).textContent = `${view.site} · ${$('band').selectedOptions[0].text} · ${single() ? 'Einzeltrials (eigene Referenz), Gesamtmittel gepunktet' : 'Gesamtmittel'}`;
   }
-  l.legend = {orientation: 'h', y: 1.2}; l.shapes = comparisonShapes(true);
-  await Plotly.react($('curves'), traces, l, config);
-  $('curve-title').textContent = `${channelName()} · ${$('band').selectedOptions[0].text} · ${single() ? 'Einzeltrials (eigene Referenz), Gesamtmittel gepunktet' : 'Gesamtmittel'}`;
+}
+async function charts() {
+  const d = state.data, ci = state.channel;
+  await motorCurves();
   let clipped = 0;
   for (const side of SIDES) {
     const c = condition(side), z = c?.n ? single() ? c.spectral_percent : c.spectral_percent[ci] : d.frequencies.map(() => d.times.map(() => null));
@@ -311,10 +328,13 @@ function staticSelectionKey(lo, hi) {
 async function updateTimeMarkers() {
   // A new time does not change the curves or TF/trial power matrices. Relayout
   // their cursors instead of rebuilding all plots and losing the current zoom.
-  await Plotly.relayout($('curves'), {shapes: comparisonShapes(true)});
+  for (const view of MOTOR_VIEWS) {
+    const ci = state.data.channels.findIndex(channel => channel.site === view.site);
+    await Plotly.relayout($(view.curve), {shapes: comparisonShapes(true, ci)});
+    for (const side of SIDES) await Plotly.relayout($(view.overview + '-' + side), {shapes: phaseShapes(aggregate(side), true)});
+  }
   for (const side of SIDES) {
     await Plotly.relayout($('tf-' + side), {shapes: phaseShapes(condition(side), true)});
-    await Plotly.relayout($('overview-' + side), {shapes: phaseShapes(aggregate(side), true)});
   }
   if (single()) await Plotly.relayout($('waveform'), {shapes: comparisonShapes()});
 }
@@ -340,13 +360,13 @@ function render() {
     for (const side of SIDES) {
       await head(side, lo, hi);
       if (revision !== state.revision) return;
-      if (full) await overview(side, lo, hi);
+      if (full) for (const view of MOTOR_VIEWS) await overview(view, side, lo, hi);
       if (revision !== state.revision) return;
     }
     if (full) await charts(); else await updateTimeMarkers();
     if (revision !== state.revision) return;
     table(); referencePanel(); state.staticKey = key;
-    $('overview-title').textContent = `${channelName()} · ${$('band').selectedOptions[0].text} · alle Wiederholungen einzeln`;
+    for (const view of MOTOR_VIEWS) $(view.overviewTitle).textContent = `${view.site} · ${$('band').selectedOptions[0].text} · alle Wiederholungen einzeln`;
     $('status').textContent = 'Bereit · ' + state.data.metadata.signal_description + ' · ' + state.data.metadata.statistics;
   }).catch(error => { state.staticKey = null; stop(); $('status').textContent = 'Fehler: ' + error.message; });
   return state.rendering;
@@ -386,6 +406,7 @@ function selectionMetadata() {
     montage_source: state.data.geometry.source, montage_confirmed: m.montage_confirmed,
     n_left: condition('left').n, n_right: condition('right').n,
     trial_left: single() ? state.selected[conditionKey('left')] : null, trial_right: single() ? state.selected[conditionKey('right')] : null,
+    motor_comparison_channels: MOTOR_VIEWS.map(view => view.site),
     color_limits: scale(), normalization: single() ? m.single_trial_normalization : m.normalization};
 }
 function download(content, type, filename) {
@@ -395,12 +416,13 @@ function download(content, type, filename) {
 async function savePNG(id) {
   stop(); await state.rendering;
   const graph = $(id), old = structuredClone({title: graph.layout.title, margin: graph.layout.margin});
-  const scope = single() ? 'Einzeltrials' : 'Gesamtmittel', suffix = `${$('family').value}-${band().id}-${$('mode').value}-${scope}-${channelName()}`;
+  const plotChannel = MOTOR_VIEWS.find(view => view.curve === id)?.site || channelName();
+  const scope = single() ? 'Einzeltrials' : 'Gesamtmittel', suffix = `${$('family').value}-${band().id}-${$('mode').value}-${scope}-${plotChannel}`;
   const frequencies = id.startsWith('tf-') ? '6–40 Hz' : `${band().low}–${band().high} Hz`;
   const time = $('mode').value === 'time' ? ` · Fenstermitte ${state.data.times[+$('time').value].toFixed(1)} s zum Cue` : '';
   const title = `${state.data.metadata.signal.toUpperCase()} · ${scope} · ${frequencies} · ${$('mode').selectedOptions[0].text}${time}`;
   const side = id.includes('left') ? 'left' : id.includes('right') ? 'right' : null;
-  const detail = side ? `${taskLabel(side)} · ${selectionLabel(side)}` : `${channelName()} · Auswahl im JSON-Export dokumentiert`;
+  const detail = side ? `${taskLabel(side)} · ${selectionLabel(side)}` : `${plotChannel} · Auswahl im JSON-Export dokumentiert`;
   try { await Plotly.relayout(graph, {'title.text': title + '<br><sup>' + detail + '</sup>', 'margin.t': 65});
     await Plotly.downloadImage(graph, {format: 'png', filename: 'erds-' + id + '-' + suffix, scale: 2});
   } finally { await Plotly.relayout(graph, old); }
@@ -410,7 +432,8 @@ function chooseTrial(side, key) {
 }
 async function showReference() {
   stop(); await state.rendering;
-  const ids = ['curves', 'tf-left', 'tf-right', 'overview-left', 'overview-right', ...(single() ? ['waveform'] : [])];
+  const ids = [...MOTOR_VIEWS.flatMap(view => [view.curve, ...SIDES.map(side => view.overview + '-' + side)]),
+    'tf-left', 'tf-right', ...(single() ? ['waveform'] : [])];
   for (const id of ids) await Plotly.relayout($(id), {'xaxis.range': [-2, 10], 'xaxis.autorange': false});
 }
 async function start() {
@@ -465,6 +488,7 @@ async function start() {
   }));
   $('png-head').addEventListener('click', async () => { await savePNG('head-left'); await savePNG('head-right'); });
   $('png-curve').addEventListener('click', () => savePNG('curves'));
+  $('png-curve-c4').addEventListener('click', () => savePNG('curves-c4'));
   $('png-tf').addEventListener('click', async () => { await savePNG('tf-left'); await savePNG('tf-right'); });
   $('selection-json').addEventListener('click', async () => {
     stop(); await state.rendering;
@@ -485,7 +509,13 @@ async function start() {
       if (point) { state.channel = point.customdata[0]; $('channel').value = state.channel; render(); }
     });
     $('bars-' + side).on('plotly_click', event => { state.channel = event.points[0].customdata; $('channel').value = state.channel; render(); });
-    $('overview-' + side).on('plotly_click', event => { const key = event.points[0]?.customdata; if (key) chooseTrial(side, key); });
+    for (const view of MOTOR_VIEWS) $(view.overview + '-' + side).on('plotly_click', event => {
+      const key = event.points[0]?.customdata;
+      if (key) {
+        state.channel = d.channels.findIndex(channel => channel.site === view.site); $('channel').value = state.channel;
+        chooseTrial(side, key);
+      }
+    });
     $('head-' + side).on('plotly_relayout', event => {
       if (event['scene.camera']) {
         state.camera = event['scene.camera']; const other = $('head-' + (side === 'left' ? 'right' : 'left'));
