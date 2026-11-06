@@ -12,6 +12,7 @@ const state = {
   data: null, channel: 1, camera: {eye: {x: 0, y: 0, z: 2.2}, up: {x: 0, y: 1, z: 0}},
   timer: null, revision: 0, rendering: Promise.resolve(), cache: new Map(), staticKey: null,
   selected: {}, details: {}, channelTrials: {}, scales: {percent: [-100, 100], power: [0, 100]},
+  hiddenCurves: new Set(), curveSelectorFamily: null,
 };
 const fmt = v => v === null || v === undefined ? '—' : (Math.abs(v) < .005 ? 0 : Number(v)).toFixed(2);
 const available = v => typeof v === 'number' && Number.isFinite(v);
@@ -247,14 +248,56 @@ async function overview(view, side, lo, hi) {
     zmin: lo, zmax: hi, colorscale: colorscale(lo, hi), hoverongaps: false,
     colorbar: {title: {text: unit()}}, hovertemplate: '%{customdata}<br>%{x:.2f} s · %{z:.2f}<extra></extra>'}], l, config);
 }
+function curveVisibility() {
+  const keys = SIDES.flatMap(side => aggregate(side).trials.map(t => t.key));
+  const enabled = $('individual-curves').checked && !single();
+  return {overlays_enabled: enabled,
+    visible_trial_keys: enabled ? keys.filter(key => !state.hiddenCurves.has(key)) : [],
+    disabled_trial_keys: keys.filter(key => state.hiddenCurves.has(key)),
+    effect: 'Display of background curves only; aggregate and scientific exclusions unchanged'};
+}
+function updateCurveSelection() {
+  const enabled = $('individual-curves').checked && !single();
+  $('individual-curves').disabled = single();
+  $('curve-trial-selection').hidden = !enabled;
+  if (state.curveSelectorFamily !== $('family').value) {
+    for (const side of SIDES) {
+      const list = $('curve-trial-list-' + side), trials = aggregate(side).trials;
+      $('curve-trial-label-' + side).textContent = taskLabel(side);
+      list.replaceChildren();
+      for (const t of trials) {
+        const label = document.createElement('label'), input = document.createElement('input');
+        input.type = 'checkbox'; input.dataset.trialKey = t.key;
+        const text = document.createElement('span'); text.textContent = trialLabel(t);
+        input.addEventListener('change', () => {
+          stop();
+          if (input.checked) state.hiddenCurves.delete(t.key); else state.hiddenCurves.add(t.key);
+          render();
+        });
+        label.append(input, text); list.append(label);
+      }
+      if (!trials.length) { const p = document.createElement('p'); p.textContent = 'Keine gültigen Trials.'; list.append(p); }
+      for (const action of ['show', 'hide']) $('curve-' + action + '-' + side).disabled = !trials.length;
+    }
+    state.curveSelectorFamily = $('family').value;
+  }
+  for (const side of SIDES) {
+    const trials = aggregate(side).trials, visible = trials.filter(t => !state.hiddenCurves.has(t.key)).length;
+    $('curve-trial-count-' + side).textContent = `${visible} von ${trials.length} Einzelkurven eingeblendet`;
+    for (const input of $('curve-trial-list-' + side).querySelectorAll('input')) {
+      input.checked = !state.hiddenCurves.has(input.dataset.trialKey);
+    }
+  }
+}
 function curveTraces(ci, site) {
   const d = state.data, bi = +$('band').value, metric = $('metric').value;
   const traces = [];
   SIDES.forEach((side, i) => {
     const c = condition(side), color = i ? '#c77b14' : '#287cba';
     if ($('individual-curves').checked && !single()) {
-      for (const t of state.channelTrials[site]?.[conditionKey(side)] || []) traces.push({type: 'scatter', mode: 'lines', x: d.times, y: t[metric],
-        line: {color, width: 1}, opacity: .22, showlegend: false, name: trialLabel(t), connectgaps: false,
+      for (const t of state.channelTrials[site]?.[conditionKey(side)] || []) if (!state.hiddenCurves.has(t.key)) traces.push({type: 'scatter', mode: 'lines', x: d.times, y: t[metric],
+        line: {color, dash: i ? 'dash' : 'solid', width: 1}, opacity: .22, showlegend: false, name: trialLabel(t), connectgaps: false,
+        meta: {role: 'individual', trialKey: t.key, condition: conditionKey(side)},
         hovertemplate: '%{x:.2f} s · %{y:.2f}<extra>%{fullData.name}</extra>'});
     }
     if (single() && aggregate(side)?.n) traces.push({type: 'scatter', mode: 'lines', x: d.times, y: aggregate(side)[metric][ci][bi],
@@ -329,6 +372,7 @@ function staticSelectionKey(lo, hi) {
   return JSON.stringify({scope: $('scope').value, family: $('family').value, band: $('band').value,
     metric: $('metric').value, channel: state.channel, lo, hi, theme: theme(),
     individuals: $('individual-curves').checked,
+    disabledCurves: curveVisibility().disabled_trial_keys,
     trials: SIDES.map(side => state.selected[conditionKey(side)])});
 }
 async function updateTimeMarkers() {
@@ -368,6 +412,7 @@ function render() {
     $('time').setAttribute('aria-valuetext', `${t.toFixed(1)} Sekunden zum Aufgaben-Cue; Fenster ${(t - .5).toFixed(1)} bis ${(t + .5).toFixed(1)} Sekunden`);
     $('window-note').textContent = $('mode').value === 'task' ? state.data.metadata.task_window : $('mode').value === 'rebound' ? state.data.metadata.rebound_window : '1-s-Fenster, 100-ms-Schritte; keine unabhängige 100-ms-Auflösung, keine Zeitstreckung.';
     updateSelectionText();
+    updateCurveSelection();
     for (const side of SIDES) {
       await head(side, lo, hi);
       if (revision !== state.revision) return;
@@ -418,6 +463,7 @@ function selectionMetadata() {
     n_left: condition('left').n, n_right: condition('right').n,
     trial_left: single() ? state.selected[conditionKey('left')] : null, trial_right: single() ? state.selected[conditionKey('right')] : null,
     motor_comparison_channels: MOTOR_VIEWS.map(view => view.site),
+    curve_visibility: curveVisibility(),
     color_limits: scale(), normalization: single() ? m.single_trial_normalization : m.normalization};
 }
 function download(content, type, filename) {
@@ -433,8 +479,13 @@ async function savePNG(id) {
   const time = $('mode').value === 'time' ? ` · Fenstermitte ${state.data.times[+$('time').value].toFixed(1)} s zum Cue` : '';
   const title = `${state.data.metadata.signal.toUpperCase()} · ${scope} · ${frequencies} · ${$('mode').selectedOptions[0].text}${time}`;
   const side = id.includes('left') ? 'left' : id.includes('right') ? 'right' : null;
-  const detail = side ? `${taskLabel(side)} · ${selectionLabel(side)}` : `${plotChannel} · Auswahl im JSON-Export dokumentiert`;
-  try { await Plotly.relayout(graph, {'title.text': title + '<br><sup>' + detail + '</sup>', 'margin.t': 65});
+  let detail = side ? `${taskLabel(side)} · ${selectionLabel(side)}` : `${plotChannel} · Auswahl im JSON-Export dokumentiert`;
+  const visibility = curveVisibility(), curveExport = MOTOR_VIEWS.some(view => view.curve === id);
+  if (curveExport && visibility.overlays_enabled) {
+    const total = SIDES.reduce((n, s) => n + aggregate(s).trials.length, 0);
+    detail += `<br>Einzelkurven: ${visibility.visible_trial_keys.length}/${total} · Mittelwerte aus allen gültigen Trials`;
+  }
+  try { await Plotly.relayout(graph, {'title.text': title + '<br><sup>' + detail + '</sup>', 'margin.t': curveExport && visibility.overlays_enabled ? 85 : 65});
     await Plotly.downloadImage(graph, {format: 'png', filename: 'erds-' + id + '-' + suffix, scale: 2});
   } finally { await Plotly.relayout(graph, old); }
 }
@@ -476,6 +527,13 @@ async function start() {
   });
   $('standard-scale').addEventListener('click', () => { [$('scale-min').value, $('scale-max').value] = $('metric').value === 'percent' ? [-100, 100] : [0, absoluteMax * 1.05]; render(); });
   for (const side of SIDES) {
+    for (const action of ['show', 'hide']) $('curve-' + action + '-' + side).addEventListener('click', () => {
+      stop();
+      for (const t of aggregate(side).trials) {
+        if (action === 'show') state.hiddenCurves.delete(t.key); else state.hiddenCurves.add(t.key);
+      }
+      render();
+    });
     $('trial-' + side).addEventListener('change', () => chooseTrial(side, $('trial-' + side).value));
     for (const [direction, step] of [['prev', -1], ['next', 1]]) $(direction + '-' + side).addEventListener('click', () => {
       const select = $('trial-' + side), index = select.selectedIndex + step;

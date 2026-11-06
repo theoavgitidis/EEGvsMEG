@@ -33,6 +33,10 @@ Trialübersichten und Bandkurven stehen als fester Vergleich nebeneinander:
 links C3, rechts C4, jeweils mit beiden Handbedingungen und gemeinsamen Skalen.
 Der Kanalwähler betrifft EEG-Spannung, Referenzanzeige und Zeit-Frequenz-Karten;
 ein Klick auf eine Trialkarte wählt außerdem deren Elektrode und Wiederholung.
+Unter den eingeblendeten Einzelkurven lassen sich einzelne Trial-Kurven per
+Häkchen gemeinsam für C3 und C4 ausblenden. Die Listen sind nach Hand getrennt.
+Diese Anzeigeauswahl verändert keine Mittelwerte oder QC-Ausschlüsse und bleibt
+innerhalb des geöffneten Viewers beim Band-/Aufgabenwechsel erhalten.
 Auf schmalen Bildschirmen werden die beiden Elektroden untereinander dargestellt.
 Bedienung, QC und vollständige Parameter:
 [ERD/ERS-Anleitung](../../docs/erds-viewer.md).

@@ -94,6 +94,9 @@ Farbskala machen Unterschiede und ähnliche Kanalwerte nachvollziehbar.
 Trialübersichten und Bandkurven zeigen C3 links und C4 rechts nebeneinander,
 jeweils mit beiden Handbedingungen und gemeinsamen Skalen. Die Elektrodenauswahl
 für EEG-Spannung, Referenzanzeige und Zeit-Frequenz-Karten bleibt separat bedienbar.
+Bei eingeblendeten Einzelkurven lassen sich einzelne Trials per Häkchen für beide
+Elektroden ausblenden. Dies betrifft nur die Hintergrundkurven; die Gesamtmittel
+und wissenschaftlichen Ausschlüsse bleiben unverändert.
 Der Zeitschieber und „Abspielen“ öffnen direkt den Zeitverlauf, auch aus einer
 Mittelwertansicht; Werte und Zeitmarkierungen bleiben synchron.
 Die verwendete Vorbereitungsreferenz ist markiert; Referenz- und Aufgabenleistung

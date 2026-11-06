@@ -78,7 +78,16 @@ weiterhin zurückgewiesen.
   Einzeltrial und wählt dessen Elektrode für EEG-Spannung, Referenzanzeige und
   Zeit-Frequenz-Karten. Die festen C3-/C4-Vergleiche bleiben beim Kanalwechsel erhalten.
   Im Gesamtmittel lassen sich zusätzlich alle Einzelkurven in beiden Diagrammen
-  einblenden. In der Einzelansicht folgen beide Bandkurven derselben linken/rechten
+  einblenden. Darunter lassen sich **einzelne Trial-Kurven ein-/ausblenden**:
+  getrennte Listen für linke/rechte Hand nennen Block, Trial, Attempt und Aufnahmezeit.
+  Ein Häkchen gilt gleichzeitig für C3 und C4; je Hand gibt es außerdem
+  **Alle einblenden/ausblenden**. Die Auswahl bleibt bei Band-, Kanal-, Aufgaben-
+  und Ansichtswechsel erhalten, solange der Viewer geöffnet ist. Der Hauptschalter
+  blendet die gewählten Einzelkurven gemeinsam ein oder aus, ohne die Häkchen
+  zurückzusetzen. In der Einzeltrial-Ansicht ist diese Hintergrundauswahl deaktiviert.
+  **Dies ist nur eine Anzeigeauswahl:** Gesamtmittel, Kopfwerte, Tabelle und
+  Trialkarten behalten sämtliche akzeptierten Trials. Für einen wissenschaftlichen
+  Ausschluss die dokumentierte QC-Datei verwenden. In der Einzelansicht folgen beide Bandkurven derselben linken/rechten
   Trialauswahl; das Gesamtmittel wird zum Vergleich gepunktet dargestellt.
   Kopf, Tabelle, Zeit-Frequenz-Karte und ungefilterte EEG-Spannung zeigen ebenfalls
   diese Trialauswahl. „Ungefiltert“ bedeutet
@@ -336,6 +345,11 @@ Im Browser sind Gesamtbericht, Zusammenfassungs-CSV, aktuelle Tabelle,
 **Aktuelle Auswahl (JSON)** und PNG-Abbildungen verfügbar. **C3-Kurven als PNG**
 und **C4-Kurven als PNG** exportieren das jeweilige Diagramm; Beschriftung und
 Dateiname nennen dessen feste Elektrode unabhängig vom Kanalwähler.
+Bei eingeblendeten Einzelkurven nennt der PNG-Titel deren sichtbare Anzahl und
+weist darauf hin, dass die Mittelwerte weiterhin alle akzeptierten Trials enthalten.
+`curve_visibility` im Auswahl-JSON und in der Auswahlspalte der Tabellen-CSV nennt
+den Hauptschalter, die sichtbaren Trial-IDs und die einzeln deaktivierten IDs der
+aktuellen Aufgabenfamilie. Diese Angaben verändern die wissenschaftlichen Ausschlüsse nicht.
 Der Auswahl-JSON nennt die festen Vergleichskanäle unter
 `motor_comparison_channels` und enthält
 beide ausgewählten Trials oder Mittelwerte, ihre Kurven und Referenzen,
