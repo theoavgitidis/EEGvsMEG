@@ -11,7 +11,14 @@ from analysis.recording_files import resolve_recording
 from analysis.erds_cli import add_erds_arguments, run_erds
 
 
-def load_recording(path, unit, signal="auto"):
+def load_recording(path, unit=None, signal="auto", bci_channels=None):
+    if Path(path).suffix.lower() == ".dat":
+        if unit is not None or signal != "auto":
+            raise ValueError("BCI2000 .dat uses header calibration; omit --unit and --signal.")
+        from analysis.bci2000 import to_mne
+        return to_mne(path, bci_channels)
+    if unit not in ("uV", "mV", "V") or bci_channels is not None:
+        raise ValueError("CSV requires --unit uV/mV/V; --bci-channels is for BCI2000 .dat only.")
     selected = resolve_recording(path, signal)
     if selected.signal == "oscar" and unit != "uV":
         raise ValueError("OSCAR output is in uV; use --unit uV.")
@@ -57,11 +64,12 @@ def load_recording(path, unit, signal="auto"):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("csv", type=Path, help="Path to the EEG CSV")
+    parser.add_argument("csv", type=Path, help="EEG CSV oder native BCI2000 .dat")
     parser.add_argument("--signal", choices=["auto", "raw", "oscar"], default="auto",
                         help="Neue OSCAR-Sitzungen: bereinigte Daten; raw wählt ausdrücklich Rohdaten")
-    parser.add_argument("--unit", required=True, choices=["uV", "mV", "V"],
+    parser.add_argument("--unit", choices=["uV", "mV", "V"],
                         help="EEG unit reported by the terminal's config command")
+    parser.add_argument("--bci-channels", nargs="+", help="EEG-Kanalnamen einer BCI2000-Datei ausdrücklich auswählen")
     parser.add_argument("--view", choices=["traces", "waterfall", "erds"], default="traces",
                         help="Zeitkurven, Wasserfall oder ERD/ERS mit 3D-Kopf (OSCAR-Standard)")
     parser.add_argument("--start", type=float, default=0, help="Display start in seconds")
@@ -90,28 +98,30 @@ def main():
         for output in (args.save_fif, args.snapshot):
             if output and output.exists():
                 raise ValueError(f"Output already exists: {output}")
-        raw = load_recording(args.csv, args.unit, args.signal)
+        options = {"bci_channels": args.bci_channels} if args.bci_channels is not None else {}
+        raw = load_recording(args.csv, args.unit, args.signal, **options)
         print(f"\nCSV: {args.csv.resolve()}\nChannels: {raw.ch_names}")
-        print(f"Samples: {raw.n_times}; nominal duration: {raw.n_times / 250:.3f} s; labels: {len(raw.annotations)}")
-        print(f"Assumed CSV unit: {args.unit}; MNE data unit: V")
+        print(f"Samples: {raw.n_times}; nominal duration: {raw.n_times / raw.info['sfreq']:.3f} s; labels: {len(raw.annotations)}")
+        print(f"CSV unit: {args.unit}" if args.unit else "BCI2000 header calibration; EEG in V, states dimensionless")
         if not np.isfinite(args.duration) or args.duration <= 0 or not np.isfinite(args.start) or not 0 <= args.start <= raw.times[-1]:
             raise ValueError("duration must be positive and start within the recording.")
         if args.scale_uv is not None and (not np.isfinite(args.scale_uv) or args.scale_uv <= 0):
             raise ValueError("scale-uv must be positive.")
         for cutoff in (args.highpass, args.lowpass):
-            if cutoff is not None and (not np.isfinite(cutoff) or not 0 < cutoff < 125):
-                raise ValueError("Filter frequencies must be between 0 and 125 Hz.")
+            if cutoff is not None and (not np.isfinite(cutoff) or not 0 < cutoff < raw.info["sfreq"] / 2):
+                raise ValueError("Filter frequencies must be between 0 and the recording's Nyquist frequency.")
         if args.highpass and args.lowpass and args.highpass >= args.lowpass:
             raise ValueError("highpass must be lower than lowpass.")
-        if args.spectrogram_channel is not None and args.spectrogram_channel not in raw.ch_names:
-            raise ValueError(f"Unknown spectrogram channel: {args.spectrogram_channel}. Choose from {raw.ch_names}.")
+        eeg_names = [name for name, kind in zip(raw.ch_names, raw.get_channel_types()) if kind == "eeg"]
+        if args.spectrogram_channel is not None and args.spectrogram_channel not in eeg_names:
+            raise ValueError(f"Unknown EEG spectrogram channel: {args.spectrogram_channel}. Choose from {eeg_names}.")
         if not np.isfinite(args.spectrogram_max) or args.spectrogram_max <= .5:
             raise ValueError("spectrogram-max must be finite and greater than 0.5 Hz.")
         if args.save_fif:
-            raw.save(args.save_fif, overwrite=False)
-        display = raw
+            raw.save(args.save_fif, overwrite=False, fmt="double" if args.csv.suffix.lower() == ".dat" else "single")
+        display = raw.copy().pick("eeg") if len(eeg_names) != len(raw.ch_names) else raw
         if args.highpass is not None or args.lowpass is not None:
-            display = raw.copy().filter(args.highpass, args.lowpass)
+            display = display.copy().filter(args.highpass, args.lowpass)
         cutoffs = []
         if args.highpass is not None:
             cutoffs.append(f"high-pass {args.highpass:g} Hz")

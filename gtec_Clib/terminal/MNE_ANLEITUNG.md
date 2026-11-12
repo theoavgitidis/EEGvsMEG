@@ -4,6 +4,8 @@
 
 Stand: 21. Oktober 2026. Beide mitgelieferten Viewer verwenden dieselbe Zeitansicht mit getrennten EEG-Spuren, einer eigenen Marker-Zeitleiste und einem Spektrogramm auf gemeinsamer Zeitachse. Die Befehle für FIF-/PNG-Export in dieser Anleitung beziehen sich auf `view_eeg.py` im Projektstamm.
 
+**Ergänzung 12.11.2026:** Beide Einstiege lesen zusätzlich native BCI2000-`.dat` auf macOS und Windows. Dort `--unit`/`--signal` weglassen: Samplingrate, Kanalnamen und Kalibrierung kommen aus dem Header. Die Ansichten zeigen nur EEG; vollständige Integer-States bleiben als dimensionslose `misc`-Kanäle erhalten und werden vom Hauptviewer im FIF mitgespeichert. Beispiel: `python view_eeg.py AUFNAHME.dat --no-show --save-fif NEUE_AUFNAHME_raw.fif`. CSV-Verhalten bleibt wie unten beschrieben. Export unserer Sitzungen für BCI2000Analysis, explizite Kanalwahl und Grenzen: [BCI2000 offline](../../docs/bci2000-offline.md).
+
 Das Skript `view_eeg.py` im Projektstamm liest die EEG-Kanäle deiner CSV und
 die Labels aus der danebenliegenden `.events.csv` in MNE ein. Die Originaldateien
 bleiben unverändert. Es funktioniert für neue Versuche unter `EEG/recordings`

@@ -17,7 +17,17 @@ else:
     from erds_cli import add_erds_arguments, run_erds
 
 
-def load_recording(path, unit, signal="auto"):
+def load_recording(path, unit=None, signal="auto", bci_channels=None):
+    if Path(path).suffix.lower() == ".dat":
+        if unit is not None or signal != "auto":
+            raise ValueError("BCI2000 .dat verwendet Headerkalibrierung; --unit und --signal weglassen.")
+        if __package__:
+            from .bci2000 import to_mne
+        else:
+            from bci2000 import to_mne
+        return to_mne(path, bci_channels)
+    if unit not in ("uV", "mV", "V") or bci_channels is not None:
+        raise ValueError("CSV benötigt --unit uV/mV/V; --bci-channels gilt nur für BCI2000 .dat.")
     selected = resolve_recording(path, signal)
     if selected.signal == "oscar" and unit != "uV":
         raise ValueError("OSCAR-Ausgabe hat die Einheit uV; --unit uV verwenden.")
@@ -78,8 +88,9 @@ def main():
     parser.add_argument("csv", type=Path)
     parser.add_argument("--signal", choices=["auto", "raw", "oscar"], default="auto",
                         help="OSCAR-Sitzungen standardmäßig bereinigt; raw wählt Rohdaten")
-    parser.add_argument("--unit", required=True, choices=["uV", "mV", "V"],
+    parser.add_argument("--unit", choices=["uV", "mV", "V"],
                         help="EEG-Einheit aus dem Recorder-Befehl config; nicht raten.")
+    parser.add_argument("--bci-channels", nargs="+", help="EEG-Kanalnamen einer BCI2000-Datei ausdrücklich auswählen")
     parser.add_argument("--view", choices=["traces", "waterfall", "erds"], default="traces",
                         help="Zeitkurven, Wasserfall oder ERD/ERS mit 3D-Kopf (OSCAR-Standard)")
     parser.add_argument("--start", type=float, default=0, help="Start des Anzeigefensters in Sekunden")
@@ -104,9 +115,12 @@ def main():
             return
         if args.erds_qc or args.erds_export:
             raise ValueError("--erds-qc/--erds-export benötigen --view erds.")
-        raw = load_recording(args.csv, args.unit, args.signal)
+        options = {"bci_channels": args.bci_channels} if args.bci_channels is not None else {}
+        raw = load_recording(args.csv, args.unit, args.signal, **options)
+        if any(kind != "eeg" for kind in raw.get_channel_types()):
+            raw = raw.copy().pick("eeg")
         signal_label = (raw.info.get("description") + "; ") if raw.info.get("description") else ""
-        print(f"Kanäle: {raw.ch_names}; Samples: {raw.n_times}; nominale Dauer: {raw.n_times / 250:.3f} s")
+        print(f"Kanäle: {raw.ch_names}; Samples: {raw.n_times}; nominale Dauer: {raw.n_times / raw.info['sfreq']:.3f} s")
         if not np.isfinite(args.duration) or args.duration <= 0 or not np.isfinite(args.start) or not 0 <= args.start <= raw.times[-1]:
             raise ValueError("duration muss positiv sein und start innerhalb der Aufnahme liegen.")
         if args.scale_uv is not None and (not np.isfinite(args.scale_uv) or args.scale_uv <= 0):
@@ -124,7 +138,7 @@ def main():
             import matplotlib.pyplot as plt
             if raw.n_times < 2:
                 raise ValueError("Zu wenige Samples für ein Spektrum.")
-            raw.compute_psd(method="welch", fmin=0, fmax=100,
+            raw.compute_psd(method="welch", fmin=0, fmax=min(100, raw.info["sfreq"] / 2),
                             n_fft=min(1024, raw.n_times)).plot()
             plt.show(block=True)
         elif args.view == "waterfall":

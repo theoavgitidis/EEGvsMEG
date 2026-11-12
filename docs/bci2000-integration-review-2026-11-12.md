@@ -1,6 +1,8 @@
 # BCI2000 im EEGvsMEG-Projekt: Einsatzmöglichkeiten und Integrationsentscheidung
 
-Recherche: **12.11.2026**, Projektbasis `017a84d` auf `main`. Untersucht wurden Projektanleitungen, Aufnahme-/Importcode und offizielle BCI2000-, MNE- und LSL-Quellen. **Dies ist eine Machbarkeitsuntersuchung. Eine BCI2000-Anbindung ist damit noch nicht implementiert oder mit Hardware validiert.**
+Recherche: **12.11.2026**, Projektbasis `017a84d` auf `main`. Untersucht wurden Projektanleitungen, Aufnahme-/Importcode und offizielle BCI2000-, MNE- und LSL-Quellen. Die folgenden Abschnitte dokumentieren die ursprüngliche Machbarkeitsuntersuchung.
+
+**Nachfolgende Umsetzung:** Der [Offline-Weg für macOS/Windows](bci2000-offline.md) ist inzwischen implementiert: eigener kalibrierter DAT-Reader, CSV-Export mit Trial-/Attempt-Erhalt und Folds, beide Viewer und Runner für native Offline-Filter. Die Python-Seite ist hardwarefrei geprüft; ein echter nativer BCI2000-Lauf steht aus. Aufnahme, Feedback und Versuchssteuerung sind weiterhin Vorschläge dieses Berichts und wurden auf Nutzerwunsch nicht umgesetzt.
 
 ## 1. Ergebnis und Empfehlung
 

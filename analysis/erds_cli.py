@@ -10,6 +10,9 @@ def add_erds_arguments(parser):
 
 
 def run_erds(args):
+    if args.csv.suffix.lower() == ".dat" or getattr(args, "bci_channels", None):
+        raise ValueError('--view erds benötigt die ursprüngliche Projekt-CSV mit Sitzungsmetadaten; '
+                         'native BCI2000-Dateien zunächst als Zeitkurven oder Spektrum untersuchen.')
     if (getattr(args, 'filtered', False) or getattr(args, 'psd', False)
             or getattr(args, 'highpass', None) is not None or getattr(args, 'lowpass', None) is not None
             or getattr(args, 'save_fif', None) or getattr(args, 'snapshot', None)):

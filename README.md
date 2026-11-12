@@ -26,7 +26,7 @@ Stand: 28. Oktober 2026.
 | Dauerhafte Teilnehmer-IDs und Sitzungszuordnung | [ID-Schema](docs/participant-ids.md) |
 | Eigener Bewegungsklassifikator: Training, unabhängiger Test und kausaler Replay | [ML-Bewegungsklassifikation](docs/movement-classifier.md) |
 | Öffentliche Faustbewegungsdaten: Download, Labelprüfung und Trainingsimport | [PhysioNet-Datenaudit und Importer](docs/physionet-fist-data.md) |
-| BCI2000: Anwendungsfälle, Schnittstellen und gestufter Pilot; noch keine Integration | [BCI2000-Untersuchung, 12.11.2026](docs/bci2000-integration-review-2026-11-12.md) |
+| BCI2000 offline: CSV-Export, native DAT-Viewer, States und Filterketten auf Mac/Windows | [Offline-Anleitung](docs/bci2000-offline.md), [Anwendungsfälle und Recherche](docs/bci2000-integration-review-2026-11-12.md) |
 | Teilnehmerangaben und Sitzungsnotizen | [Teilnehmerbogen](docs/participant-record-template.md) |
 | Kurze manuelle Vorführung mit bisherigen Aufgaben | [Demo-Anleitung](presentations/Demo_Anleitung_DE.md) |
 
@@ -141,6 +141,8 @@ Diese datierten Berichte dokumentieren vorhandene Daten und Modellversuche mit d
 
 ## Tests und Prüfstand
 
+Für die neue **Offline-Anbindung an BCI2000** bereitet `python -m analysis.bci2000_offline prepare PFAD_ZUR_SESSION.csv --signal raw --runs MI_HandSide MI_Bilateral --output-dir NEUER_ORDNER` gültige Trials als blockweise `.dat`-Dateien mit nachvollziehbaren Trainings-/Test-Folds auf. Native `.dat` lassen sich mit beiden Viewern ohne `--unit` öffnen; CSV verlangt weiterhin die bestätigte Einheit. Python-Werkzeuge laufen ohne Headset/DLL; native BCI2000-Programme benötigen einen passenden Build. Bedienung, Mac-/Windows-Beispiele und Grenzen stehen in der [Offline-Anleitung](docs/bci2000-offline.md). Versuchssteuerung und Aufnahme bleiben unverändert.
+
 Aus dem Repository-Stamm:
 
 ```sh
@@ -152,6 +154,7 @@ python -m unittest analysis.test_movement_classifier
 python -m unittest analysis.test_physionet
 python -m unittest analysis.test_physionet_dataset
 python -m unittest analysis.test_erds analysis.test_erds_browser
+python -m unittest analysis.test_bci2000
 ```
 
 C++-Tests benötigen Clang++ oder MSVC `cl`; Viewer- und Annotationstests benötigen MNE, NumPy, pandas und Matplotlib; die HTTP-Tests der Wasserfallansicht benötigen zusätzlich Plotly. Optionale echte Browserprüfungen laufen mit `python -m unittest analysis.test_waterfall_ui analysis.test_waterfall_navigation`, wenn Playwright und ein installiertes Chrome verfügbar sind (`EEG_BROWSER_EXECUTABLE` kann den Browserpfad setzen). Die hardwarefreien Tests prüfen Protokoll 2.0 mit 168 Trials über 250 Zufallsseeds in beiden Laufreihenfolgen, einen vollständigen beschleunigten Sitzungsdurchlauf, Unterbrechungen, Fehler und die im Review korrigierten Timingfälle. Die Viewer-Regressionstests prüfen dichte Marker und Fenstergrößenänderungen, getrennte Kanalachsen, Skalierung und Abschneidehinweise, Navigation, unveränderte Daten sowie echte PNG-Ausgabe ohne Desktop und einen ungefilterten FIF-Speicher-/Ladetest. Die C++-Plan- und Laufzeittests bestanden außerdem mit Address-/UndefinedBehavior-Sanitizer auf macOS.
