@@ -26,6 +26,7 @@ Stand: 28. Oktober 2026.
 | Dauerhafte Teilnehmer-IDs und Sitzungszuordnung | [ID-Schema](docs/participant-ids.md) |
 | Eigener Bewegungsklassifikator: Training, unabhängiger Test und kausaler Replay | [ML-Bewegungsklassifikation](docs/movement-classifier.md) |
 | Öffentliche Faustbewegungsdaten: Download, Labelprüfung und Trainingsimport | [PhysioNet-Datenaudit und Importer](docs/physionet-fist-data.md) |
+| BCI2000: Anwendungsfälle, Schnittstellen und gestufter Pilot; noch keine Integration | [BCI2000-Untersuchung, 12.11.2026](docs/bci2000-integration-review-2026-11-12.md) |
 | Teilnehmerangaben und Sitzungsnotizen | [Teilnehmerbogen](docs/participant-record-template.md) |
 | Kurze manuelle Vorführung mit bisherigen Aufgaben | [Demo-Anleitung](presentations/Demo_Anleitung_DE.md) |
 
